@@ -1,2 +1,2 @@
 # last_letter_lib
-Software library for UAV simulation
+Software libraries for UAV simulation.
