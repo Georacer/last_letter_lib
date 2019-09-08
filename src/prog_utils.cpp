@@ -31,6 +31,38 @@ YAML::Node filterConfig(YAML::Node config, std::string prefix)
     return filteredNode;
 }
 
+// Randomize the requested parameters of a configuration node by std_dev
+YAML::Node randomizeParameters(YAML::Node config, vector<string> stringVec, double std_dev)
+{
+    if (std_dev < 0)
+    {
+        throw domain_error("Standard deviation cannot be negative");
+    }
+
+    std::random_device rdev;
+    std::default_random_engine generator;
+    generator.seed(rdev());
+    std::normal_distribution<double> distribution(0.0, std_dev);
+    YAML::Node newConfig(config);
+
+    if (std_dev) // Apply only if std_dev>0
+    {
+        double scalarParam;
+        for (auto const& paramString: stringVec)
+        {
+            if (!config[paramString].Type() == YAML::NodeType::Scalar)
+            {
+                throw runtime_error("Requested parameter "+paramString+" is not scalar.");
+            }
+            cout << "Randomizing parameter: " << paramString << endl;
+            getParameter(config, paramString, scalarParam);
+            newConfig[paramString] = scalarParam * (1+distribution(generator));
+        }
+    }
+    return newConfig;
+}
+
+
 /////////////////////////////////////////////////////////////////
 // Build a new polynomial, reading from a configuration YAML Node
 Polynomial * buildPolynomial(YAML::Node config)

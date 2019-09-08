@@ -2,6 +2,8 @@
 #ifndef PROG_UTILS
 #define PROG_UTILS
 
+#include <random>
+
 #include "yaml-cpp/yaml.h"
 #include "math_utils.hpp"
 
@@ -69,6 +71,8 @@ bool startsWith(std::string mainStr, std::string startStr);
 // Filter a YAML::Node file to keep only a sub-parameter set
 // Example: for start string /world, keep /world/timeControls but not /environment/rho
 YAML::Node filterConfig(YAML::Node config, std::string prefix);
+
+YAML::Node randomizeParameters(YAML::Node config, vector<string> stringVec, double std_dev);
 
 /////////////////////////////////////////////////////////////////
 // Build a new polynomial, reading from a configuration YAML Node

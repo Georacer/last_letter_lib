@@ -46,9 +46,15 @@ int main(int, char**){
     cout << "Filtered config:" << endl;
     cout << newConfig << endl;
 
-    // std::vector<double> wrongVector;
-    // getParameterList(config, "/world/timeControls", wrongVector);
-    // vectorString = vectorToString2(wrongVector);
-    // cout << "/world/timeControls :" << vectorString << "\n";
+    // Randomize parameters
+    cout << "Testing parameter randomization" << endl;
+    std::vector<string> paramNames;
+    double doubleValue;
+    getParameter(config, "/scalarParameter", doubleValue);
+    cout << "Original parameter value: " << doubleValue << endl;
+    paramNames.push_back("/scalarParameter");
+    YAML::Node randomzedConfig = randomizeParameters(config, paramNames, 0.1);
+    getParameter(config, "/scalarParameter", doubleValue);
+    cout << "Randomized value: " << doubleValue << endl;
 
 }

@@ -3,3 +3,4 @@
 /world/integratorType: 0
 /anIntSequence: [0, 1, 2]
 /aDoubleSequence: [0.0, 1.1, 2.2]
+/scalarParameter: 1.0
