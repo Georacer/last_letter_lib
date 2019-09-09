@@ -65,5 +65,6 @@ int main(int, char * argv[]){
     ConfigsStruct_t newConfigStruct = randomizeConfigsStruct(configs, randomizerConfig);
 
     // Test parameter loading
-    ConfigsStruct_t loadedConfig = loadModel(uav_name);
+    cout << "Testing loading of model configuration" << endl;
+    ConfigsStruct_t loadedConfig = loadModelConfig(uav_name);
 }

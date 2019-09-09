@@ -103,3 +103,6 @@ target_link_libraries(test_kinematics uav_utils
 
 add_executable(test_uav_model test/test_uav_model.cpp)
 target_link_libraries(test_uav_model lib_uav_model)
+
+add_executable(test_loop_rate test/test_loop_rate.cpp)
+target_link_libraries(test_loop_rate lib_uav_model)

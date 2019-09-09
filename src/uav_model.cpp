@@ -18,16 +18,6 @@ UavModel::UavModel (ConfigsStruct_t p_configs) :
 {
 	configs = p_configs;
 	getParameter(configs.world, "deltaT", dt);
-	// TODO: Make sure to add this functionality to the ROS wrapper
-	// tprev = ros::Time::now();
-	// states.header.stamp = tprev;
-	//Subscribe and advertize
-	// subInp = n.subscribe("ctrlPWM",1,&UavModel::getInput, this); //model control input subscriber
-	// subEnv = n.subscribe("environment",1,&UavModel::getEnvironment, this); //dynamic environment effects subscriber
-	// pubState = n.advertise<last_letter_msgs::SimStates>("states",1000); //model states publisher
-	// pubForce = n.advertise<geometry_msgs::Vector3>("forceInput",1000); // forces publisher
-	// pubTorque = n.advertise<geometry_msgs::Vector3>("torqueInput",1000); // torques publisher
-	// pubLinAcc = n.advertise<geometry_msgs::Vector3>("linearAcc",1000); // Body frame linear acceleration - no corriolis effect
 
 	init(configs.init);
 }
@@ -35,10 +25,6 @@ UavModel::UavModel (ConfigsStruct_t p_configs) :
 //Initialize states
 void UavModel::init(YAML::Node initConfig)
 {
-	// Set states message frame name
-	// TODO port this to ROS wrapper
-	// states.header.frame_id = "bodyFrame";
-
 	// Read initial NED coordinates
 	vector<double> doubleVect;
 	getParameterList(initConfig, "position", doubleVect);
@@ -82,11 +68,10 @@ void UavModel::init(YAML::Node initConfig)
 	}
 	setInput(input);
 
-	// if(!ros::param::getCached("init/chanReset", chanReset)) {ROS_INFO("No RESET channel selected"); chanReset=-1;}
 	if (!getParameter(initConfig, "chanReset", chanReset, false)) {cout << "No RESET channel selected" << endl; chanReset=-1;}
 }
 
-void init()
+void UavModel::init()
 {
 	init(configs.init);
 }
@@ -138,17 +123,12 @@ void UavModel::step(void)
 		throw runtime_error("uav_model.cpp: NaN member in new angular velocity");
 	}
 
+	for (int i=0; i<dynamics.nMotors; i++)
+	{
+		newState.rotorspeed[i] = dynamics.propulsion[i]->omega;
+	}
+
 	state = newState;
-
-	// TODO: Port these to ROS wrapper
-	// tprev = ros::Time::now();
-	// states.header.stamp = tprev;
-
-	//publish results
-	// pubState.publish(states);
-	// pubForce.publish(kinematics.forceInput);
-	// pubTorque.publish(kinematics.torqueInput);
-	// pubLinAcc.publish(kinematics.linearAcc);
 }
 
 /////////////////////////////////////////////////

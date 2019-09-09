@@ -90,6 +90,7 @@ void Propulsion::rotateWind(SimState_t states, Inertial_t inertial, Environment_
 
 void Propulsion::rotateProp() // Update propeller angle
 {
+	if (!std::isfinite(omega)) {throw runtime_error("propulsion.cpp: non-finite omega value");}
 	theta += omega*dt;
 	if (theta > 2.0*M_PI) theta -= 2*M_PI;
 	if (theta < 0.0) theta += 2*M_PI;
@@ -99,11 +100,6 @@ void Propulsion::rotateProp() // Update propeller angle
 
 	body_to_prop = body_to_mount * (mount_to_gimbal * gimbal_to_prop);
 	body_to_prop_rot = body_to_mount_rot * (mount_to_gimbal_rot * gimbal_to_prop_rot);
-
-	// TODO: Remember to migrate this to the ROS wrapper
-	// char prop_frame[50];
-	// sprintf(prop_frame, "propeller_%i", id);
-	// broadcaster.sendTransform(tf::StampedTransform(body_to_prop, ros::Time::now(), "base_link", prop_frame));
 }
 
  // Convert the resulting force to the body axes

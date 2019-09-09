@@ -31,7 +31,7 @@ class UavModel
 	Kinematics kinematics;
 	Dynamics dynamics;
 	EnvironmentModel environmentModel;
-	Airdata airdata;
+	Airdata airdata; // TODO: Is this member used?
 
 	///////////
 	//Methods

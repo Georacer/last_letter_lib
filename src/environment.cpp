@@ -115,7 +115,6 @@ ostringstream oss;
 		}
 
 		environment.wind = states.pose.orientation*wind; //Rotate bias wind in body axes
-		// std::cout << "wind: " << environment.wind.x << ", " << environment.wind.y << ", " << environment.wind.z << std::endl; // Check
 
 		Vector3d disturbance(windDistU, windDistV[0], windDistW[0]);
 

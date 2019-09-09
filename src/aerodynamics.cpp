@@ -101,7 +101,6 @@ void Aerodynamics::rotateFrame(SimState_t states, Environment_t environment)
 	airspeed = airdata.airspeed;
 	alpha = airdata.alpha;
 	beta = airdata.beta;
-	// std::cout << "airspeed: " << airspeed << " alpha: " << alpha << " beta: " << beta << std::endl; // Check
 
 	if (!std::isfinite(airspeed)) {throw runtime_error("aerodynamicsLib.cpp/rotateWind: NaN value in airspeed");}
 	if (std::fabs(airspeed)>1e+160) {throw runtime_error("aerodynamicsLib.cpp/rotateWind: normalWind over 1e+160");}
@@ -349,10 +348,6 @@ double HCUAVAero::dragCoeff (double alpha)
 // Build aerodynamics model
 Aerodynamics * buildAerodynamics(YAML::Node config)
 {
-	// int i;
-	// char paramMsg[50];
-	// sprintf(paramMsg, "airfoil%i/aerodynamicsType", id);
-	// if(!ros::param::getCached(paramMsg, i)) {ROS_FATAL("Invalid parameters for -%s- in param server!", paramMsg); ros::shutdown();}
 	int aerodynamicsType;
 	getParameter(config, "aerodynamicsType", aerodynamicsType);
 	std::cout<< "building aerodynamics model: ";
