@@ -101,7 +101,39 @@ void UavModel::step(void)
 	Wrench_t inpWrench;
 	inpWrench.force = dynamics.getForce();
 	inpWrench.torque = dynamics.getTorque();
-	state = kinematics.propagateState(state, inpWrench);
+
+	SimState_t newState;
+	newState = kinematics.propagateState(state, inpWrench);
+
+	// Check new state for non-finite values
+	Vector3d tempVect;
+	Quaterniond tempQuat;
+	if (!newState.pose.position.allFinite())
+	{
+		tempVect = newState.pose.position;
+		cout << "New position:\n" << tempVect << endl;
+		throw runtime_error("uav_model.cpp: NaN member in new position");
+	}
+	if (!myisfinite(newState.pose.orientation))
+	{
+		tempQuat = newState.pose.orientation;
+		cout << "New orientation:\n" << tempQuat.w() << "\n" << tempQuat.vec() << endl;
+		throw runtime_error("uav_model.cpp: NaN member in new orientation");
+	}
+	if (!newState.velocity.linear.allFinite())
+	{
+		tempVect = newState.velocity.linear;
+		cout << "New linear velocity:\n" << tempVect << endl;
+		throw runtime_error("uav_model.cpp: NaN member in new linear velocity");
+	}
+	if (!newState.velocity.angular.allFinite())
+	{
+		tempVect = newState.velocity.angular;
+		cout << "New angular velocity:\n" << tempVect << endl;
+		throw runtime_error("uav_model.cpp: NaN member in new angular velocity");
+	}
+
+	state = newState;
 
 	// TODO: Port these to ROS wrapper
 	// tprev = ros::Time::now();
