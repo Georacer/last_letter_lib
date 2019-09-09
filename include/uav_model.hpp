@@ -41,6 +41,7 @@ class UavModel
 
 	// Initialize UavModel object
 	void init(YAML::Node initConfig);
+	void init();
 
 	// Destructor
 	~UavModel ();

@@ -88,7 +88,7 @@ YAML::Node randomizeConfig(YAML::Node config, vector<string> stringVec, double s
 
 ConfigsStruct_t randomizeConfigsStruct(const ConfigsStruct_t p_configStruct, const YAML::Node randomizerConfig);
 
-ConfigsStruct_t loadModel(string modelName);
+ConfigsStruct_t loadModelConfig(string modelName);
 
 string getHomeFolder();
 

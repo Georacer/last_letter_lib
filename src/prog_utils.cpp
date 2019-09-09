@@ -99,10 +99,11 @@ ConfigsStruct_t randomizeConfigsStruct(const ConfigsStruct_t p_configStruct, con
     }
 }
 
-ConfigsStruct_t loadModel(string modelName)
+ConfigsStruct_t loadModelConfig(string modelName)
 {
-    string modelFolderName = "last_letter_models";
-    string modelPath = getHomeFolder() + "/" + modelFolderName + "/";
+    string modelFolderName = "last_letter_models/";
+    string aircraftDir = "aircraft/";
+    string modelPath = getHomeFolder() + "/" + modelFolderName;
 
     ConfigsStruct_t configs;
 
@@ -117,12 +118,12 @@ ConfigsStruct_t loadModel(string modelName)
 
     string fullWorldFilename = modelPath + world_filename;
     string fullEnvironmentFilename = modelPath + environment_filename;
-    string fullPropFilename = modelPath+modelName+"/"+prop_filename;
-    string fullAeroFilename = modelPath+modelName+"/"+aero_filename;
-    string fullGroundFilename = modelPath+modelName+"/"+ground_filename;
-    string fullInertialFilename = modelPath+modelName+"/"+inertial_filename;
-    string fullInitFilename = modelPath+modelName+"/"+init_filename;
-    string fullRandomizerFilename = modelPath+modelName+"/"+randomizer_filename;
+    string fullPropFilename = modelPath+aircraftDir+modelName+"/"+prop_filename;
+    string fullAeroFilename = modelPath+aircraftDir+modelName+"/"+aero_filename;
+    string fullGroundFilename = modelPath+aircraftDir+modelName+"/"+ground_filename;
+    string fullInertialFilename = modelPath+aircraftDir+modelName+"/"+inertial_filename;
+    string fullInitFilename = modelPath+aircraftDir+modelName+"/"+init_filename;
+    string fullRandomizerFilename = modelPath+aircraftDir+modelName+"/"+randomizer_filename;
 
     configs.world = YAML::LoadFile(fullWorldFilename);
     configs.env = YAML::LoadFile(fullEnvironmentFilename);

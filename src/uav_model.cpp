@@ -86,6 +86,11 @@ void UavModel::init(YAML::Node initConfig)
 	if (!getParameter(initConfig, "chanReset", chanReset, false)) {cout << "No RESET channel selected" << endl; chanReset=-1;}
 }
 
+void init()
+{
+	init(configs.init);
+}
+
 ///////////////////////////////////////
 //Make one step of the plane simulation
 void UavModel::step(void)
