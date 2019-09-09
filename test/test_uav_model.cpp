@@ -16,8 +16,8 @@ int main(int argc, char * argv[])
     cout << "Building uav model for UAV: " << uav_name << endl;
     string prop_filename = "propulsion.yaml";
     string aero_filename = "aerodynamics.yaml";
-    string ground_filename = "contactPts.yaml";
-    string inertial_filename = "rigidBody.yaml";
+    string ground_filename = "ground.yaml";
+    string inertial_filename = "inertial.yaml";
     string init_filename = "init.yaml";
     string world_filename = "world.yaml";
     string environment_filename = "environment.yaml";
@@ -32,13 +32,13 @@ int main(int argc, char * argv[])
 
     std::cout << "Reading parameter files" << endl;
     ConfigsStruct_t configs;
-    configs.world = filterConfig(YAML::LoadFile(fullWorldFilename), "/world/");
-    configs.env = filterConfig(YAML::LoadFile(fullEnvironmentFilename), "/environment/");
+    configs.world = YAML::LoadFile(fullWorldFilename);
+    configs.env = YAML::LoadFile(fullEnvironmentFilename);
     configs.prop = YAML::LoadFile(fullPropFilename);
     configs.aero = YAML::LoadFile(fullAeroFilename);
-    configs.ground = filterConfig(YAML::LoadFile(fullGroundFilename), "airframe/");
-    configs.inertial = filterConfig(YAML::LoadFile(fullInertialFilename), "airframe/");
-    configs.init = filterConfig(YAML::LoadFile(fullInitFilename), "init/");
+    configs.ground = YAML::LoadFile(fullGroundFilename);
+    configs.inertial = YAML::LoadFile(fullInertialFilename);
+    configs.init = YAML::LoadFile(fullInitFilename);
 
     // Create model
     UavModel uavModel(configs);

@@ -9,6 +9,18 @@
 
 using namespace std;
 
+// Model plane configuration structure
+struct ConfigsStruct_t {
+	YAML::Node world;
+	YAML::Node env;
+	YAML::Node init;
+	YAML::Node inertial;
+	YAML::Node aero;
+	YAML::Node prop;
+	YAML::Node ground;
+};
+
+
 template<typename T>
 bool getParameter(YAML::Node configFile, string paramName, T &targetVar, bool isFatal = true)
 {
@@ -72,7 +84,13 @@ bool startsWith(std::string mainStr, std::string startStr);
 // Example: for start string /world, keep /world/timeControls but not /environment/rho
 YAML::Node filterConfig(YAML::Node config, std::string prefix);
 
-YAML::Node randomizeParameters(YAML::Node config, vector<string> stringVec, double std_dev);
+YAML::Node randomizeConfig(YAML::Node config, vector<string> stringVec, double std_dev);
+
+ConfigsStruct_t randomizeConfigsStruct(const ConfigsStruct_t p_configStruct, const YAML::Node randomizerConfig);
+
+ConfigsStruct_t loadModel(string modelName);
+
+string getHomeFolder();
 
 /////////////////////////////////////////////////////////////////
 // Build a new polynomial, reading from a configuration YAML Node

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <pwd.h>
 // #include <string>
 // #include <stdexcept>
 
@@ -32,7 +33,7 @@ YAML::Node filterConfig(YAML::Node config, std::string prefix)
 }
 
 // Randomize the requested parameters of a configuration node by std_dev
-YAML::Node randomizeParameters(YAML::Node config, vector<string> stringVec, double std_dev)
+YAML::Node randomizeConfig(YAML::Node config, vector<string> stringVec, double std_dev)
 {
     if (std_dev < 0)
     {
@@ -60,6 +61,89 @@ YAML::Node randomizeParameters(YAML::Node config, vector<string> stringVec, doub
         }
     }
     return newConfig;
+}
+
+ConfigsStruct_t randomizeConfigsStruct(const ConfigsStruct_t p_configStruct, const YAML::Node randomizerConfig)
+{
+    ConfigsStruct_t randomizedConfig;
+    double std_dev;
+    getParameter(randomizerConfig, "std_dev", std_dev);
+    if (!std_dev) // No changes required
+    {
+        return p_configStruct;
+    }
+    else
+    {
+        vector<string> paramList;
+
+        getParameter(randomizerConfig, "aerodynamics", paramList);
+        randomizedConfig.aero = randomizeConfig(p_configStruct.aero, paramList, std_dev);
+
+        paramList.clear();
+        getParameter(randomizerConfig, "ground", paramList);
+        randomizedConfig.ground = randomizeConfig(p_configStruct.ground, paramList, std_dev);
+        
+        paramList.clear();
+        getParameter(randomizerConfig, "propulsion", paramList);
+        randomizedConfig.prop = randomizeConfig(p_configStruct.prop, paramList, std_dev);
+        
+        paramList.clear();
+        getParameter(randomizerConfig, "inertial", paramList);
+        randomizedConfig.inertial = randomizeConfig(p_configStruct.inertial, paramList, std_dev);
+        
+        paramList.clear();
+        getParameter(randomizerConfig, "init", paramList);
+        randomizedConfig.init = randomizeConfig(p_configStruct.init, paramList, std_dev);
+
+        return randomizedConfig;
+    }
+}
+
+ConfigsStruct_t loadModel(string modelName)
+{
+    string modelFolderName = "last_letter_models";
+    string modelPath = getHomeFolder() + "/" + modelFolderName + "/";
+
+    ConfigsStruct_t configs;
+
+    string prop_filename = "propulsion.yaml";
+    string aero_filename = "aerodynamics.yaml";
+    string ground_filename = "ground.yaml";
+    string inertial_filename = "inertial.yaml";
+    string init_filename = "init.yaml";
+    string world_filename = "world.yaml";
+    string environment_filename = "environment.yaml";
+    string randomizer_filename = "randomizer.yaml";
+
+    string fullWorldFilename = modelPath + world_filename;
+    string fullEnvironmentFilename = modelPath + environment_filename;
+    string fullPropFilename = modelPath+modelName+"/"+prop_filename;
+    string fullAeroFilename = modelPath+modelName+"/"+aero_filename;
+    string fullGroundFilename = modelPath+modelName+"/"+ground_filename;
+    string fullInertialFilename = modelPath+modelName+"/"+inertial_filename;
+    string fullInitFilename = modelPath+modelName+"/"+init_filename;
+    string fullRandomizerFilename = modelPath+modelName+"/"+randomizer_filename;
+
+    configs.world = YAML::LoadFile(fullWorldFilename);
+    configs.env = YAML::LoadFile(fullEnvironmentFilename);
+    configs.prop = YAML::LoadFile(fullPropFilename);
+    configs.aero = YAML::LoadFile(fullAeroFilename);
+    configs.ground = YAML::LoadFile(fullGroundFilename);
+    configs.inertial = YAML::LoadFile(fullInertialFilename);
+    configs.init = YAML::LoadFile(fullInitFilename);
+    
+    // Load randomization information, and apply them
+    YAML::Node randomizerConfig = YAML::LoadFile(fullRandomizerFilename);
+
+    return randomizeConfigsStruct(configs, randomizerConfig);
+}
+
+// Return home folder, without trailling slash
+string getHomeFolder()
+{
+    passwd* pw = getpwuid(getuid());
+    string path(pw->pw_dir);
+    return path;
 }
 
 

@@ -40,21 +40,4 @@ int main(int, char**){
     // Write-out new parameter file
     std::ofstream fout(filename);
     fout << config;
-
-    //filter config
-    YAML::Node newConfig = filterConfig(config, "/world/");
-    cout << "Filtered config:" << endl;
-    cout << newConfig << endl;
-
-    // Randomize parameters
-    cout << "Testing parameter randomization" << endl;
-    std::vector<string> paramNames;
-    double doubleValue;
-    getParameter(config, "/scalarParameter", doubleValue);
-    cout << "Original parameter value: " << doubleValue << endl;
-    paramNames.push_back("/scalarParameter");
-    YAML::Node randomzedConfig = randomizeParameters(config, paramNames, 0.1);
-    getParameter(config, "/scalarParameter", doubleValue);
-    cout << "Randomized value: " << doubleValue << endl;
-
 }

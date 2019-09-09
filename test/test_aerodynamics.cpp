@@ -15,7 +15,7 @@ int main(int, char **)
     string aero_filename = "aerodynamics.yaml";
     string init_filename = "init.yaml";
     string world_filename = "world.yaml";
-    string inertial_filename = "rigidBody.yaml";
+    string inertial_filename = "inertial.yaml";
 
     string fullWorldFilename = paramDir + "world.yaml";
     string fullEnvironmentFilename = paramDir + "environment.yaml";
@@ -23,12 +23,12 @@ int main(int, char **)
     string fullInertialFilename = paramDir+uav_name+"/"+inertial_filename;
     string fullInitFilename = paramDir+uav_name+"/"+init_filename;
 
-    YAML::Node worldConfig = filterConfig(YAML::LoadFile(fullWorldFilename), "/world/");
-    YAML::Node environmentConfig = filterConfig(YAML::LoadFile(fullEnvironmentFilename), "/environment/");
+    YAML::Node worldConfig = YAML::LoadFile(fullWorldFilename);
+    YAML::Node environmentConfig = YAML::LoadFile(fullEnvironmentFilename);
     YAML::Node aeroConfig = YAML::LoadFile(fullAeroFilename);
     YAML::Node aeroConfig1 = filterConfig(aeroConfig, "airfoil1/");
-    YAML::Node inertialConfig = filterConfig(YAML::LoadFile(fullInertialFilename), "airframe/");
-    YAML::Node initConfig = filterConfig(YAML::LoadFile(fullInitFilename), "init/");
+    YAML::Node inertialConfig = YAML::LoadFile(fullInertialFilename);
+    YAML::Node initConfig = YAML::LoadFile(fullInitFilename);
     
     SimState_t states;
     std::vector<double> doubleVect;

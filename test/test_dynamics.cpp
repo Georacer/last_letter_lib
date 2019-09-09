@@ -16,8 +16,8 @@ int main(int argc, char * argv[])
     cout << "Building dynamics for UAV: " << uav_name << endl;
     string prop_filename = "propulsion.yaml";
     string aero_filename = "aerodynamics.yaml";
-    string ground_filename = "contactPts.yaml";
-    string inertial_filename = "rigidBody.yaml";
+    string ground_filename = "ground.yaml";
+    string inertial_filename = "inertial.yaml";
     string init_filename = "init.yaml";
     string world_filename = "world.yaml";
     string environment_filename = "environment.yaml";
@@ -31,13 +31,13 @@ int main(int argc, char * argv[])
     string fullInitFilename = paramDir+uav_name+"/"+init_filename;
 
     std::cout << "Reading parameter files" << endl;
-    YAML::Node worldConfig = filterConfig(YAML::LoadFile(fullWorldFilename), "/world/");
-    YAML::Node environmentConfig = filterConfig(YAML::LoadFile(fullEnvironmentFilename), "/environment/");
-    YAML::Node propConfig = YAML::LoadFile(fullPropFilename);
+    YAML::Node worldConfig = YAML::LoadFile(fullWorldFilename);
+    YAML::Node environmentConfig = YAML::LoadFile(fullEnvironmentFilename);
     YAML::Node aeroConfig = YAML::LoadFile(fullAeroFilename);
-    YAML::Node groundConfig = filterConfig(YAML::LoadFile(fullGroundFilename), "airframe/");
-    YAML::Node inertialConfig = filterConfig(YAML::LoadFile(fullInertialFilename), "airframe/");
-    YAML::Node initConfig = filterConfig(YAML::LoadFile(fullInitFilename), "init/");
+    YAML::Node propConfig = YAML::LoadFile(fullPropFilename);
+    YAML::Node groundConfig = YAML::LoadFile(fullGroundFilename);
+    YAML::Node inertialConfig = YAML::LoadFile(fullInertialFilename);
+    YAML::Node initConfig = YAML::LoadFile(fullInitFilename);
     
     // Create input data
     std::cout << "Creating input structures" << endl;

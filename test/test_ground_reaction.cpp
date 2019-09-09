@@ -14,17 +14,16 @@ int main(int argc, char * argv[])
     string paramDir = "../test/parameters/";
     string uav_name = argv[1];
     cout << "Building ground reactions for UAV: " << uav_name << endl;
-    string ground_filename = "contactPts.yaml";
+    string ground_filename = "ground.yaml";
     string world_filename = "world.yaml";
 
     string fullWorldFilename = paramDir + "world.yaml";
     string fullGroundFilename = paramDir+uav_name+"/"+ground_filename;
 
-    YAML::Node worldConfig = filterConfig(YAML::LoadFile(fullWorldFilename), "/world/");
+    YAML::Node worldConfig = YAML::LoadFile(fullWorldFilename);
     YAML::Node groundConfig = YAML::LoadFile(fullGroundFilename);
-    YAML::Node groundConfig1 = filterConfig(groundConfig, "airframe/");
 
-    GroundReaction * airframe = buildGroundReaction(groundConfig1, worldConfig);
+    GroundReaction * airframe = buildGroundReaction(groundConfig, worldConfig);
     
     SimState_t states;
     states.velocity.linear = Eigen::Vector3d(0,0,0);

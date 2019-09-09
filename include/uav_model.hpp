@@ -12,16 +12,6 @@ using Eigen::Quaterniond;
 
 // Core class declarations
 
-// Model plane configuration structure
-struct ConfigsStruct_t {
-	YAML::Node world;
-	YAML::Node env;
-	YAML::Node init;
-	YAML::Node inertial;
-	YAML::Node aero;
-	YAML::Node prop;
-	YAML::Node ground;
-};
 
 // Top UavModel object class
 class UavModel

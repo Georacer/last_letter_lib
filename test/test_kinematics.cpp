@@ -14,7 +14,7 @@ int main(int argc, char * argv[])
     string paramDir = "../test/parameters/";
     string uav_name = argv[1];
     cout << "Building kinematics for UAV: " << uav_name << endl;
-    string inertial_filename = "rigidBody.yaml";
+    string inertial_filename = "inertial.yaml";
     string init_filename = "init.yaml";
     string world_filename = "world.yaml";
 
@@ -23,9 +23,9 @@ int main(int argc, char * argv[])
     string fullInitFilename = paramDir+uav_name+"/"+init_filename;
 
     std::cout << "Reading parameter files" << endl;
-    YAML::Node worldConfig = filterConfig(YAML::LoadFile(fullWorldFilename), "/world/");
-    YAML::Node inertialConfig = filterConfig(YAML::LoadFile(fullInertialFilename), "airframe/");
-    YAML::Node initConfig = filterConfig(YAML::LoadFile(fullInitFilename), "init/");
+    YAML::Node worldConfig = YAML::LoadFile(fullWorldFilename);
+    YAML::Node inertialConfig = YAML::LoadFile(fullInertialFilename);
+    YAML::Node initConfig = YAML::LoadFile(fullInitFilename);
     
     // Create input data
     std::cout << "Creating input structures" << endl;

@@ -51,10 +51,16 @@ target_link_libraries(lib_uav_model uav_utils
                                     lib_ground_reaction
                                     Eigen3::Eigen)
 
+# Copy data files to home folder
+file(COPY last_letter_models DESTINATION $ENV{HOME})
+
 
 # Compile test files
 add_executable(test_yaml test/test_yaml.cpp)
 target_link_libraries(test_yaml prog_utils yaml-cpp)
+
+add_executable(test_prog_utils test/test_prog_utils.cpp)
+target_link_libraries(test_prog_utils prog_utils uav_utils)
 
 add_executable(test_environment test/test_environment.cpp)
 target_link_libraries(test_environment lib_environment prog_utils yaml-cpp)

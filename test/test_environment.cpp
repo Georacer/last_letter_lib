@@ -10,8 +10,8 @@ int main(int, char ** ) {
     std::string param_path = "../test/parameters/";
     std::string fullWorldFilename = param_path + "world.yaml";
     std::string fullEnvironmentFilename = param_path + "environment.yaml";
-    YAML::Node worldConfig = filterConfig(YAML::LoadFile(fullWorldFilename), "/world/");
-    YAML::Node environmentConfig = filterConfig(YAML::LoadFile(fullEnvironmentFilename), "/environment/");
+    YAML::Node worldConfig = YAML::LoadFile(fullWorldFilename);
+    YAML::Node environmentConfig = YAML::LoadFile(fullEnvironmentFilename);
 
     EnvironmentModel environment_obj = EnvironmentModel(environmentConfig, worldConfig);
     SimState_t states;
