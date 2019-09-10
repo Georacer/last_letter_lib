@@ -289,13 +289,13 @@ double WGS84_RM(double lat)
 double PwmToHalfRange(uint16_t pwmValue)
 // Convert a 1000-2000 us value to 0-1 range
 {
-    return (float)(pwmValue - 1000) / 1000;
+    return ((double)pwmValue - 1000) / 1000;
 }
 
 double PwmToFullRange(uint16_t pwmValue)
 // Convert a 1000-2000 us value to -1-1 range
 {
-    return (pwmValue - 1500) / 500;
+    return ((double)pwmValue - 1500) / 500;
 }
 
 uint16_t HalfRangeToPwm(double signal)
