@@ -30,6 +30,7 @@ class Propulsion
 	double normalWind; // scalar wind normal to propeller disc
 	Wrench_t wrenchProp;
 
+    Eigen::Quaterniond q_bm, q_mg, q_bg; // Quaternion rotations
 	Eigen::Transform<double, 3, Eigen::Affine> body_to_mount, mount_to_gimbal, gimbal_to_prop, body_to_prop; // Transformations in the propeller assembly for visual rendering
 	Eigen::Transform<double, 3, Eigen::Affine> body_to_mount_rot, mount_to_gimbal_rot, gimbal_to_prop_rot, body_to_prop_rot; // Transformations in the propeller assembly for force and moment rotation
 

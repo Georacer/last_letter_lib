@@ -29,6 +29,7 @@ class Aerodynamics
     int chanAileron, chanElevator, chanRudder, chanGimbal;
     Wrench_t wrenchAero;
 
+    Eigen::Quaterniond q_bm, q_mg, q_bg; // Quaternion rotations
     Eigen::Transform<double, 3, Eigen::Affine> body_to_mount, mount_to_gimbal, body_to_gimbal; // Transformations in the airfoil assembly for visual rendering
     Eigen::Transform<double, 3, Eigen::Affine> body_to_mount_rot, mount_to_gimbal_rot, body_to_gimbal_rot; // Transformations in the airfoil assembly for force and moment rotation
 

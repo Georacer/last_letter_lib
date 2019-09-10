@@ -24,7 +24,8 @@ int main(int, char ** ) {
 
     Eigen::Vector3d airdata = getAirData(states.velocity.linear - result.wind);
 
-    cout << "Resulting environment data" << endl;
+    cout << "Body-velocity:\n" << states.velocity.linear << endl;
+    cout << "***Resulting environment data" << endl;
     cout << "wind:\n" << result.wind << endl;
     cout << "Airspeed: " << airdata.x() << endl;
     cout << "Alpha (deg): " << airdata.y()*180/M_PI << endl;

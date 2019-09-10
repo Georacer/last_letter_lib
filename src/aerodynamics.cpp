@@ -80,19 +80,21 @@ void Aerodynamics::stepDynamics(const SimState_t states, const Inertial_t inerti
 void Aerodynamics::rotateFrame(SimState_t states, Environment_t environment)
 {
 	// Construct transformation from body axes to mount frame
-	body_to_mount = Eigen::Translation<double, 3>(CGOffset)*euler2quat(mountOrientation);
-	body_to_mount_rot = Eigen::Translation<double, 3>(Vector3d::Zero())*euler2quat(mountOrientation);
+	q_bm = euler2quat(mountOrientation);
+	body_to_mount = Eigen::Translation<double, 3>(CGOffset)*q_bm.conjugate();
+	body_to_mount_rot = Eigen::Translation<double, 3>(Vector3d::Zero())*q_bm.conjugate();
 
 	// Construct transformation to apply gimbal movement. Gimbal rotation MUST be aligned with (be applied on) the resulting z-axis!
-	mount_to_gimbal = Eigen::Translation<double, 3>(Vector3d::Zero())*euler2quat(Vector3d(0, 0, inputGimbal));
-	mount_to_gimbal_rot = Eigen::Translation<double, 3>(Vector3d::Zero())*euler2quat(Vector3d(0, 0, inputGimbal));
+	q_mg = euler2quat(Vector3d(0, 0, inputGimbal));
+	mount_to_gimbal = Eigen::Translation<double, 3>(Vector3d::Zero())*q_mg.conjugate();
+	mount_to_gimbal_rot = Eigen::Translation<double, 3>(Vector3d::Zero())*q_mg.conjugate();
 
-	// TODO: Is this the correct order of operations?
+	q_bg = q_mg*q_bm;
 	body_to_gimbal = body_to_mount * mount_to_gimbal;
 	body_to_gimbal_rot = body_to_mount_rot * mount_to_gimbal_rot;
 
 	// Transform the relative wind from body axes to airfoil axes
-	Vector3d relWind = body_to_gimbal_rot*(states.velocity.linear-environment.wind);
+	Vector3d relWind = q_mg*q_bm*(states.velocity.linear-environment.wind);
 	Vector3d airdata = getAirData(relWind);
 	airspeed = airdata.x();
 	alpha = airdata.y();
@@ -108,25 +110,25 @@ void Aerodynamics::rotateFrame(SimState_t states, Environment_t environment)
 	if (std::fabs(airspeed)>1e+160) {throw runtime_error("aerodynamicsLib.cpp/rotateWind: normalWind over 1e+160");}
 
 	// Rotate angular rates from the body frame to the airfoil frame
-	relativeRates = mount_to_gimbal_rot * (body_to_mount_rot * states.velocity.angular);
+	relativeRates = q_mg * q_bm * states.velocity.angular;
 	p = relativeRates.x();
 	q = relativeRates.y();
 	r = relativeRates.z();
 }
 
- // Convert the resulting force to the body axes
+ // Convert the resulting force from the gimbal axes to the body axes
 void Aerodynamics::rotateForce()
 {
-	wrenchAero.force = body_to_gimbal_rot.inverse() * wrenchAero.force;
+	wrenchAero.force = q_bg.conjugate() * wrenchAero.force;
 }
 
-// Convert the resulting torque to the body axes
+// Convert the resulting torque from the gimbal axes to the body axes
 void Aerodynamics::rotateTorque(Inertial_t inertial)
 {
-	wrenchAero.torque = body_to_gimbal_rot.inverse() * wrenchAero.torque;
-
 	// Convert the torque from the airfoil frame to the body frame
-	// TODO: I don't understand why this is true. I may remove it in the future
+	wrenchAero.torque = q_bg.conjugate() * wrenchAero.torque;
+
+	// Calculate the increased moment of inertia due to off-center torque application
 	double x, y, z;
 	double ratio = inertial.J(0,0) / (inertial.J(0,0) + inertial.mass * CGOffset.x()*CGOffset.x());
 	x =  ratio * wrenchAero.torque.x();

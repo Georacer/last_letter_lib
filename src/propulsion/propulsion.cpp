@@ -72,15 +72,20 @@ void Propulsion::stepEngine(SimState_t states, Inertial_t inertial, Environment_
 // Convert the relateive wind from body axes to propeller axes
 void Propulsion::rotateWind(SimState_t states, Inertial_t inertial, Environment_t environment)
 {
-	body_to_mount = Eigen::Translation<double, 3>(CGOffset)*euler2quat(mountOrientation);
-	body_to_mount_rot = Eigen::Translation<double, 3>(Vector3d::Zero())*euler2quat(mountOrientation);
+	// Construct transformation from body axes to mount frame
+	q_bm = euler2quat(mountOrientation);
+	body_to_mount = Eigen::Translation<double, 3>(CGOffset)*q_bm.conjugate();
+	body_to_mount_rot = Eigen::Translation<double, 3>(Vector3d::Zero())*q_bm.conjugate();
 
-	// Construct transformation to apply gimbal movement. Gimbal rotation MUST be aligned with the resulting z-axis!
-	mount_to_gimbal = Eigen::Translation<double, 3>(Vector3d::Zero())*euler2quat(Vector3d(0, 0, inputGimbal));
-	mount_to_gimbal_rot = Eigen::Translation<double, 3>(Vector3d::Zero())*euler2quat(Vector3d(0, 0, inputGimbal));
+	// Construct transformation to apply gimbal movement. Gimbal rotation MUST be aligned with (be applied on) the resulting z-axis!
+	q_mg = euler2quat(Vector3d(0, 0, inputGimbal));
+	mount_to_gimbal = Eigen::Translation<double, 3>(Vector3d::Zero())*q_mg.conjugate();
+	mount_to_gimbal_rot = Eigen::Translation<double, 3>(Vector3d::Zero())*q_mg.conjugate();
+
+	q_bg = q_mg*q_bm;
 
 	// Transform the relative wind from body axes to propeller axes
-	Vector3d relWind = body_to_mount_rot*mount_to_gimbal_rot*(states.velocity.linear-environment.wind);
+	Vector3d relWind = q_mg*q_bm*(states.velocity.linear-environment.wind);
 	Vector3d airdata = getAirData(relWind);
 	normalWind = airdata.x();
 	// Airdata airdata;
@@ -98,26 +103,26 @@ void Propulsion::rotateProp() // Update propeller angle
 	if (theta > 2.0*M_PI) theta -= 2*M_PI;
 	if (theta < 0.0) theta += 2*M_PI;
 
-	gimbal_to_prop = Eigen::Translation<double, 3>(Vector3d::Zero()) * euler2quat(Vector3d(0.0, theta, 0.0));
-	gimbal_to_prop_rot = Eigen::Translation<double, 3>(Vector3d::Zero()) * euler2quat(Vector3d(0.0, theta, 0.0));
+	gimbal_to_prop = Eigen::AngleAxis<double>(theta, Vector3d::UnitZ());
+	gimbal_to_prop_rot = gimbal_to_prop;
 
-	body_to_prop = body_to_mount * (mount_to_gimbal * gimbal_to_prop);
-	body_to_prop_rot = body_to_mount_rot * (mount_to_gimbal_rot * gimbal_to_prop_rot);
+	body_to_prop = body_to_mount * mount_to_gimbal * gimbal_to_prop;
+	body_to_prop_rot = body_to_mount_rot * mount_to_gimbal_rot * gimbal_to_prop_rot;
 }
 
- // Convert the resulting force to the body axes
+ // Convert the resulting force from the gimbal axes to the body axes
 void Propulsion::rotateForce()
 {
-	wrenchProp.force = body_to_prop_rot.inverse() * wrenchProp.force;
+	wrenchProp.force = q_bg.conjugate() * wrenchProp.force;
 }
 
-// Convert the resulting torque to the body axes
+// Convert the resulting torque from the gimbal axes to the body axes
 void Propulsion::rotateTorque(Inertial_t inertial)
 {
-	wrenchProp.torque = body_to_prop_rot.inverse() * wrenchProp.torque;
-
 	// Convert the torque from the motor frame to the body frame
-	// TODO: I don't understand why this is true. I may remove it in the future
+	wrenchProp.torque = q_bg.conjugate() * wrenchProp.torque;
+
+	// Calculate the increased moment of inertia due to off-center torque application
 	double x, y, z;
 	double ratio = inertial.J(0,0) / (inertial.J(0,0) + inertial.mass * CGOffset.x()*CGOffset.x());
 	x =  ratio * wrenchProp.torque.x();
