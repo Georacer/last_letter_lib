@@ -57,6 +57,7 @@ void Kinematics::calcDerivatives(SimState_t states, Wrench_t inpWrench)
 	// variable declaration
 	// create position derivatives from earth velocity
 	stateDot.posDot = states.pose.orientation.conjugate() * states.velocity.linear;
+	// stateDot.posDot = states.pose.orientation * states.velocity.linear;
 	if (!stateDot.posDot.allFinite()) {throw runtime_error("NaN member in position derivative vector");}
 
 	// create body velocity derivatives from acceleration, angular rotation and body velocity
@@ -122,6 +123,7 @@ SimState_t ForwardEuler::propagation(SimState_t states, Derivatives_t derivative
 
 	// Propagate orientation quaternion from angular derivatives quaternion
 	Quaterniond tempQuat = states.pose.orientation*derivatives.quatDot;
+	// Quaterniond tempQuat = states.pose.orientation.conjugate()*derivatives.quatDot;
 	newStates.pose.orientation = tempQuat.normalized();
 	if (!myisfinite(newStates.pose.orientation)) {throw runtime_error("NaN member in orientation quaternion");}
 
@@ -140,9 +142,9 @@ SimState_t ForwardEuler::propagation(SimState_t states, Derivatives_t derivative
 	newStates.acceleration.angular = derivatives.rateDot;
 
 	//Update Geoid stuff using the NED coordinates
-	newStates.geoid.latitude += 180.0/M_PI*asin(derivatives.posDot.x() * dt / WGS84_RM(states.geoid.latitude));
-	newStates.geoid.longitude += 180.0/M_PI*asin(derivatives.posDot.y() * dt / WGS84_RN(states.geoid.longitude));
-	newStates.geoid.altitude += -derivatives.posDot.z() * dt;
+	newStates.geoid.latitude = states.geoid.latitude + 180.0/M_PI*asin(derivatives.posDot.x() * dt / WGS84_RM(states.geoid.latitude));
+	newStates.geoid.longitude = states.geoid.longitude + 180.0/M_PI*asin(derivatives.posDot.y() * dt / WGS84_RN(states.geoid.longitude));
+	newStates.geoid.altitude = states.geoid.altitude - derivatives.posDot.z() * dt;
 	newStates.geoid.velocity[0] = derivatives.posDot.x();
 	newStates.geoid.velocity[1] = derivatives.posDot.y();
 	newStates.geoid.velocity[2] = -derivatives.posDot.z(); // Upwards velocity

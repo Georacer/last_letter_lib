@@ -17,11 +17,18 @@ int main(int, char ** ) {
     SimState_t states;
     states.pose.position = Eigen::Vector3d(0,0,-10);
     states.geoid.altitude = -states.pose.position.z();
+    states.velocity.linear = Eigen::Vector3d(10, 0, 1);
 
     environment_obj.calcEnvironment(states);
     auto result = environment_obj.environment;
+
+    Eigen::Vector3d airdata = getAirData(states.velocity.linear - result.wind);
+
     cout << "Resulting environment data" << endl;
     cout << "wind:\n" << result.wind << endl;
+    cout << "Airspeed: " << airdata.x() << endl;
+    cout << "Alpha (deg): " << airdata.y()*180/M_PI << endl;
+    cout << "Beta (deg): " << airdata.z()*180/M_PI << endl;
     cout << "density: " << result.density << endl;
     cout << "pressure: " << result.pressure << endl;
     cout << "temperature: " << result.temperature << endl;

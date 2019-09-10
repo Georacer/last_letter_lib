@@ -96,6 +96,8 @@ class Airdata
 	void calcAirData(Vector3d velBody, Vector3d velWind);
 };
 
+Vector3d getAirData (Vector3d speeds);
+
 //////////////
 // Controllers
 //////////////
@@ -188,8 +190,5 @@ uint16_t FullRangeToPwm(double signal);
 //////////////////////////
 // Miscellaneous Utilities
 //////////////////////////
-
-Vector3d getAirData (Vector3d speeds);
-
 
 #endif

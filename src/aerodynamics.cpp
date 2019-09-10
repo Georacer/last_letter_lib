@@ -91,22 +91,27 @@ void Aerodynamics::rotateFrame(SimState_t states, Environment_t environment)
 	body_to_gimbal = body_to_mount * mount_to_gimbal;
 	body_to_gimbal_rot = body_to_mount_rot * mount_to_gimbal_rot;
 
-	// TODO: Remember to migrate this to the ROS wrapper
-	// broadcaster.sendTransform(tf::StampedTransform(body_to_gimbal, ros::Time::now(), "base_link", foil_frame));
-
 	// Transform the relative wind from body axes to airfoil axes
-	Airdata airdata;
-	airdata.calcAirData(states.velocity.linear, environment.wind);
+	Vector3d relWind = body_to_gimbal_rot*(states.velocity.linear-environment.wind);
+	Vector3d airdata = getAirData(relWind);
+	airspeed = airdata.x();
+	alpha = airdata.y();
+	beta = airdata.z();
+	// Airdata airdata;
+	// airdata.calcAirData(states.velocity.linear, environment.wind);
 	// Calculate the new, relative air data
-	airspeed = airdata.airspeed;
-	alpha = airdata.alpha;
-	beta = airdata.beta;
+	// airspeed = airdata.airspeed;
+	// alpha = airdata.alpha;
+	// beta = airdata.beta;
 
 	if (!std::isfinite(airspeed)) {throw runtime_error("aerodynamicsLib.cpp/rotateWind: NaN value in airspeed");}
 	if (std::fabs(airspeed)>1e+160) {throw runtime_error("aerodynamicsLib.cpp/rotateWind: normalWind over 1e+160");}
 
 	// Rotate angular rates from the body frame to the airfoil frame
 	relativeRates = mount_to_gimbal_rot * (body_to_mount_rot * states.velocity.angular);
+	p = relativeRates.x();
+	q = relativeRates.y();
+	r = relativeRates.z();
 }
 
  // Convert the resulting force to the body axes

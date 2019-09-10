@@ -22,7 +22,7 @@ class Aerodynamics
     Vector3d CGOffset; // vector from CG to engine coordinates
     Vector3d mountOrientation; // YPR mounting orientation of the wing
     double airspeed, alpha, beta; // rotated airdata quantities
-    Vector3d relativeRates; // rotated angular rate container vector
+    Vector3d relativeWind, relativeRates; // rotated angular rate container vector
     double p, q, r; // rotated angular rates
     double deltaa_max, deltae_max, deltar_max, gimbalAngle_max; // Control inputs and maximum surface deflections
     double inputAileron, inputElevator, inputRudder, inputGimbal;

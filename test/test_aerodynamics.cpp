@@ -8,10 +8,11 @@
 using namespace std;
 using namespace Eigen;
 
-int main(int, char **)
+int main(int argc, char * argv[])
 {
     string paramDir = "../test/parameters/";
-    string uav_name = "skywalker_2013/";
+    string uav_name = argv[1];
+    cout << "Building dynamics for UAV: " << uav_name << endl;
     string aero_filename = "aerodynamics.yaml";
     string init_filename = "init.yaml";
     string world_filename = "world.yaml";
@@ -19,7 +20,7 @@ int main(int, char **)
 
     string fullWorldFilename = paramDir + "world.yaml";
     string fullEnvironmentFilename = paramDir + "environment.yaml";
-    string fullAeroFilename = paramDir+uav_name+aero_filename;
+    string fullAeroFilename = paramDir+uav_name+"/"+aero_filename;
     string fullInertialFilename = paramDir+uav_name+"/"+inertial_filename;
     string fullInitFilename = paramDir+uav_name+"/"+init_filename;
 

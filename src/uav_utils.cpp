@@ -37,6 +37,35 @@ void Airdata::calcAirData(Vector3d velBody, Vector3d velWind)
 	beta = airdata.z();
 }
 
+/////////////////////////////////////////
+// Aerodynamc angles/ airspeed calculation
+Vector3d getAirData (Vector3d speeds)
+{
+	double u = speeds.x();
+	double v = speeds.y();
+	double w = speeds.z();
+
+	double airspeed = sqrt(pow(u,2)+pow(v,2)+pow(w,2));
+	double alpha = atan2(w,u);
+	double beta = 0;
+	if (u==0) {
+		if (v==0) {
+			beta=0;
+		}
+		else {
+			beta=asin(v/abs(v));
+		}
+
+	}
+	else {
+		beta = atan2(v,u);
+	}
+
+	Vector3d result = Vector3d(airspeed, alpha, beta);
+
+	return result;
+}
+
 
 ///////////////////
 // Define PID class
@@ -249,6 +278,11 @@ double WGS84_RM(double lat)
 	return Geoid::WGS84_Ra*(1-Geoid::WGS84_e2)/pow(1-Geoid::WGS84_e2*sfi*sfi,1.5);
 }
 
+
+//////////////////////////
+// Miscellaneous Utilities
+//////////////////////////
+
 //////////////////////////////
 // PPM and PWM functionalities
 
@@ -274,38 +308,4 @@ uint16_t FullRangeToPwm(double signal)
 // Convert a -1-1 range to 1000-2000 us range
 {
     return (uint16_t)(signal * 500 + 1500);
-}
-
-
-//////////////////////////
-// Miscellaneous Utilities
-//////////////////////////
-
-/////////////////////////////////////////
-// Aerodynamc angles/ airspeed calculation
-Vector3d getAirData (Vector3d speeds)
-{
-	double u = speeds.x();
-	double v = speeds.y();
-	double w = speeds.z();
-
-	double airspeed = sqrt(pow(u,2)+pow(v,2)+pow(w,2));
-	double alpha = atan2(w,u);
-	double beta = 0;
-	if (u==0) {
-		if (v==0) {
-			beta=0;
-		}
-		else {
-			beta=asin(v/abs(v));
-		}
-
-	}
-	else {
-		beta = atan2(v,u);
-	}
-
-	Vector3d result = Vector3d(airspeed, alpha, beta);
-
-	return result;
 }

@@ -64,6 +64,7 @@ int main(int argc, char * argv[])
 
     cout << "Initial State:\n" << endl;
     cout << "Position\n" << state.pose.position << endl;
+    cout << "Coordinates\n" << state.geoid.latitude << "\n" << state.geoid.longitude << "\n" << state.geoid.altitude << endl;
     cout << "Orientation\n" << state.pose.orientation.vec() << "\n" << state.pose.orientation.w() << endl;
     cout << "Linear Velocity\n" << state.velocity.linear << endl;
     cout << "Angular Velocity\n" << state.velocity.angular << endl;
@@ -71,6 +72,7 @@ int main(int argc, char * argv[])
     cout << "Angular Acceleration\n" << state.acceleration.angular << endl;
 
     cout << "Propagated State:\n" << endl;
+    cout << "Coordinates\n" << newState.geoid.latitude << "\n" << newState.geoid.longitude << "\n" << newState.geoid.altitude << endl;
     cout << "Position\n" << newState.pose.position << endl;
     cout << "Orientation\n" << newState.pose.orientation.vec() << "\n" << newState.pose.orientation.w() << endl;
     cout << "Linear Velocity\n" << newState.velocity.linear << endl;
