@@ -85,7 +85,11 @@ ostringstream oss;
 		// Calculate turbulent wind
 
 		// Calculate airspeed
-		relAirVelocity = states.velocity.linear - states.pose.orientation * wind; // Velocity vector in body frame
+
+		// Read vehicle orientation quaternion.
+		// Vehicle quaternion refers to the Body-to-Earth rotation
+		Quaterniond orientation = states.pose.orientation.conjugate();
+		relAirVelocity = states.velocity.linear - orientation * wind; // Velocity vector in body frame
 		Vector3d airdata = getAirData(relAirVelocity);
 		Va = airdata.x();
 
@@ -114,7 +118,7 @@ ostringstream oss;
 			throw runtime_error("turbulence NAN in environmentNode " + oss.str());
 		}
 
-		environment.wind = states.pose.orientation*wind; //Rotate bias wind in body axes
+		environment.wind = orientation*wind; //Rotate bias wind in body axes
 
 		Vector3d disturbance(windDistU, windDistV[0], windDistW[0]);
 

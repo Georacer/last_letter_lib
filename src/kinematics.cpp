@@ -17,7 +17,7 @@ Kinematics::Kinematics(YAML::Node inertialConfig, YAML::Node worldConfig)
     getParameter(inertialConfig, "j_y", j_y);
     getParameter(inertialConfig, "j_z", j_z);
     getParameter(inertialConfig, "j_xz", j_xz);
-    inertial.J << j_x, 1, -j_xz,
+    inertial.J << j_x, 0, -j_xz,
                     0, j_y, 0,
                     -j_xz, 0, j_z;
 
@@ -56,8 +56,7 @@ void Kinematics::calcDerivatives(SimState_t states, Wrench_t inpWrench)
 {
 	// variable declaration
 	// create position derivatives from earth velocity
-	stateDot.posDot = states.pose.orientation.conjugate() * states.velocity.linear;
-	// stateDot.posDot = states.pose.orientation * states.velocity.linear;
+	stateDot.posDot = states.pose.orientation * states.velocity.linear;
 	if (!stateDot.posDot.allFinite()) {throw runtime_error("NaN member in position derivative vector");}
 
 	// create body velocity derivatives from acceleration, angular rotation and body velocity
@@ -68,6 +67,7 @@ void Kinematics::calcDerivatives(SimState_t states, Wrench_t inpWrench)
 	stateDot.speedDot = linearAcc + corriolisAcc;
 
 	// create angular derivatives quaternion from angular rates
+	// ATTENTION! This quaternion derivative equation referes to the body-to-earth quaternion
 	double x, y, z, w;
 	x = states.velocity.angular.x()*0.5*dt;
 	y = states.velocity.angular.y()*0.5*dt;

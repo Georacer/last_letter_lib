@@ -86,11 +86,7 @@ void Propulsion::rotateWind(SimState_t states, Inertial_t inertial, Environment_
 
 	// Transform the relative wind from body axes to propeller axes
 	Vector3d relWind = q_mg*q_bm*(states.velocity.linear-environment.wind);
-	Vector3d airdata = getAirData(relWind);
-	normalWind = airdata.x();
-	// Airdata airdata;
-	// airdata.calcAirData(states.velocity.linear, environment.wind);
-	// normalWind = airdata.relWind.x();
+	normalWind = relWind.x();
 
 	if (!std::isfinite(normalWind)) {throw runtime_error("propulsion.cpp: NaN value in normalWind"); }
 	if (std::fabs(normalWind)>1e+160) {throw runtime_error("propulsion.cpp/rotateWind: normalWind over 1e+160");}

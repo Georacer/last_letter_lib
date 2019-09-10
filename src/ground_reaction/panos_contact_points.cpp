@@ -62,7 +62,9 @@ Vector3d PanosContactPoints::getForce(const SimState_t states, const WrenchSum_t
 	safe = true; // NaN protection flag
 	Vector3d Euler;
 
-	Quaterniond orientation = states.pose.orientation; // Read vehicle orientation quaternion
+	// Read vehicle orientation quaternion.
+	// Vehicle quaternion refers to the Body-to-Earth rotation
+	Quaterniond orientation = states.pose.orientation.conjugate();
 	Euler = quat2euler(orientation);
 
 	Wrench_t tempE, totalE; 

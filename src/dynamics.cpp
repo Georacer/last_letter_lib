@@ -81,10 +81,10 @@
 		Vector3d tempVect;
 
 		// Call gravity calculation routines
-		forceGrav = gravity->getForce(states.pose.orientation, environment.gravity, inertial.mass);
+		forceGrav = gravity->getForce(states.pose.orientation.conjugate(), environment.gravity, inertial.mass);
 		if (!forceGrav.allFinite()) {throw runtime_error("dynamicsLib.cpp: NaN member in gravity force vector");}
 
-		torqueGrav = gravity->getTorque(states.pose.orientation, environment.gravity, inertial.mass);
+		torqueGrav = gravity->getTorque(states.pose.orientation.conjugate(), environment.gravity, inertial.mass);
 		if (!torqueGrav.allFinite()) {throw runtime_error("dynamicsLib.cpp: NaN member in gravity torque vector");}
 
 		// Call  motors routines
