@@ -1,11 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(last_letter_lib)
-
-find_package(catkin REQUIRED COMPONENTS
-	roscpp
-	rospy
-	std_msgs
-)
+project(uav_model)
 
 find_package(Eigen3 REQUIRED)
 
@@ -19,19 +13,6 @@ include_directories(
   include/ground_reaction
   ${EIGEN3_INCLUDE_DIRS}
   ${LAPACK_INCLUDE_DIRS}
-)
-
-catkin_package(
-	INCLUDE_DIRS include include/propulsion include/ground_reaction
-	LIBRARIES math_utils
-            uav_utils
-            prog_utils
-            lib_environment
-            lib_gravity
-            lib_aerodynamics
-            lib_propulsion
-            lib_ground_reaction
-            lib_uav_model
 )
 
 add_library(math_utils src/math_utils.cpp)
@@ -72,9 +53,6 @@ target_link_libraries(lib_uav_model uav_utils
 
 # Copy data files to home folder
 file(COPY last_letter_models DESTINATION $ENV{HOME})
-
-
-add_dependencies(lib_uav_model ${catkin_EXPORTED_TARGETS} )
 
 
 # Compile test files
