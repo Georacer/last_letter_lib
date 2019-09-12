@@ -59,6 +59,8 @@ void UavModel::init(YAML::Node initConfig)
 	state.geoid.longitude = doubleVect[1];
 	state.geoid.altitude = doubleVect[2] - state.pose.position.z(); // Read ground geoid altitude and raise the WGS coordinate by the NED altitude
 
+	if (!getParameter(initConfig, "chanReset", chanReset, false)) {cout << "No RESET channel selected" << endl; chanReset=-1;}
+
 	// Initialize input
 	doubleVect.clear();
 	if (getParameterList(initConfig, "ctrlInput", doubleVect))
@@ -67,7 +69,6 @@ void UavModel::init(YAML::Node initConfig)
 	}
 	setInput(input);
 
-	if (!getParameter(initConfig, "chanReset", chanReset, false)) {cout << "No RESET channel selected" << endl; chanReset=-1;}
 }
 
 void UavModel::init()
@@ -139,9 +140,9 @@ void UavModel::setState(const SimState_t p_state)
 
 /////////////////////////////////////////////////
 // Pass control inputs to sub-models
-void UavModel::setInput(Input_t p_input)
+void UavModel::setInput(const Input_t p_input)
 {
-	input = p_input;
+	input.value = p_input.value;
 	dynamics.setInput(input);
 
 	if (chanReset>-1) { // If a reset channel is set
@@ -153,9 +154,9 @@ void UavModel::setInput(Input_t p_input)
 
 /////////////////////////////////////////////////
 //convert uS PWM values to control surface inputs
-void UavModel::setInputPwm(InputPwm_t p_input)
+void UavModel::setInputPwm(const InputPwm_t p_input)
 {
-	PwmInput = p_input;
+	PwmInput.value = p_input.value;
 	dynamics.setInputPwm(PwmInput);
 
 	if (chanReset>-1) { // If a reset channel is set
