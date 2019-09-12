@@ -6,6 +6,25 @@
 #include "prog_utils.hpp"
 
 
+string vectorToString2(Eigen::Vector3d vec3d, const string delimiter=", ")
+{
+    vector<double> vec(3);
+    vec[0] = vec3d[0];
+    vec[1] = vec3d[1];
+    vec[2] = vec3d[2];
+    return vectorToString2(vec, delimiter);
+}
+
+string vectorToString2(Eigen::Quaterniond quat, const string delimiter=", ")
+{
+    vector<double> vec(4);
+    vec[0] = quat.w();
+    vec[1] = quat.x();
+    vec[2] = quat.y();
+    vec[2] = quat.z();
+    return vectorToString2(vec, delimiter);
+}
+
 bool startsWith(std::string mainStr, std::string startStr)
 {
     if (mainStr.find(startStr) == 0)

@@ -17,6 +17,7 @@ test_list[8]="test_dynamics ${uav_name}"
 test_list[9]="test_kinematics ${uav_name}"
 test_list[10]="test_uav_model ${uav_name}"
 test_list[11]="test_loop_rate ${uav_name}"
+test_list[12]="test_trimmer ${uav_name}"
 
 for test_file in "${test_list[@]}"
 do

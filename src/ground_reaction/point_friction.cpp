@@ -151,14 +151,15 @@ Vector3d PointFriction::getForce(const SimState_t states, const WrenchSum_t wren
 			// Calculate force arm
 			dx.col(i) = cpi_up.block<3,1>(0,i) - uavpos;
 
-			double forceX, forceY;
-
 			// Calculate point friction in the Earth frame
 			if (vpointList.block<3,1>(0,i).norm() > 0.01) // If the point is moving
 			{
+				double forceX, forceY;
 				double forceAngle = atan2(vpointList(i, 1), vpointList(i, 0));
 				forceX = Fmax*cos(forceAngle);
 				forceY = Fmax*sin(forceAngle);
+				tempE.force(0) = forceX;
+				tempE.force(1) = forceY;
 			}
 			else // If static friction is applied on the point
 			{

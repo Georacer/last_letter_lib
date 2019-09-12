@@ -4,6 +4,8 @@
 
 #include <random>
 
+#include <Eigen/Eigen>
+
 #include "yaml-cpp/yaml.h"
 #include "math_utils.hpp"
 
@@ -60,7 +62,7 @@ bool getParameterList(YAML::Node configFile, string paramName, std::vector<T> &t
 }
 
 template<typename T>
-string vectorToString(vector<T> p_vector) {
+string vectorToString(vector<T> p_vector ) {
     ostringstream oss;
     for (auto i = p_vector.begin(); i != p_vector.end(); i++) {
         oss << *i << ' ';
@@ -69,13 +71,17 @@ string vectorToString(vector<T> p_vector) {
 }
 
 template<typename T>
-string vectorToString2(vector<T> p_vector) {
+string vectorToString2(vector<T> p_vector, const string delimiter = ", ") {
     ostringstream oss;
     for (uint i = 0; i<p_vector.size(); i++) {
-        oss << p_vector[i] << ' ';
+        oss << p_vector[i] << delimiter;
     }
     return oss.str();
 }
+
+string vectorToString2(Eigen::Vector3d vec3d, const string delimiter);
+
+string vectorToString2(Eigen::Quaterniond quat, const string delimiter);
 
 // Find if mainStr starts with startString
 bool startsWith(std::string mainStr, std::string startStr);
