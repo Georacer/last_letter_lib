@@ -16,6 +16,7 @@ using Eigen::Vector3d;
 //////////////////
 
 struct Geoid {
+	Geoid(): latitude(0), longitude(0), altitude(0), velocity(Vector3d::Zero()) {}
 	constexpr static double WGS84_Ra = 6378137.0; // Earth ellipsoid semi-major axis (alpha);
 	constexpr static double EARTH_flattening = 0.003352811;
 	constexpr static double WGS84_e2 = 0.006694380022901;
@@ -60,21 +61,24 @@ struct Accelerations {
 };
 
 struct SimState_t {
+	SimState_t(): rotorspeed(4, 0.01) {}
 	Geoid geoid;
 	Pose pose; // NED
 	Twist velocity; // body
 	Accelerations acceleration; // body
 	// double rotorspeed[4]; // in rad/s
-	std::array<double, 4> rotorspeed; // in rad/s
+	std::vector<double> rotorspeed; // in rad/s
 	// TODO: a fixed number of 4 rotors is restrictive
 };
 
 struct Input_t {
-	std::array<double, 12> value; // -1 - 1 (or 0 - 1) ranged
+	Input_t(): value(12, 0) {}
+	std::vector<double> value; // -1 - 1 (or 0 - 1) ranged
 };
 
 struct InputPwm_t {
-	std::array<uint16_t, 12> value; // PWM microseconds, 1000-2000 typical range
+	InputPwm_t(): value(12, 1000) {}
+	std::vector<uint16_t> value; // PWM microseconds, 1000-2000 typical range
 };
 
 struct Inertial_t {
@@ -97,6 +101,7 @@ class Airdata
 };
 
 Vector3d getAirData (Vector3d speeds);
+Vector3d getVelocityFromAirdata(Vector3d airdata);
 
 //////////////
 // Controllers

@@ -46,11 +46,7 @@ class UavModel
 	// Destructor
 	~UavModel ();
 
-	// Input callback
-	/**
-	 * setInput Read PWM input to the model and store its normalized values
-	 * @param inputMsg Direct servo control commands
-	 */
+	void setState(const SimState_t p_state);
 	void setInput(Input_t inputMsg);
 	void setInputPwm(InputPwm_t inputMsg);
 

@@ -98,6 +98,8 @@ void quat2rotmtx (const Quaterniond q, double *rotmtx)
 
 Vector3d quat2euler (const Quaterniond q)
 // Based on Stevens & Lewis p. 42
+// Takes the body-to-Earth quaternion and produces the Euler anlges
+// CAUTION! This quaternion is the conjugate of the one returned from quat2euler
 {
 //	double rotmtx[9];
 	Vector3d euler;

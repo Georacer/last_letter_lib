@@ -37,7 +37,7 @@ class Propulsion
 	///////////
 	//Functions
 	Propulsion(YAML::Node propConfig, YAML::Node worldConfig);
-	~Propulsion();
+	virtual ~Propulsion();
 
 	void setInput(Input_t input, YAML::Node config); // store control input
 	void setInputPwm(InputPwm_t input, YAML::Node config); // store PWM control input

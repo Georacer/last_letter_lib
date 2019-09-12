@@ -76,7 +76,7 @@ class Polynomial
 {
 public:
 	Polynomial();
-	~Polynomial();
+	virtual ~Polynomial();
 	virtual double evaluate() {return 0;}
 	virtual double evaluate(double x) {return 0;}
 	virtual double evaluate(double x, double y) {return 0;}

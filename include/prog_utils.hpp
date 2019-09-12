@@ -71,7 +71,7 @@ string vectorToString(vector<T> p_vector) {
 template<typename T>
 string vectorToString2(vector<T> p_vector) {
     ostringstream oss;
-    for (int i = 0; i<p_vector.size(); i++) {
+    for (uint i = 0; i<p_vector.size(); i++) {
         oss << p_vector[i] << ' ';
     }
     return oss.str();

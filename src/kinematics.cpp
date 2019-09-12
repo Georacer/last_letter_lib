@@ -67,7 +67,7 @@ void Kinematics::calcDerivatives(SimState_t states, Wrench_t inpWrench)
 	stateDot.speedDot = linearAcc + corriolisAcc;
 
 	// create angular derivatives quaternion from angular rates
-	// ATTENTION! This quaternion derivative equation referes to the body-to-earth quaternion
+	// ATTENTION! This quaternion derivative equation refers to the body-to-earth quaternion
 	double x, y, z, w;
 	x = states.velocity.angular.x()*0.5*dt;
 	y = states.velocity.angular.y()*0.5*dt;

@@ -7,7 +7,6 @@
 PointFriction::PointFriction(YAML::Node config, YAML::Node worldConfig) : GroundReaction(config, worldConfig)
 {
 	vector<double> doubleVect;
-	double temp[6];
 	// Read contact points number from parameter server
 	getParameter(config, "contactPtsNo", contactPtsNo);
 	// Create an appropriately sized matrix to contain contact point information
@@ -58,9 +57,8 @@ PointFriction::~PointFriction()
 // Wrench_t calculation function
 Vector3d PointFriction::getForce(const SimState_t states, const WrenchSum_t wrenchSum)
 {
-	double Reb[9];
 	double mu;
-	int i, j;
+	int i;
 	contact = false;
 	safe = true; // NaN protection flag
 	Vector3d Euler;
@@ -153,7 +151,7 @@ Vector3d PointFriction::getForce(const SimState_t states, const WrenchSum_t wren
 			// Calculate force arm
 			dx.col(i) = cpi_up.block<3,1>(0,i) - uavpos;
 
-			double forceX, forceY, forceZ;
+			double forceX, forceY;
 
 			// Calculate point friction in the Earth frame
 			if (vpointList.block<3,1>(0,i).norm() > 0.01) // If the point is moving

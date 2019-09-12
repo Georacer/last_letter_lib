@@ -28,7 +28,7 @@ class Integrator
 	public:
 	double dt;
 	Integrator(YAML::Node worldConfig);
-	~Integrator();
+	virtual ~Integrator();
 	virtual SimState_t propagation(SimState_t states, Derivatives_t derivatives) =0;
 };
 

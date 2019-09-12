@@ -8,7 +8,6 @@ PanosContactPoints::PanosContactPoints(YAML::Node config, YAML::Node worldConfig
 {
 	// Read contact points number from parameter server
 	vector<double> doubleVect;
-	double temp[6];
 
 	getParameter(config, "contactPtsNo", contactPtsNo);
 	pointCoords.setZero(3, contactPtsNo); // contact points coordinates in the body frame
@@ -56,8 +55,8 @@ PanosContactPoints::~PanosContactPoints()
 // Wrench calculation function
 Vector3d PanosContactPoints::getForce(const SimState_t states, const WrenchSum_t wrenchSum)
 {
-	double kFLong, kFLat, kFrictionE, kFrictionX, kFrictionY;
-	int i, j;
+	double kFLong, kFLat;
+	int i;
 	contact = false;
 	safe = true; // NaN protection flag
 	Vector3d Euler;

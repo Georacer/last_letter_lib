@@ -14,7 +14,7 @@ class GroundReaction
 {
 	public:
 	GroundReaction(YAML::Node config, YAML::Node worldConfig);
-	~GroundReaction();
+	virtual ~GroundReaction();
 	double dt;
 	Wrench_t wrenchGround;
 	double inputSteer, inputBrake;

@@ -51,7 +51,7 @@ YAML::Node randomizeConfig(YAML::Node config, vector<string> stringVec, double s
         double scalarParam;
         for (auto const& paramString: stringVec)
         {
-            if (!config[paramString].Type() == YAML::NodeType::Scalar)
+            if (!(config[paramString].Type() == YAML::NodeType::Scalar))
             {
                 throw runtime_error("Requested parameter "+paramString+" is not scalar.");
             }
@@ -159,7 +159,7 @@ Polynomial * buildPolynomial(YAML::Node config)
 	{
 	case 0: {
 		std::cout << "selecting 1D polynomial" << std::endl;
-        int polyNo;
+        uint polyNo;
         getParameter(config, "polyNo", polyNo);
         std::vector<double> coeffVect;
         getParameterList(config, "coeffs", coeffVect); 
@@ -176,8 +176,8 @@ Polynomial * buildPolynomial(YAML::Node config)
         std::vector<int> polyNoVect;
         getParameterList(config, "polyNo", polyNoVect);
         std::vector<double> coeffVect;
-		int polyOrder1 = coeffVect[0];
-		int polyOrder2 = coeffVect[1];
+		uint polyOrder1 = coeffVect[0];
+		uint polyOrder2 = coeffVect[1];
         getParameterList(config, "coeffs", coeffVect);
         if (coeffVect.size() != ((2*polyOrder2 + 2*polyOrder1*polyOrder2 + polyOrder1 - polyOrder1*polyOrder1 + 2)/2))
         {
@@ -189,7 +189,7 @@ Polynomial * buildPolynomial(YAML::Node config)
 		}
 	case 2: {
 		std::cout << "selecting cubic spline" << std::endl;
-        int breaksNo;
+        uint breaksNo;
         getParameter(config, "breaksNo", breaksNo);
         std::vector<double> breaksVect;
         getParameterList(config, "breaks", breaksVect);

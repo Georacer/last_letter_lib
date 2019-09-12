@@ -45,8 +45,8 @@ void UavModel::init(YAML::Node initConfig)
 	getParameterList(initConfig, "velAng", doubleVect);
 	state.velocity.angular = Vector3d(doubleVect.data());
 
-	// Initialize rotorspeed array
-	state.rotorspeed.fill(0.0);
+	// Initialize rotorspeed vector
+	fill(state.rotorspeed.begin(), state.rotorspeed.end(), 0.01);
 	// And propulsion model omega
 	for (int i=0; i<dynamics.nMotors; i++) {
 		dynamics.propulsion[i]->omega = 0.01; // A small non-zero value
@@ -60,7 +60,6 @@ void UavModel::init(YAML::Node initConfig)
 	state.geoid.altitude = doubleVect[2] - state.pose.position.z(); // Read ground geoid altitude and raise the WGS coordinate by the NED altitude
 
 	// Initialize input
-	input.value.fill(0.0);
 	doubleVect.clear();
 	if (getParameterList(initConfig, "ctrlInput", doubleVect))
 	{
@@ -129,6 +128,13 @@ void UavModel::step(void)
 	}
 
 	state = newState;
+}
+
+////////////////////////
+// Set state explicitly
+void UavModel::setState(const SimState_t p_state)
+{
+	state = p_state;
 }
 
 /////////////////////////////////////////////////

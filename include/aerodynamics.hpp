@@ -36,7 +36,7 @@ class Aerodynamics
     ////////////
     // Functions
     Aerodynamics(YAML::Node config);
-    ~Aerodynamics();
+    virtual ~Aerodynamics();
     void setInput(Input_t input, YAML::Node config);
     void setInputPwm(InputPwm_t input, YAML::Node config);
     void stepDynamics(const SimState_t states, const Inertial_t inertial, const Environment_t environment); // perform one step in the aerodynamics
