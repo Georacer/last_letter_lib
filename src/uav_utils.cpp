@@ -66,6 +66,19 @@ Vector3d getAirData (Vector3d speeds)
 	return result;
 }
 
+// Convert airdata to body-frame velocities
+Vector3d getVelocityFromAirdata(Vector3d airdata)
+{
+	double u, v, w;
+	double Va = airdata.x();
+	double alpha = airdata.y();
+	double beta = airdata.z();
+	u = Va*cos(alpha)*cos(beta);
+	v = Va*sin(beta);
+	w = Va*sin(alpha)*cos(beta);
+	return Vector3d(u, v, w);
+}
+
 
 ///////////////////
 // Define PID class

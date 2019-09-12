@@ -27,6 +27,9 @@ int main(int, char **)
     cout << q_eb.w() << "\n" << q_eb.vec() << endl;
     cout << "Quaternion norm: " << q_eb.norm() << endl;
 
+    cout << "Going back to Euler angles:\n";
+    cout << quat2euler(q_eb.conjugate())*180/M_PI << endl;
+
     cout << "Multiplying q_eb * unitVectX:\n";
     cout << q_eb*unitVectX << endl;
     // cout << "This should be equal to (0.07071, 0.5, 0.5)\n";

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <time.h>
+#include <chrono>
 
 #include "uav_model.hpp"
 
@@ -16,22 +17,30 @@ int main(int argc, char * argv[])
     state = uav.state;
 
     uint32_t loopNum=10000;
-    time_t t_before, t_after;
-    double seconds;
+    double t_steps, t_derivs;
 
     cout << "Testing simulation loop rate" << endl;
 
-    t_before = time(NULL);
+    // Calculate step time requirements 
+    auto t_start = chrono::steady_clock::now();
     for (uint32_t i=0; i<loopNum; i++)
     {
         uav.step();
     }
-    t_after = time(NULL);
-
-    seconds = difftime(t_after, t_before);
+    auto t_end = chrono::steady_clock::now();
+    t_steps = (double)chrono::duration_cast<chrono::milliseconds>(t_end-t_start).count()/1000;
 
     SimState_t newState;
     newState = uav.state;
+
+    // Calculate dynamics calculation time requirements 
+    t_start = chrono::steady_clock::now();
+    for (uint32_t i=0; i<loopNum; i++)
+    {
+        uav.dynamics.calcWrench(uav.state, uav.kinematics.inertial, uav.environmentModel.environment);
+    }
+    t_end = chrono::steady_clock::now();
+    t_derivs = (double)chrono::duration_cast<chrono::milliseconds>(t_end-t_start).count()/1000;
 
     cout << "Initial State:\n" << endl;
     cout << "Position\n" << state.pose.position << endl;
@@ -51,6 +60,7 @@ int main(int argc, char * argv[])
     cout << "Linear Acceleration\n" << newState.acceleration.linear << endl;
     cout << "Angular Acceleration\n" << newState.acceleration.angular << endl;
 
-    cout << seconds << " second(s) elapsed for " << loopNum << " steps" << endl;
+    cout << t_steps << " second(s) elapsed for " << loopNum << " simulation steps" << endl;
+    cout << t_derivs << " second(s) elapsed for " << loopNum << " model derivative calculations" << endl;
 
 }
