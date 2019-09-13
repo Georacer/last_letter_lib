@@ -2,6 +2,24 @@
 
 #include <trimmer.hpp>
 
+extern "C"
+{
+    Trimmer * Trimmer_new(char * uavName){return new Trimmer(uavName);}
+    double * find_trim(Trimmer* trimmer, double * trimState){
+        printf("Entered find_trim C Function\n");
+        static double result[6];
+        trimmer->pyFindTrimInput(trimState, result);
+        return result;
+        }
+    double * find_trim_2(char * uavName, double * trimState){
+        printf("Entered find_trim_2 C Function\n");
+        static Trimmer trimmer(uavName);
+        static double result[6];
+        trimmer.pyFindTrimInput(trimState, result);
+        return result;
+        }
+}
+
 Trimmer::Trimmer(const string uavName):
     opt(nlopt::LN_BOBYQA, 4),
     // opt(nlopt::LN_COBYLA, 4);
@@ -24,7 +42,6 @@ Trimmer::Trimmer(const string uavName):
 
     // Calculate trim derivatives
 
-    // opt.set_min_objective(costWrapper, &trimState);
     opt.set_min_objective(objFunWrapper, this);
 
     opt.set_xtol_abs(1e-2);
@@ -37,6 +54,7 @@ Trimmer::~Trimmer()
 
 void Trimmer::setInitInput(const vector<double> inputVect)
 {
+    cout << "Initial Input set to " << vectorToString2(inputVect) << endl;
     initInput[0] = inputVect[0];
     initInput[1] = inputVect[1];
     initInput[2] = inputVect[2];
@@ -63,22 +81,22 @@ TrimState_t Trimmer::calcTrimState(const TrimParameters_t trimParams)
     double trim_p = -k * sin(trim_theta);
     double trim_q = k * sin(trim_phi) * cos(trim_theta);
 
-    TrimState_t trimState;
-    trimState.trimState.position = Vector3d(0, 0, -100);
-    trimState.trimState.euler = Vector3d(trim_phi, trim_theta, 0);
+    TrimState_t newTrimState;
+    newTrimState.trimState.position = Vector3d(0, 0, -100);
+    newTrimState.trimState.euler = Vector3d(trim_phi, trim_theta, 0);
     Vector3d velocity = getVelocityFromAirdata(Vector3d(trim_Va, trim_alpha, trim_beta));
-    trimState.trimState.linearVel = velocity;
-    trimState.trimState.angularVel = Vector3d(trim_p, trim_q, trim_r);
+    newTrimState.trimState.linearVel = velocity;
+    newTrimState.trimState.angularVel = Vector3d(trim_p, trim_q, trim_r);
 
     // Calculate derived quantities
     double gamma = trim_theta - trim_alpha;
 
-    trimState.trimDerivatives.position = Vector3d(0, 0, -trim_Va*sin(gamma));
-    trimState.trimDerivatives.euler = Vector3d(0, 0, k); // k=Va/R*cos(gamm)
-    trimState.trimDerivatives.linearVel = Vector3d::Zero();
-    trimState.trimDerivatives.angularVel = Vector3d::Zero();
+    newTrimState.trimDerivatives.position = Vector3d(0, 0, -trim_Va*sin(gamma));
+    newTrimState.trimDerivatives.euler = Vector3d(0, 0, k); // k=Va/R*cos(gamm)
+    newTrimState.trimDerivatives.linearVel = Vector3d::Zero();
+    newTrimState.trimDerivatives.angularVel = Vector3d::Zero();
 
-    return trimState;
+    return newTrimState;
 }
 
 // Convert State_t to SimState_t for passing to UavModel
@@ -87,7 +105,6 @@ SimState_t Trimmer::convertState4ll(const State_t p_state)
     SimState_t state;
     state.pose.position = p_state.position;
     state.pose.orientation = euler2quat(p_state.euler).conjugate();
-    // state.pose.orientation = euler2quat(p_state.euler);
     state.velocity.linear = p_state.linearVel;
     state.velocity.angular = p_state.angularVel;
     return state;
@@ -128,15 +145,11 @@ double Trimmer::calcCost(const Derivatives_t stateDer, Eigen::Vector4d input)
 }
 
 // Wrapper to the cost function. Accepts input u under optimization and also passes the trimState parameter to the cost function
-// double Trimmer::costWrapper(const vector<double> &u, vector<double> &grad, void *trimStatePtr)
 double Trimmer::costWrapper(const vector<double> &u, vector<double> &grad, TrimState_t trimState)
 {
     ++funCallCount;
 
-    // TrimState_t * trimState = reinterpret_cast<TrimState_t *>(trimStatePtr);
-
     Input_t input = convertInput4ll(u);
-    // SimState_t state = convertState4ll(trimState->trimState);
     SimState_t state = convertState4ll(trimState.trimState);
 
     // If your motors have state as well (RPM) you need to set it here again
@@ -162,6 +175,8 @@ double Trimmer::objFunWrapper(const vector<double> &u, vector<double> &grad, voi
 
 OptimResult_t Trimmer::findTrimInput(const TrimParameters_t p_trimParams)
 {
+    resetFunCallCount();
+
     // extract the trim states and state derivatives
     trimState = calcTrimState(p_trimParams);
 
@@ -182,6 +197,35 @@ OptimResult_t Trimmer::findTrimInput(const TrimParameters_t p_trimParams)
     }
 
     return result;
+}
+
+// Simplified wrapper for calling via ctypes python API
+// Input: a double array[6] holding the trim values for (in order):
+//  phi, theta, Va, alpha, beta, r
+// Ouptut: a double array[6] holding:
+//  Positions 0-3: the trim control inputs
+//  Position 4: the optimization cost
+//  Position 5: the success flag (0/1)
+void Trimmer::pyFindTrimInput(double * trimParamArray, double * result)
+// double * Trimmer::pyFindTrimInput(double * trimParamArray)
+{
+    TrimParameters_t trimParams;
+    trimParams.phi = trimParamArray[0];
+    trimParams.theta = trimParamArray[1];
+    trimParams.Va = trimParamArray[2];
+    trimParams.alpha = trimParamArray[3];
+    trimParams.beta = trimParamArray[4];
+    trimParams.r = trimParamArray[5];
+
+    OptimResult_t resultStruct = findTrimInput(trimParams);
+
+    // double result[6];
+    result[0] = resultStruct.trimInput[0];
+    result[1] = resultStruct.trimInput[1];
+    result[2] = resultStruct.trimInput[2];
+    result[3] = resultStruct.trimInput[3];
+    result[4] = resultStruct.cost;
+    result[5] = (double)resultStruct.success;
 }
 
 string Trimmer::printOptimalResult()

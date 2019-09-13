@@ -20,8 +20,8 @@ int main(int argc, char * argv[])
 
     Trimmer trimmer(uavName);
 
-    vector<double> initInput {0, 0, 0.5, 0};
-    trimmer.setInitInput(initInput);
+    // vector<double> initInput {0, 0, 0.5, 0};
+    // trimmer.setInitInput(initInput);
 
     TrimState_t trimState = trimmer.trimState;
     cout << "Generated trim state:\n";
@@ -40,7 +40,8 @@ int main(int argc, char * argv[])
 
     OptimResult_t result;
 
-    uint32_t loopNum=1000;
+    // uint32_t loopNum=1000;
+    uint32_t loopNum=1;
     double seconds;
 
     cout << "Testing optimization time requirement." << endl;
@@ -48,7 +49,6 @@ int main(int argc, char * argv[])
     auto t_start = chrono::steady_clock::now();
     for (uint32_t i=0; i<loopNum; i++)
     {
-        trimmer.resetFunCallCount();
         result = trimmer.findTrimInput(trimParams);
     }
     auto t_end = chrono::steady_clock::now();
@@ -62,4 +62,23 @@ int main(int argc, char * argv[])
     cout << trimmer.printOptimalResult();
 
     cout << seconds << " second(s) elapsed for " << loopNum << " steps" << endl;
+
+    cout << "Testing pyFindTrimInput interface" << endl;
+    double stateArray[6], resultArray[6];
+    stateArray[0] = trimParams.phi;
+    stateArray[1] = trimParams.theta;
+    stateArray[2] = trimParams.Va;
+    stateArray[3] = trimParams.alpha;
+    stateArray[4] = trimParams.beta;
+    stateArray[5] = trimParams.r;
+    
+    trimmer.pyFindTrimInput(stateArray, resultArray);
+
+    printf("Got result:\n");
+    printf("%f", resultArray[0]); printf("\n");
+    printf("%f", resultArray[1]); printf("\n");
+    printf("%f", resultArray[2]); printf("\n");
+    printf("%f", resultArray[3]); printf("\n");
+    printf("%f", resultArray[4]); printf("\n");
+    printf("%f", resultArray[5]); printf("\n");
 }

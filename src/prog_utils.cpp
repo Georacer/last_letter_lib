@@ -6,7 +6,7 @@
 #include "prog_utils.hpp"
 
 
-string vectorToString2(Eigen::Vector3d vec3d, const string delimiter=", ")
+string vectorToString2(Eigen::Vector3d vec3d, const string delimiter)
 {
     vector<double> vec(3);
     vec[0] = vec3d[0];
@@ -15,7 +15,7 @@ string vectorToString2(Eigen::Vector3d vec3d, const string delimiter=", ")
     return vectorToString2(vec, delimiter);
 }
 
-string vectorToString2(Eigen::Quaterniond quat, const string delimiter=", ")
+string vectorToString2(Eigen::Quaterniond quat, const string delimiter)
 {
     vector<double> vec(4);
     vec[0] = quat.w();

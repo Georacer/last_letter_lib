@@ -79,9 +79,9 @@ string vectorToString2(vector<T> p_vector, const string delimiter = ", ") {
     return oss.str();
 }
 
-string vectorToString2(Eigen::Vector3d vec3d, const string delimiter);
+string vectorToString2(Eigen::Vector3d vec3d, const string delimiter=", ");
 
-string vectorToString2(Eigen::Quaterniond quat, const string delimiter);
+string vectorToString2(Eigen::Quaterniond quat, const string delimiter=", ");
 
 // Find if mainStr starts with startString
 bool startsWith(std::string mainStr, std::string startStr);

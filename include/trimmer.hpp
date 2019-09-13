@@ -57,10 +57,10 @@ class Trimmer
     SimState_t convertState4ll(const State_t p_state);
     Input_t convertInput4ll(const vector<double> &u);
     double calcCost(const Derivatives_t stateDer, Eigen::Vector4d input);
-    // double costWrapper(const vector<double> &u, vector<double> &grad, void *trimStatePtr);
     double costWrapper(const vector<double> &u, vector<double> &grad, TrimState_t trimState);
     static double objFunWrapper(const vector<double> &u, vector<double> &grad, void *trimmerObjPtr);
     OptimResult_t findTrimInput(const TrimParameters_t);
+    void pyFindTrimInput(double * trimParamArray, double * result);
     string printOptimalResult();
 };
 
