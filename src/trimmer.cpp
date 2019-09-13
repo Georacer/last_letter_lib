@@ -6,13 +6,11 @@ extern "C"
 {
     Trimmer * Trimmer_new(char * uavName){return new Trimmer(uavName);}
     double * find_trim(Trimmer* trimmer, double * trimState){
-        printf("Entered find_trim C Function\n");
         static double result[6];
         trimmer->pyFindTrimInput(trimState, result);
         return result;
         }
     double * find_trim_2(char * uavName, double * trimState){
-        printf("Entered find_trim_2 C Function\n");
         static Trimmer trimmer(uavName);
         static double result[6];
         trimmer.pyFindTrimInput(trimState, result);

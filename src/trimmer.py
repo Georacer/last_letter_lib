@@ -2,58 +2,68 @@
 
 import os
 from math import pi
+import numpy as np
 import ctypes as ct
 
-
 print('Currently working on {}'.format(os.getcwd()))
-uav_name = 'skywalker_2013'
 
 class Trimmer():
-    trim_input = []
-    trim_input_2 = []
     dll = None
-    trimFunc = None
-    trimFunc2 = None
+    obj = None
+    trim_func = None
+    trim_func_2 = None
     input_type = ct.c_double * 6
-    output_type = ct.c_double * 6
+    output_type = ct.POINTER(ct.c_double)
+    trim_input = None
 
     def __init__(self, uav_name):
+        # Load the lib_trimmer dll
         self.dll = ct.cdll.LoadLibrary('/home/george/ros_workspaces/uav_ftc/src/last_letter/last_letter_lib/build/liblib_trimmer.so')
+
+        # Set the exposed functions data types
         self.dll.Trimmer_new.argtypes = [ct.c_char_p]
         self.dll.Trimmer_new.restype = ct.c_void_p
-        self.dll.find_trim.argtypes = [ct.c_void_p, ct.c_double * 6]
-        self.dll.find_trim.restype = ct.POINTER(ct.c_double)
-        self.dll.find_trim_2.argtypes = [ct.c_char_p, ct.c_double * 6]
-        self.dll.find_trim_2.restype = ct.POINTER(ct.c_double)
+        self.trim_func = self.dll.find_trim
+        self.dll.find_trim.argtypes = [ct.c_void_p, self.input_type]
+        self.dll.find_trim.restype = self.output_type
+        self.trim_func_2 = self.dll.find_trim_2
+        self.dll.find_trim_2.argtypes = [ct.c_char_p, self.input_type]
+        self.dll.find_trim_2.restype = self.output_type
 
+        self.uav_name = uav_name
         self.obj = self.dll.Trimmer_new(uav_name)
 
-        print('Got Trimmer object of type {}'.format(type(self.obj)))
-        self.trimFunc = self.dll.find_trim
-        # self.trimFunc.argtypes = [type(self.obj), ct.c_double * 6]
-        # self.trimFunc.argtypes = None * 2
-        # self.trimFunc.argtypes[1] = ct.c_double * 6
-        # self.trimFunc.argtypes = [ct.c_int, ct.c_double * 6]
-        self.trimFunc2 = self.dll.find_trim_2
+    # Convert trim states from a numpy array of [phi, theta, Va, alpha, beta ,r]
+    # to a suitable input type for find_trim()
+    def convert_trim_states(self, trim_states_np):
+        return self.input_type(*trim_states_np)
+
+    def convert_trim_controls(self, trim_ctrls_ct):
+        trim_ctrls = np.zeros(6)
+        for i in range(6):
+            trim_ctrls[i] = trim_ctrls_ct[i]
+        return trim_ctrls
 
     def find_trim_input(self, trim_states):
-        print('Querying trim point')
-        # self.trim_input_2 = self.trimFunc(self.obj, trim_states, self.trim_input)
-        self.trim_input = self.trimFunc(self.obj, trim_states)
+        trim_states_ct = self.convert_trim_states(trim_states)
+        trim_input_ct = self.trim_func(self.obj, trim_states_ct)
+        self.trim_input = self.convert_trim_controls(trim_input_ct)
+        return self.trim_input
 
+    # Do not use this function, it loads a new Trimmer object every time
     def find_trim_input_2(self, trim_states):
-        print('Querying trim point 2')
-        # self.trim_input_2 = self.trimFunc(self.obj, trim_states, self.trim_input)
-        self.trim_input_2 = self.trimFunc2(uav_name, trim_states)
+        trim_states_ct = self.convert_trim_states(trim_states)
+        trim_input_ct = self.trim_func_2(self.uav_name, trim_states_ct)
+        self.trim_input = self.convert_trim_controls(trim_input_ct)
+        return self.trim_input
 
-trimmer = Trimmer(uav_name)
-print('Successfully loaded Trimmer object')
+if __name__ == '__main__':
+    print('Testing trimmer module functionality')
+    uav_name = 'skywalker_2013'
+    trimmer = Trimmer(uav_name)
+    print('Successfully loaded Trimmer object')
 
-# trim_states = [0, 0, 1*pi/180, 10, 1*pi/180, 0]
-trim_states = Trimmer.input_type(0, 1*pi/180, 10, 1*pi/180, 0, 0)
+    trim_states = np.array([0, 1*pi/180, 10, 1*pi/180, 0, 0])
 
-# trimmer.find_trim_input_2(trim_states)
-trimmer.find_trim_input(trim_states)
-print("Trim found: {}".format(trimmer.trim_input))
-ctrl = trimmer.trim_input
-print("Trim found 2: {}, {}, {}, {}, {}, {}".format(ctrl[0], ctrl[1], ctrl[2], ctrl[3], ctrl[4], ctrl[5]))
+    trim_ctrls = trimmer.find_trim_input(trim_states)
+    print("Trim found:\n" + "{}".format(trim_ctrls))
