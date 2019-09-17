@@ -1,11 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(last_letter_lib)
+project(uav_model)
 
-find_package(catkin REQUIRED COMPONENTS
-	roscpp
-	rospy
-	std_msgs
-)
+add_compile_options(-Wall -O3)
+
+set(BUILD_SHARED_LIBS "Enabling shared library building" ON)
 
 find_package(Eigen3 REQUIRED)
 
@@ -19,19 +17,7 @@ include_directories(
   include/ground_reaction
   ${EIGEN3_INCLUDE_DIRS}
   ${LAPACK_INCLUDE_DIRS}
-)
-
-catkin_package(
-	INCLUDE_DIRS include include/propulsion include/ground_reaction
-	LIBRARIES math_utils
-            uav_utils
-            prog_utils
-            lib_environment
-            lib_gravity
-            lib_aerodynamics
-            lib_propulsion
-            lib_ground_reaction
-            lib_uav_model
+	"/usr/local/inlcude" # Used to include nlopt
 )
 
 add_library(math_utils src/math_utils.cpp)
@@ -70,14 +56,19 @@ target_link_libraries(lib_uav_model uav_utils
                                     lib_ground_reaction
                                     Eigen3::Eigen)
 
+add_library(lib_trimmer src/trimmer.cpp)
+target_link_libraries(lib_trimmer
+                      "/usr/local/lib/libnlopt.so"
+                      lib_uav_model)
+
 # Copy data files to home folder
 file(COPY last_letter_models DESTINATION $ENV{HOME})
 
 
-add_dependencies(lib_uav_model ${catkin_EXPORTED_TARGETS} )
-
-
 # Compile test files
+add_executable(test_rotations test/test_rotations.cpp)
+target_link_libraries(test_rotations math_utils uav_utils Eigen3::Eigen)
+
 add_executable(test_yaml test/test_yaml.cpp)
 target_link_libraries(test_yaml prog_utils yaml-cpp)
 
@@ -128,3 +119,6 @@ target_link_libraries(test_uav_model lib_uav_model)
 
 add_executable(test_loop_rate test/test_loop_rate.cpp)
 target_link_libraries(test_loop_rate lib_uav_model)
+
+add_executable(test_trimmer test/test_trimmer.cpp)
+target_link_libraries(test_trimmer lib_trimmer)
