@@ -17,6 +17,7 @@ struct Derivatives_t {
 	Vector3d speedDot;
 	Vector3d rateDot;
 	Quaterniond quatDot;
+	Vector3d coordDot;
 };
 
 // Kinematics equations related classes
