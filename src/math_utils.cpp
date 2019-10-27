@@ -635,4 +635,3 @@ int is_pos_def(double * R)
   // Matrix is positive definite
   return 0;
 }
-

@@ -162,5 +162,76 @@ bool myisfinite(const Vector3d vec);
 bool myisfinite(const Quaterniond q);
 bool myisfinite_mtx(double * R, int n);
 
+///////////////////////////////////////
+// Numerical derivative functionalities
+///////////////////////////////////////
+
+namespace Eigen
+{
+template <typename F>
+VectorXd derivative_partial_numerical(F funcPtr, VectorXd values)
+// Version without parameters
+{
+
+double de = 1e-4; // Numerical differentiation step
+
+uint num_inputs = values.size();
+
+VectorXd result = VectorXd(num_inputs);
+
+for (int i=0; i<num_inputs; ++i)
+{
+	// Setup the argument shift
+	VectorXd eps = VectorXd::Zero(num_inputs);
+	eps(i) = de;
+	VectorXd x_plus = values + eps;
+	VectorXd x_minus = values - eps;
+
+	double f_plus, f_minus;
+
+	f_plus = funcPtr(x_plus);
+	f_minus = funcPtr(x_minus);
+
+	result(i) = (f_plus - f_minus) / (2 * de);
+}
+
+return result;
+
+}
+
+template <typename F>
+VectorXd derivative_partial_numerical(F funcPtr, VectorXd values, VectorXd parameters)
+// Version with parameters
+{
+
+double de = 1e-4; // Numerical differentiation step
+
+uint num_inputs = values.size();
+
+VectorXd result = VectorXd(num_inputs);
+
+for (int i=0; i<num_inputs; ++i)
+{
+	// Setup the argument shift
+	VectorXd eps = VectorXd::Zero(num_inputs);
+	eps(i) = de;
+	VectorXd x_plus = values + eps;
+	VectorXd x_minus = values - eps;
+
+	double f_plus, f_minus;
+
+	f_plus = funcPtr(x_plus, parameters);
+	f_minus = funcPtr(x_minus, parameters);
+
+	result(i) = (f_plus - f_minus) / (2 * de);
+}
+
+return result;
+
+}
+
+} // End of Eigen namespace
+
+
 
 #endif

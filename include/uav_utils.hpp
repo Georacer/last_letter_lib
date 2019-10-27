@@ -66,9 +66,7 @@ struct SimState_t {
 	Pose pose; // NED
 	Twist velocity; // body
 	Accelerations acceleration; // body
-	// double rotorspeed[4]; // in rad/s
 	std::vector<double> rotorspeed; // in rad/s
-	// TODO: a fixed number of 4 rotors is restrictive
 };
 
 struct Input_t {
