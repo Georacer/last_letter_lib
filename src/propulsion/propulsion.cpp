@@ -12,26 +12,13 @@ using Eigen::Quaterniond;
 // Constructor
 Propulsion::Propulsion(YAML::Node propConfig, YAML::Node worldConfig)
 {
-	getParameter(worldConfig, "deltaT", dt);
-
-	vector<double> doubleVect;
-	getParameterList(propConfig, "CGOffset", doubleVect);
-	CGOffset = Vector3d(doubleVect.data());
-
-	doubleVect.clear();
-	getParameterList(propConfig, "mountOrientation", doubleVect);
-	mountOrientation = Vector3d(doubleVect.data());
+	readParametersWorld(worldConfig);
+	readParametersProp(propConfig);
 
 	theta = 0; // Initialize propeller angle
 
-	if (!getParameter(propConfig, "chanMotor", chanMotor, false)) {chanMotor = -1;}
-	if (!getParameter(propConfig, "chanGimbal", chanGimbal, false)) {chanGimbal = -1;}
-	if (!getParameter(propConfig, "gimbalAngle_max", gimbalAngle_max, false)) {gimbalAngle_max = 0.0;}
-
 	inputMotor = 0.0;
 	inputGimbal = 0.0;
-
-	if (!getParameter(propConfig, "rotationDir", rotationDir, false)) {rotationDir=1.0;}
 }
 
 // Destructor
@@ -39,21 +26,42 @@ Propulsion::~Propulsion()
 {
 }
 
-void Propulsion::setInput(Input_t input, YAML::Node config)
+void Propulsion::readParametersWorld(YAML::Node config)
+{
+	getParameter(config, "deltaT", dt);
+}
+
+void Propulsion::readParametersProp(YAML::Node config)
+{
+	vector<double> doubleVect;
+	getParameterList(config, "CGOffset", doubleVect);
+	CGOffset = Vector3d(doubleVect.data());
+
+	doubleVect.clear();
+	getParameterList(config, "mountOrientation", doubleVect);
+	mountOrientation = Vector3d(doubleVect.data());
+
+	if (!getParameter(config, "chanMotor", chanMotor, false)) {chanMotor = -1;}
+	if (!getParameter(config, "chanGimbal", chanGimbal, false)) {chanGimbal = -1;}
+	if (!getParameter(config, "gimbalAngle_max", gimbalAngle_max, false)) {gimbalAngle_max = 0.0;}
+
+	if (!getParameter(config, "rotationDir", rotationDir, false)) {rotationDir=1.0;}
+}
+
+void Propulsion::setInput(Input_t input)
 {
 	// TODO: I shouldn't check this all the time, since it is an optional parameter
-	getParameter(config, "gimbalAngle_max", gimbalAngle_max);
 	if (chanMotor>-1) {inputMotor = input.value[chanMotor];}
 	if (chanGimbal>-1) {inputGimbal = gimbalAngle_max * input.value[chanGimbal]; }
 }
 
-void Propulsion::setInputPwm(InputPwm_t p_input, YAML::Node config)
+void Propulsion::setInputPwm(InputPwm_t p_input)
 {
 	Input_t input;
 	if (chanMotor>-1) {input.value[chanMotor] = PwmToHalfRange(p_input.value[chanMotor]);}
 	if (chanGimbal>-1) {input.value[chanGimbal] = PwmToFullRange(p_input.value[chanGimbal]);}
 
-	setInput(input, config);
+	setInput(input);
 }
 
 // Engine physics step, container for the generic class

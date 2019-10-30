@@ -12,9 +12,9 @@ int main(int argc, char * argv[])
 
     TrimParameters_t trimParams;
     trimParams.phi = 0;
-    trimParams.theta = 1*M_PI/180;
+    trimParams.theta = 0*M_PI/180;
     trimParams.Va = 10;
-    trimParams.alpha = 1*M_PI/180;
+    trimParams.alpha = 0*M_PI/180;
     trimParams.beta = 0;
     trimParams.r = 0*M_PI/180;
 
@@ -40,8 +40,8 @@ int main(int argc, char * argv[])
 
     OptimResult_t result;
 
-    // uint32_t loopNum=1000;
-    uint32_t loopNum=1;
+    uint32_t loopNum=1000;
+    // uint32_t loopNum=1;
     double seconds;
 
     cout << "Testing optimization time requirement." << endl;

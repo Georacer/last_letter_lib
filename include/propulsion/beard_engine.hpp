@@ -13,6 +13,7 @@ class EngBeard: public Propulsion
 	//Functions
 	EngBeard(YAML::Node propConfig, YAML::Node worldConfig);
 	~EngBeard();
+	void readParametersProp(YAML::Node config);
 
 	void updateRadPS(SimState_t states, Inertial_t inertial, Environment_t environment); //Step the angular speed
 	void getForce(SimState_t states, Inertial_t inertial, Environment_t environment);

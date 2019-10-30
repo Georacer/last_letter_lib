@@ -15,13 +15,15 @@ class GroundReaction
 	public:
 	GroundReaction(YAML::Node config, YAML::Node worldConfig);
 	virtual ~GroundReaction();
+	void readParametersGround(YAML::Node config);
+	void readParametersWorld(YAML::Node config);
 	double dt;
 	Wrench_t wrenchGround;
 	double inputSteer, inputBrake;
 	double steerAngle_max;
 	int chanSteer, chanBrake;
-	void setInput(Input_t input, YAML::Node config);
-	void setInputPwm(InputPwm_t input, YAML::Node config);
+	void setInput(Input_t input);
+	void setInputPwm(InputPwm_t input);
 	virtual Vector3d getForce(const SimState_t states, const WrenchSum_t wrenchSum)=0;
 	virtual Vector3d getTorque(const SimState_t states, const WrenchSum_t wrenchSum)=0;
 };

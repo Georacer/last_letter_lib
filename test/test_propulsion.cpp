@@ -66,7 +66,7 @@ int main(int argc, char * argv[])
     EnvironmentModel environmentModel = EnvironmentModel(environmentConfig, worldConfig);
     environmentModel.calcEnvironment(states);
 
-    motor1->setInput(input, propConfig1);
+    motor1->setInput(input);
     motor1->stepEngine(states, inertial, environmentModel.environment); // perform one step in the propdynamics
     cout << "Motor input set to: " << motor1->inputMotor << endl;
     cout << "Body-frame wind:\n" << environmentModel.environment.wind << endl;

@@ -38,9 +38,11 @@ class Propulsion
 	//Functions
 	Propulsion(YAML::Node propConfig, YAML::Node worldConfig);
 	virtual ~Propulsion();
+	void readParametersProp(YAML::Node config);
+	void readParametersWorld(YAML::Node config);
 
-	void setInput(Input_t input, YAML::Node config); // store control input
-	void setInputPwm(InputPwm_t input, YAML::Node config); // store PWM control input
+	void setInput(Input_t input); // store control input
+	void setInputPwm(InputPwm_t input); // store PWM control input
 	void stepEngine(SimState_t states, Inertial_t inertial, Environment_t environment); // engine physics step, container for the generic class
 	void rotateWind(SimState_t states, Inertial_t inertial, Environment_t environment); // convert the wind to the propeller axes
 	virtual void updateRadPS(SimState_t states, Inertial_t inertial, Environment_t environment) =0; // Step the angular speed

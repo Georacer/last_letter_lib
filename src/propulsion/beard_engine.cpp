@@ -5,19 +5,26 @@
 // Constructor
 EngBeard::EngBeard(YAML::Node propConfig, YAML::Node worldConfig):Propulsion(propConfig, worldConfig)
 {
-	std::cout << "reading parameters for new Beard engine" << std::endl;
 	omega = 0; // Initialize engine rotational speed
-	// Read engine data from parameter server
-	getParameter(propConfig, "s_prop", s_prop);
-	getParameter(propConfig, "c_prop", c_prop);
-	getParameter(propConfig, "k_motor", k_motor);
-	getParameter(propConfig, "k_t_p", k_t_p);
-	getParameter(propConfig, "k_omega", k_omega);
+	readParametersProp(propConfig);
 }
 
 // Destructor
 EngBeard::~EngBeard()
 {
+}
+
+void EngBeard::readParametersProp(YAML::Node config)
+{
+	std::cout << "reading parameters for new Beard engine" << std::endl;
+
+	Propulsion::readParametersProp(config);
+
+	getParameter(config, "s_prop", s_prop);
+	getParameter(config, "c_prop", c_prop);
+	getParameter(config, "k_motor", k_motor);
+	getParameter(config, "k_t_p", k_t_p);
+	getParameter(config, "k_omega", k_omega);
 }
 
 // Update motor rotational speed and other states for each timestep

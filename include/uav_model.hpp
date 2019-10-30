@@ -33,14 +33,21 @@ class UavModel
 	EnvironmentModel environmentModel;
 	Airdata airdata; // TODO: Is this member used?
 
+	private:
+	// Initialization parameters
+	Vector3d initPosition_, initVelLinear_, initVelAngular_, initCoordinates_;
+	Quaterniond initOrientation_;
+	int initChanReset_;
+	Input_t initCtrlInput_;
+
 	///////////
 	//Methods
+	public:
 
 	// Constructor
 	UavModel (ConfigsStruct_t configs);
 
 	// Initialize UavModel object
-	void init(YAML::Node initConfig);
 	void init();
 
 	// Destructor
@@ -50,8 +57,18 @@ class UavModel
 	void setInput(Input_t inputMsg);
 	void setInputPwm(InputPwm_t inputMsg);
 
-	// TODO: Implement this
-	// void setConfig(new_config)
+	// Force all models to re-read configuration parameters
+	void updateConfigWorld();
+	void updateConfigEnvironment();
+	void updateConfigInit();
+	void updateConfigInertial();
+	void updateConfigAero();
+	void updateConfigProp();
+	void updateConfigGround();
+	void updateConfigAll();
+
+	void readParametersWorld(YAML::Node worldConfig);
+	void readParametersInit(YAML::Node initConfig);
 
 	// Perform simulation step
 	void step(void);

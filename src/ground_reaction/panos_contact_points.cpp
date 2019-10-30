@@ -6,13 +6,8 @@
 // Class constructor
 PanosContactPoints::PanosContactPoints(YAML::Node config, YAML::Node worldConfig) : GroundReaction(config, worldConfig)
 {
-	// Read contact points number from parameter server
-	vector<double> doubleVect;
+	readParametersGround(config);
 
-	getParameter(config, "contactPtsNo", contactPtsNo);
-	pointCoords.setZero(3, contactPtsNo); // contact points coordinates in the body frame
-	materialIndex.setZero(contactPtsNo, 1); // contact points material type index
-	springIndex.setZero(2,contactPtsNo); // contact points spring characteristics
 	len=0.2;
 
 	// Set coefficient of friction for each material
@@ -20,19 +15,6 @@ PanosContactPoints::PanosContactPoints(YAML::Node config, YAML::Node worldConfig
 	frictForw[1] = 0.4; frictSide[1] = 0.4;
 	frictForw[2] = 0.1; frictSide[2] = 1.0;
 	frictForw[3] = 0.4; frictSide[3] = 0.4; //To update composite to ground firction coefficients!
-
-	// Read contact points location and material from parameter server
-	for (int j = 0; j<contactPtsNo; j++) { //Distribute the data
-		string contactPointName = "contactPoint" + std::to_string(j+1);
-		doubleVect.clear();
-		getParameterList(config, contactPointName, doubleVect);
-		pointCoords(0, j) = doubleVect[0]; // Save body frame contact point coordinates
-		pointCoords(1, j) = doubleVect[1];
-		pointCoords(2, j) = doubleVect[2];
-		materialIndex(j) = doubleVect[3]; // A separate contact point material index array
-		springIndex(0, j) = doubleVect[4];
-		springIndex(1, j) = doubleVect[5]; // And the spring constants
-	}
 
 	// Create and initialize spring contraction container
 	spp.setZero(contactPtsNo, 1);
@@ -50,6 +32,32 @@ PanosContactPoints::PanosContactPoints(YAML::Node config, YAML::Node worldConfig
 // Class destructor
 PanosContactPoints::~PanosContactPoints()
 {
+}
+
+void PanosContactPoints::readParametersGround(YAML::Node config)
+{
+	GroundReaction::readParametersGround(config);
+
+	// Read contact points number from parameter server
+	vector<double> doubleVect;
+
+	getParameter(config, "contactPtsNo", contactPtsNo);
+	pointCoords.setZero(3, contactPtsNo); // contact points coordinates in the body frame
+	materialIndex.setZero(contactPtsNo, 1); // contact points material type index
+	springIndex.setZero(2,contactPtsNo); // contact points spring characteristics
+
+	// Read contact points location and material from parameter server
+	for (int j = 0; j<contactPtsNo; j++) { //Distribute the data
+		string contactPointName = "contactPoint" + std::to_string(j+1);
+		doubleVect.clear();
+		getParameterList(config, contactPointName, doubleVect);
+		pointCoords(0, j) = doubleVect[0]; // Save body frame contact point coordinates
+		pointCoords(1, j) = doubleVect[1];
+		pointCoords(2, j) = doubleVect[2];
+		materialIndex(j) = doubleVect[3]; // A separate contact point material index array
+		springIndex(0, j) = doubleVect[4];
+		springIndex(1, j) = doubleVect[5]; // And the spring constants
+	}
 }
 
 // Wrench calculation function

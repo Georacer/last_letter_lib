@@ -7,31 +7,12 @@ using namespace std;
 // Constructor
 ElectricEng::ElectricEng(YAML::Node propConfig, YAML::Node worldConfig):Propulsion(propConfig, worldConfig)
 {
-	vector<double> doubleVect;
-	getParameter(propConfig, "propDiam", propDiam);
-	getParameter(propConfig, "engInertia", engInertia);
-	getParameter(propConfig, "Kv", Kv);
-	getParameter(propConfig, "Rm", Rm);
-	getParameter(propConfig, "Rs", Rs);
-	getParameter(propConfig, "Cells", Cells);
-	getParameter(propConfig, "I0", I0);
-	getParameterList(propConfig, "RadPSLimits", doubleVect);
-	omegaMin = doubleVect[0];
-	omegaMax = doubleVect[1];
-
-	// Create propeller efficiency polynomial
-	YAML::Node nCoeffPolyConfig = filterConfig(propConfig, "nCoeffPoly");
-	npPoly =  buildPolynomial(nCoeffPolyConfig);
-	// Create propeller power polynomial
-	YAML::Node propPowerPolyConfig = filterConfig(propConfig, "propPowerPoly");
-	propPowerPoly =  buildPolynomial(propPowerPolyConfig);
-
-	omega = omegaMin; // Initialize engine rotational speed
-
+	readParametersProp(propConfig);
 	// TODO: Make sure to add this to the ROS wrapper
 	// sprintf(paramMsg, "propulsion%i", id);
 	// ros::NodeHandle n;
 	// pub = n.advertise<last_letter_msgs::ElectricEng>(paramMsg, 1000); //propulsion data publisher
+	omega = omegaMin; // Initialize engine rotational speed
 }
 
 // Destructor
@@ -39,6 +20,30 @@ ElectricEng::~ElectricEng()
 {
 	delete npPoly;
 	delete propPowerPoly;
+}
+
+void ElectricEng::readParametersProp(YAML::Node config)
+{
+	Propulsion::readParametersProp(config);
+
+	vector<double> doubleVect;
+	getParameter(config, "propDiam", propDiam);
+	getParameter(config, "engInertia", engInertia);
+	getParameter(config, "Kv", Kv);
+	getParameter(config, "Rm", Rm);
+	getParameter(config, "Rs", Rs);
+	getParameter(config, "Cells", Cells);
+	getParameter(config, "I0", I0);
+	getParameterList(config, "RadPSLimits", doubleVect);
+	omegaMin = doubleVect[0];
+	omegaMax = doubleVect[1];
+
+	// Create propeller efficiency polynomial
+	YAML::Node nCoeffPolyConfig = filterConfig(config, "nCoeffPoly");
+	npPoly =  buildPolynomial(nCoeffPolyConfig);
+	// Create propeller power polynomial
+	YAML::Node propPowerPolyConfig = filterConfig(config, "propPowerPoly");
+	propPowerPoly =  buildPolynomial(propPowerPolyConfig);
 }
 
 // Update motor rotational speed and calculate thrust

@@ -67,7 +67,7 @@ int main(int argc, char * argv[])
     input.value[2] = 0.5;
 
     Aerodynamics * airfoil1 = buildAerodynamics(aeroConfig1);
-    airfoil1->setInput(input, aeroConfig1);
+    airfoil1->setInput(input);
 
     airfoil1->stepDynamics(states, inertial, environmentModel.environment); // perform one step in the aerodynamics
     cout << "Body-frame wind:\n" << environmentModel.environment.wind << endl;

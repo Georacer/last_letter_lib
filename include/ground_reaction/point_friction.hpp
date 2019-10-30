@@ -8,6 +8,7 @@ class PointFriction : public GroundReaction
 	public:
 	PointFriction(YAML::Node config, YAML::Node worldConfig);
 	~PointFriction();
+	void readParametersGround(YAML::Node config);
 
 	Eigen::Matrix<double, 3, Dynamic> pointCoords, cpi_up, cpi_down;
 	Eigen::Matrix<double, 2, Dynamic> springIndex;

@@ -24,13 +24,28 @@ struct ConfigsStruct_t {
 
 
 template<typename T>
-bool getParameter(YAML::Node configFile, string paramName, T &targetVar, bool isFatal = true)
+bool getParameter(const YAML::Node configFile, string paramName, T &targetVar, bool isFatal = true)
 {
     if (configFile[paramName]) {
         targetVar = configFile[paramName].as<T>();
         return true;
     }
     else if (isFatal) {
+        throw invalid_argument("Unknown parameter " + paramName);
+    }
+    else {
+        return false;
+    }
+}
+
+template<typename T>
+bool setParameter(YAML::Node &configFile, string paramName, const T newValue, bool editOnly = true)
+{
+    if (configFile[paramName]) {
+        configFile[paramName] = newValue;
+        return true;
+    }
+    else if (editOnly) {
         throw invalid_argument("Unknown parameter " + paramName);
     }
     else {

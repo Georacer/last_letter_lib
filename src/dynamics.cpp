@@ -8,16 +8,12 @@
 	//Class Constructor
 	Dynamics::Dynamics(YAML::Node p_worldConfig, YAML::Node p_aeroConfig, YAML::Node p_propConfig, YAML::Node p_groundConfig)
 	{
-		// Store the configuration nodes
-		worldConfig = p_worldConfig;
-		groundConfig = p_groundConfig;
 		// Create and initialize aerodynamic objects array
 		getParameter(p_aeroConfig, "nWings", nWings);
 		aerodynamics = new Aerodynamics*[nWings];
 		for (int i=0; i<nWings; i++) {
 			YAML::Node aeroConfig = filterConfig(p_aeroConfig, "airfoil"+std::to_string(i+1)+"/");
-			aeroConfigVec.push_back(aeroConfig);
-			aerodynamics[i] = buildAerodynamics(aeroConfigVec[i]); // Create a new aerodynamics object, id's are 1-indexed
+			aerodynamics[i] = buildAerodynamics(aeroConfig); // Create a new aerodynamics object, id's are 1-indexed
 		}
 
 		// Create and initialize gravity object
@@ -26,15 +22,42 @@
 		// Create and initialize motor objects array
 		getParameter(p_propConfig, "nMotors", nMotors);
 		propulsion = new Propulsion*[nMotors];
-		propConfigVec.reserve(nMotors);	
 		for (int i=0; i<nMotors; i++) {
 			YAML::Node propConfig = filterConfig(p_propConfig, "motor"+std::to_string(i+1)+"/");
-			propConfigVec.push_back(propConfig); 
-			propulsion[i] = buildPropulsion(propConfigVec[i], worldConfig); // Create a new propulsion object, id's are 1-indexed
+			propulsion[i] = buildPropulsion(propConfig, p_worldConfig); // Create a new propulsion object, id's are 1-indexed
 		}
 
 		// Create and initialize ground reactions object
-		groundReaction = buildGroundReaction(groundConfig, worldConfig);
+		groundReaction = buildGroundReaction(p_groundConfig, p_worldConfig);
+	}
+
+	void Dynamics::readParametersAerodynamics(YAML::Node config)
+	{
+		for (int i=0; i<nWings; i++) {
+			YAML::Node aeroConfig = filterConfig(config, "airfoil"+std::to_string(i+1)+"/");
+			aerodynamics[i]->readParametersAerodynamics(aeroConfig); // Update aerodynamic parameters
+		}
+	}
+
+	void Dynamics::readParametersProp(YAML::Node config)
+	{
+		for (int i=0; i<nMotors; i++) {
+			YAML::Node propConfig = filterConfig(config, "motor"+std::to_string(i+1)+"/");
+			propulsion[i]->readParametersProp(propConfig); // Update propulsion parameters
+		}
+	}
+
+	void Dynamics::readParametersWorld(YAML::Node config)
+	{
+		for (int i=0; i<nMotors; i++) {
+			propulsion[i]->readParametersWorld(config); // Update world parameters
+		}
+		groundReaction->readParametersWorld(config);
+	}
+
+	void Dynamics::readParametersGround(YAML::Node config)
+	{
+		groundReaction->readParametersGround(config);
 	}
 
 	//Class Destructor
@@ -55,24 +78,24 @@
 	void Dynamics::setInput(Input_t input)
 	{
 		for (int i=0; i<nMotors; i++) {
-			propulsion[i]->setInput(input, propConfigVec[i]);
+			propulsion[i]->setInput(input);
 		}
 		for (int i=0; i<nWings; i++) {
-			aerodynamics[i]->setInput(input, aeroConfigVec[i]);
+			aerodynamics[i]->setInput(input);
 		}
-		groundReaction->setInput(input, groundConfig);
+		groundReaction->setInput(input);
 	}
 
 	// Order subsystems to store control input, passed as PWM micorseconds
 	void Dynamics::setInputPwm(InputPwm_t input)
 	{
 		for (int i=0; i<nMotors; i++) {
-			propulsion[i]->setInputPwm(input, propConfigVec[i]);
+			propulsion[i]->setInputPwm(input);
 		}
 		for (int i=0; i<nWings; i++) {
-			aerodynamics[i]->setInputPwm(input, aeroConfigVec[i]);
+			aerodynamics[i]->setInputPwm(input);
 		}
-		groundReaction->setInputPwm(input, groundConfig);
+		groundReaction->setInputPwm(input);
 	}
 
 	// Calculate the forces and torques for each Wrench_t source

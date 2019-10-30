@@ -8,8 +8,31 @@
 //Class Constructor
 Kinematics::Kinematics(YAML::Node inertialConfig, YAML::Node worldConfig)
 {
-	getParameter(worldConfig, "deltaT", dt);
+	readParametersInertial(inertialConfig);
+	readParametersWorld(worldConfig);
 
+	// Build the integrator object
+	integrator = buildIntegrator(worldConfig);
+}
+
+//////////////////
+//Class Destructor
+Kinematics::~Kinematics()
+{
+	delete integrator;
+}
+
+////////////////////////////////////////
+// Read and register world parameters
+void Kinematics::readParametersWorld(YAML::Node worldConfig)
+{
+	getParameter(worldConfig, "deltaT", dt);
+}
+
+////////////////////////////////////////
+// Read and register inertial parameters
+void Kinematics::readParametersInertial(YAML::Node inertialConfig)
+{
 	// Calculate inertia matrix...
     getParameter(inertialConfig, "m", inertial.mass);
     double j_x, j_y, j_z, j_xz;
@@ -38,16 +61,6 @@ Kinematics::Kinematics(YAML::Node inertialConfig, YAML::Node worldConfig)
 
 	// ... and its inverse
 	inertial.Jinv = inertial.J.inverse();
-
-	// Build the integrator object
-	integrator = buildIntegrator(worldConfig);
-}
-
-//////////////////
-//Class Destructor
-Kinematics::~Kinematics()
-{
-	delete integrator;
 }
 
 ///////////////////////////////

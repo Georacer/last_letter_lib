@@ -17,33 +17,27 @@ UavModel::UavModel (ConfigsStruct_t p_configs) :
 	airdata()
 {
 	configs = p_configs;
-	getParameter(configs.world, "deltaT", dt);
 
-	init(configs.init);
+	readParametersWorld(configs.world);
+	readParametersInit(configs.init);
+
+	init();
 }
 
 //Initialize states
-void UavModel::init(YAML::Node initConfig)
+void UavModel::init()
 {
 	// Read initial NED coordinates
-	vector<double> doubleVect;
-	getParameterList(initConfig, "position", doubleVect);
-	state.pose.position = Vector3d(doubleVect.data());
+	state.pose.position = initPosition_;
 
 	// Read initial orientation quaternion
-	doubleVect.clear();
-	getParameterList(initConfig, "orientation", doubleVect);
-	state.pose.orientation = Quaterniond(doubleVect[3], doubleVect[0], doubleVect[1], doubleVect[2]);
+	state.pose.orientation = initOrientation_;
 
 	// Read initial velocity
-	doubleVect.clear();
-	getParameterList(initConfig, "velLin", doubleVect);
-	state.velocity.linear = Vector3d(doubleVect.data());
+	state.velocity.linear = initVelLinear_;
 
 	// Read initial angular velocity
-	doubleVect.clear();
-	getParameterList(initConfig, "velAng", doubleVect);
-	state.velocity.angular = Vector3d(doubleVect.data());
+	state.velocity.angular = initVelAngular_;
 
 	// Initialize rotorspeed vector
 	fill(state.rotorspeed.begin(), state.rotorspeed.end(), 0.01);
@@ -53,27 +47,108 @@ void UavModel::init(YAML::Node initConfig)
 	}
 
 	// Initialize WGS coordinates
+	state.geoid.latitude = initCoordinates_(0);
+	state.geoid.longitude = initCoordinates_(1);
+	state.geoid.altitude = initCoordinates_(2);
+
+	chanReset = initChanReset_;
+
+	// Initialize input
+	setInput(initCtrlInput_);
+}
+
+// Pick and update all sub-models which read from each one
+void UavModel::updateConfigWorld()
+{
+	readParametersWorld(configs.world);
+	kinematics.readParametersWorld(configs.world);	
+	dynamics.readParametersWorld(configs.world);
+	environmentModel.readParametersWorld(configs.world);
+}
+
+void UavModel::updateConfigEnvironment()
+{
+	environmentModel.readParametersEnvironment(configs.env);
+}
+
+void UavModel::updateConfigInit()
+{
+	readParametersInit(configs.init);
+}
+
+void UavModel::updateConfigInertial()
+{
+	kinematics.readParametersInertial(configs.inertial);
+}
+
+void UavModel::updateConfigAero(){
+	dynamics.readParametersAerodynamics(configs.aero);
+}
+
+void UavModel::updateConfigProp()
+{
+	dynamics.readParametersProp(configs.prop);
+}
+
+void UavModel::updateConfigGround()
+{
+	dynamics.readParametersGround(configs.ground);
+}
+
+void UavModel::updateConfigAll()
+{
+	updateConfigWorld();
+	updateConfigEnvironment();
+	updateConfigInit();
+	updateConfigInertial();
+	updateConfigAero();
+	updateConfigProp();
+	updateConfigGround();
+}
+
+
+void UavModel::readParametersWorld(YAML::Node worldConfig)
+{
+	getParameter(configs.world, "deltaT", dt);
+}
+
+void UavModel::readParametersInit(YAML::Node initConfig)
+{
+	// Read initial NED coordinates
+	vector<double> doubleVect;
+	getParameterList(initConfig, "position", doubleVect);
+	initPosition_ = Vector3d(doubleVect.data());
+
+	// Read initial orientation quaternion
+	doubleVect.clear();
+	getParameterList(initConfig, "orientation", doubleVect);
+	initOrientation_ = Quaterniond(doubleVect[3], doubleVect[0], doubleVect[1], doubleVect[2]);
+
+	// Read initial velocity
+	doubleVect.clear();
+	getParameterList(initConfig, "velLin", doubleVect);
+	initVelLinear_ = Vector3d(doubleVect.data());
+
+	// Read initial angular velocity
+	doubleVect.clear();
+	getParameterList(initConfig, "velAng", doubleVect);
+	initVelAngular_ = Vector3d(doubleVect.data());
+
+	// Initialize WGS coordinates
 	doubleVect.clear();
 	getParameterList(initConfig, "coordinates", doubleVect);
-	state.geoid.latitude = doubleVect[0];
-	state.geoid.longitude = doubleVect[1];
-	state.geoid.altitude = doubleVect[2] - state.pose.position.z(); // Read ground geoid altitude and raise the WGS coordinate by the NED altitude
+	initCoordinates_(0) = doubleVect[0];
+	initCoordinates_(1) = doubleVect[1];
+	initCoordinates_(2) = doubleVect[2] - initPosition_.z(); // Read ground geoid altitude and raise the WGS coordinate by the NED altitude
 
-	if (!getParameter(initConfig, "chanReset", chanReset, false)) {cout << "No RESET channel selected" << endl; chanReset=-1;}
+	if (!getParameter(initConfig, "chanReset", initChanReset_, false)) {cout << "No RESET channel selected" << endl; initChanReset_=-1;}
 
 	// Initialize input
 	doubleVect.clear();
 	if (getParameterList(initConfig, "ctrlInput", doubleVect))
 	{
-		std::copy(doubleVect.begin(), doubleVect.end(), input.value.begin());
+		std::copy(doubleVect.begin(), doubleVect.end(), initCtrlInput_.value.begin());
 	}
-	setInput(input);
-
-}
-
-void UavModel::init()
-{
-	init(configs.init);
 }
 
 ///////////////////////////////////////
@@ -147,7 +222,7 @@ void UavModel::setInput(const Input_t p_input)
 
 	if (chanReset>-1) { // If a reset channel is set
 		if (input.value[chanReset] > 0.6) { // Reset the simulation upon command
-			init(configs.init);
+			init();
 		}
 	}
 }
@@ -161,7 +236,7 @@ void UavModel::setInputPwm(const InputPwm_t p_input)
 
 	if (chanReset>-1) { // If a reset channel is set
 		if (PwmInput.value[chanReset] > 1600) { // Reset the simulation upon PWM command
-			init(configs.init);
+			init();
 		}
 	}
 }

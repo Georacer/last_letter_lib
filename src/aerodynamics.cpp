@@ -14,6 +14,15 @@ using Eigen::Quaterniond;
 // Pass the ID-filtered aerodynamics config YAML::Node
 Aerodynamics::Aerodynamics(YAML::Node config)
 {
+    readParametersAerodynamics(config);
+}
+
+Aerodynamics::~Aerodynamics()
+{
+}
+
+void Aerodynamics::readParametersAerodynamics(YAML::Node config)
+{
 	vector<double> doubleVect;
 	getParameterList(config, "CGOffset", doubleVect);
 	CGOffset = Vector3d(doubleVect.data());
@@ -26,7 +35,11 @@ Aerodynamics::Aerodynamics(YAML::Node config)
 	if (!getParameter(config, "chanElevator", chanElevator, false)) {chanElevator = -1;}
 	if (!getParameter(config, "chanRudder", chanRudder, false)) {chanRudder = -1;}
 	if (!getParameter(config, "chanGimbal", chanGimbal, false)) {chanGimbal = -1;}
+
 	if (!getParameter(config, "gimbalAngle_max", gimbalAngle_max, false)) {gimbalAngle_max = -1;}
+	getParameter(config, "deltaa_max", deltaa_max);
+	getParameter(config, "deltae_max", deltae_max);
+	getParameter(config, "deltar_max", deltar_max);
 
 	inputAileron = 0.0;
 	inputElevator = 0.0;
@@ -34,18 +47,8 @@ Aerodynamics::Aerodynamics(YAML::Node config)
 	inputGimbal = 0.0;
 }
 
-Aerodynamics::~Aerodynamics()
+void Aerodynamics::setInput(Input_t input)
 {
-}
-
-void Aerodynamics::setInput(Input_t input, YAML::Node config)
-{
-	// TODO: I shouldn't check these all the time, since they are an optional parameter
-	getParameter(config, "gimbalAngle_max", gimbalAngle_max);
-	getParameter(config, "deltaa_max", deltaa_max);
-	getParameter(config, "deltae_max", deltae_max);
-	getParameter(config, "deltar_max", deltar_max);
-
 	//Convert -1 - 1 input range to radians
 	if (chanAileron>-1) {inputAileron = deltaa_max * input.value[chanAileron];}
 	if (chanElevator>-1) {inputElevator = deltae_max * input.value[chanElevator];}
@@ -53,7 +56,7 @@ void Aerodynamics::setInput(Input_t input, YAML::Node config)
 	if (chanGimbal>-1) {inputGimbal = gimbalAngle_max * input.value[chanGimbal];}
 }
 
-void Aerodynamics::setInputPwm(InputPwm_t p_input, YAML::Node config)
+void Aerodynamics::setInputPwm(InputPwm_t p_input)
 {
 	// Convert PPM to -1 - 1 range
 	Input_t input;
@@ -63,7 +66,7 @@ void Aerodynamics::setInputPwm(InputPwm_t p_input, YAML::Node config)
 	if (chanGimbal>-1) {input.value[chanGimbal] = PwmToFullRange(p_input.value[chanGimbal]);}
 
 	// Call normalized input setter
-	setInput(input, config);
+	setInput(input);
 }
 
 // One step in the physics engine
@@ -184,6 +187,17 @@ void NoAerodynamics::getTorque(Environment_t environment)
 // Class constructor
 StdLinearAero::StdLinearAero(YAML::Node config) : Aerodynamics(config)
 {
+	readParametersAerodynamics(config);
+}
+
+// Class destructor
+StdLinearAero::~StdLinearAero()
+{
+}
+
+void StdLinearAero::readParametersAerodynamics(YAML::Node config)
+{
+	Aerodynamics::readParametersAerodynamics(config);
 	// Read aerodynamic coefficients from parameter server
 	getParameter(config, "c_lift_q", c_lift_q);
 	getParameter(config, "c_lift_deltae", c_lift_deltae);
@@ -220,16 +234,7 @@ StdLinearAero::StdLinearAero(YAML::Node config) : Aerodynamics(config)
 	getParameter(config, "oswald", oswald);
 	getParameter(config, "mcoeff", M);
 	getParameter(config, "alpha_stall", alpha0);
-	getParameter(config, "deltaa_max", deltaa_max);
-	getParameter(config, "deltae_max", deltae_max);
-	getParameter(config, "deltar_max", deltar_max);
 }
-
-// Class destructor
-StdLinearAero::~StdLinearAero()
-{
-}
-
 
 // Force calculation function
 void StdLinearAero::getForce(Environment_t environment)
@@ -324,17 +329,24 @@ double StdLinearAero::dragCoeff (double alpha)
 // Class constructor
 HCUAVAero::HCUAVAero (YAML::Node config) : StdLinearAero(config)
 {
+	readParametersAerodynamics(config);
+}
+
+// Class destructor
+HCUAVAero::~HCUAVAero()
+{
+}
+
+void HCUAVAero::readParametersAerodynamics(YAML::Node config)
+{
+	StdLinearAero::readParametersAerodynamics(config);
+
 	// Create CLift polynomial
 	YAML::Node liftPolyConfig = filterConfig(config, "cLiftPoly");
 	liftCoeffPoly =  buildPolynomial(liftPolyConfig);
 	// Create CDrag polynomial
 	YAML::Node dragPolyConfig = filterConfig(config, "cDragPoly");
 	dragCoeffPoly =  buildPolynomial(dragPolyConfig);
-}
-
-// Class destructor
-HCUAVAero::~HCUAVAero()
-{
 }
 
 //////////////////////////

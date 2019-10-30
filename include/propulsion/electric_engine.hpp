@@ -27,6 +27,7 @@ public:
 	////////////////
 	ElectricEng(YAML::Node propConfig, YAML::Node worldConfig);
 	~ElectricEng();
+	void readParametersProp(YAML::Node config);
 
 	void updateRadPS(SimState_t states, Inertial_t inertial, Environment_t environment);
 	void getForce(SimState_t states, Inertial_t inertial, Environment_t environment);

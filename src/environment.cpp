@@ -18,7 +18,21 @@ ostringstream oss;
 	EnvironmentModel::EnvironmentModel(YAML::Node envConfig, YAML::Node worldConfig)
 	{
 		grav0 = Geoid::EARTH_grav;
+		readParametersWorld(worldConfig);
+		readParametersEnvironment(envConfig);
+	}
+
+	//////////////////////////////////////
+	// Read world configuration parameters
+	void EnvironmentModel::readParametersWorld(YAML::Node worldConfig)
+	{
 		getParameter(worldConfig, "deltaT", dt);
+	}
+
+	/////////////////////////////////////////////
+	// Read environment configuration parameters
+	void EnvironmentModel::readParametersEnvironment(YAML::Node envConfig)
+	{
 		getParameter(envConfig, "Dryden/use", allowTurbulence);
 
 		//initialize atmosphere stuff

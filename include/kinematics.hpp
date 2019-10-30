@@ -55,5 +55,7 @@ class Kinematics
 	Inertial_t inertial;
 	void calcDerivatives(SimState_t states, Wrench_t inpWrench); // Do not use this method (private)
 	SimState_t propagateState(SimState_t states, Wrench_t inpWrench); // Use this method to calculate state integral
+	void readParametersWorld(YAML::Node worldConfig);
+	void readParametersInertial(YAML::Node inertialConfig);
 	Integrator * integrator;
 };

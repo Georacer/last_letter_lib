@@ -72,6 +72,10 @@ class EnvironmentModel
 	void calcTemp();
 
 	void calcGrav();
+
+	void readParametersWorld(YAML::Node worldConfig);
+
+	void readParametersEnvironment(YAML::Node envConfig);
 };
 
 #endif

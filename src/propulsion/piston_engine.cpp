@@ -7,24 +7,7 @@ using namespace std;
 // Constructor
 PistonEng::PistonEng(YAML::Node propConfig, YAML::Node worldConfig):Propulsion(propConfig, worldConfig)
 {
-	vector<double> doubleVect;
-	getParameter(propConfig, "propDiam", propDiam);
-	getParameter(propConfig, "engInertia", engInertia);
-	getParameter(propConfig, "RadPSLimits", doubleVect);
-	// // Initialize RadPS limits
-	omegaMin = doubleVect[0];
-	omegaMax = doubleVect[1];
-
-	// Create engine power polynomial
-	YAML::Node engPowerPolyConfig = filterConfig(propConfig, "engPowerPoly");
-	engPowerPoly =  buildPolynomial(engPowerPolyConfig);
-	// Create propeller efficiency polynomial
-	YAML::Node engCoeffPolyConfig = filterConfig(propConfig, "engCoeffPoly");
-	npPoly =  buildPolynomial(engCoeffPolyConfig);
-	// Create propeller power polynomial
-	YAML::Node propPowerPolyConfig = filterConfig(propConfig, "propPowerPoly");
-	propPowerPoly =  buildPolynomial(propPowerPolyConfig);
-
+	readParametersProp(propConfig);
 	omega = omegaMin; // Initialize engine rotational speed
 }
 
@@ -34,6 +17,29 @@ PistonEng::~PistonEng()
 	delete npPoly;
 	// delete engPowerPoly; //@TODO examine if I need to uncomment this
 	delete propPowerPoly;
+}
+
+void PistonEng::readParametersProp(YAML::Node config)
+{
+	Propulsion::readParametersProp(config);
+
+	vector<double> doubleVect;
+	getParameter(config, "propDiam", propDiam);
+	getParameter(config, "engInertia", engInertia);
+	getParameter(config, "RadPSLimits", doubleVect);
+	// // Initialize RadPS limits
+	omegaMin = doubleVect[0];
+	omegaMax = doubleVect[1];
+
+	// Create engine power polynomial
+	YAML::Node engPowerPolyConfig = filterConfig(config, "engPowerPoly");
+	engPowerPoly =  buildPolynomial(engPowerPolyConfig);
+	// Create propeller efficiency polynomial
+	YAML::Node engCoeffPolyConfig = filterConfig(config, "engCoeffPoly");
+	npPoly =  buildPolynomial(engCoeffPolyConfig);
+	// Create propeller power polynomial
+	YAML::Node propPowerPolyConfig = filterConfig(config, "propPowerPoly");
+	propPowerPoly =  buildPolynomial(propPowerPolyConfig);
 }
 
 // Update motor rotational speed and calculate thrust

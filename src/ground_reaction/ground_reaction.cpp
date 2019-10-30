@@ -7,11 +7,8 @@
 // Class constructor
 GroundReaction::GroundReaction(YAML::Node config, YAML::Node worldConfig)
 {
-	getParameter(worldConfig, "deltaT", dt);
-
-	if (!getParameter(config, "chanSteer", chanSteer)) {chanSteer = -1;}
-	if (!getParameter(config, "chanBrake", chanBrake)) {chanBrake = -1;}
-	if (!getParameter(config, "steerAngle_max", steerAngle_max)) {steerAngle_max = 0.0;}
+	readParametersWorld(worldConfig);
+	readParametersGround(config);
 
 	inputSteer = 0.0;
 	inputBrake = 0.0;
@@ -22,23 +19,33 @@ GroundReaction::~GroundReaction()
 {
 }
 
-// Store the steering and brake control inputs
-void GroundReaction::setInput(Input_t input, YAML::Node config)
+void GroundReaction::readParametersGround(YAML::Node config)
 {
-	// TODO: I shouldn't check this all the time, since it is an optional parameter
-	getParameter(config, "steerAngle_max", steerAngle_max);
+	if (!getParameter(config, "chanSteer", chanSteer)) {chanSteer = -1;}
+	if (!getParameter(config, "chanBrake", chanBrake)) {chanBrake = -1;}
+	if (!getParameter(config, "steerAngle_max", steerAngle_max)) {steerAngle_max = 0.0;}
+}
+
+void GroundReaction::readParametersWorld(YAML::Node config)
+{
+	getParameter(config, "deltaT", dt);
+}
+
+// Store the steering and brake control inputs
+void GroundReaction::setInput(Input_t input)
+{
 	if (chanSteer>-1) {inputSteer = steerAngle_max * input.value[chanSteer];}
 	if (chanBrake>-1) {inputBrake = input.value[chanBrake];}
 }
 
 // Store the steering and brake control inputs
-void GroundReaction::setInputPwm(InputPwm_t p_input, YAML::Node config)
+void GroundReaction::setInputPwm(InputPwm_t p_input)
 {
 	Input_t input;
 	if (chanSteer>-1) {input.value[chanSteer] = PwmToFullRange(p_input.value[chanSteer]);}
 	if (chanBrake>-1) {input.value[chanBrake] = PwmToHalfRange(p_input.value[chanBrake]);}
 
-	setInput(input, config);
+	setInput(input);
 }
 
 

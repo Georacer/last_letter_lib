@@ -35,14 +35,16 @@ class Aerodynamics
 
     ////////////
     // Functions
+    public: 
     Aerodynamics(YAML::Node config);
     virtual ~Aerodynamics();
-    void setInput(Input_t input, YAML::Node config);
-    void setInputPwm(InputPwm_t input, YAML::Node config);
+    void setInput(Input_t input);
+    void setInputPwm(InputPwm_t input);
     void stepDynamics(const SimState_t states, const Inertial_t inertial, const Environment_t environment); // perform one step in the aerodynamics
     void rotateFrame(SimState_t states, Environment_t environment); // convert the wind to the propeller axes
     void rotateForce(); // convert the resulting force to the body axes
     void rotateTorque(Inertial_t inertial); // convert the resulting torque to the body axes
+    void readParametersAerodynamics(YAML::Node config);
     virtual void getForce(Environment_t environmet) = 0;
     virtual void getTorque(Environment_t environment) = 0;
 };
@@ -76,6 +78,7 @@ class StdLinearAero : public Aerodynamics
     double c_n_0, c_n_b, c_n_p, c_n_r, c_n_deltaa, c_n_deltar;
     double M, alpha0, c_lift_0, c_lift_a0;
     double c_drag_p, oswald, AR;
+    void readParametersAerodynamics(YAML::Node config);
     void getForce(Environment_t environment);
     void getTorque(Environment_t environment);
     //Calculate lift coefficient from alpha
@@ -92,6 +95,7 @@ class HCUAVAero : public StdLinearAero
 public:
     HCUAVAero(YAML::Node config);
     ~HCUAVAero();
+    void readParametersAerodynamics(YAML::Node config);
     Polynomial * liftCoeffPoly;
     Polynomial * dragCoeffPoly;
 
