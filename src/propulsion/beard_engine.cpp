@@ -5,6 +5,7 @@
 // Constructor
 EngBeard::EngBeard(YAML::Node propConfig, YAML::Node worldConfig):Propulsion(propConfig, worldConfig)
 {
+	std::cout << "Building new Beard Engine" << std::endl;;
 	omega = 0; // Initialize engine rotational speed
 	readParametersProp(propConfig);
 }
@@ -16,8 +17,6 @@ EngBeard::~EngBeard()
 
 void EngBeard::readParametersProp(YAML::Node config)
 {
-	std::cout << "reading parameters for new Beard engine" << std::endl;
-
 	Propulsion::readParametersProp(config);
 
 	getParameter(config, "s_prop", s_prop);

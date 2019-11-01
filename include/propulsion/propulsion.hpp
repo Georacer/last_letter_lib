@@ -38,8 +38,8 @@ class Propulsion
 	//Functions
 	Propulsion(YAML::Node propConfig, YAML::Node worldConfig);
 	virtual ~Propulsion();
-	void readParametersProp(YAML::Node config);
-	void readParametersWorld(YAML::Node config);
+	virtual void readParametersProp(YAML::Node config);
+	virtual void readParametersWorld(YAML::Node config);
 
 	void setInput(Input_t input); // store control input
 	void setInputPwm(InputPwm_t input); // store PWM control input

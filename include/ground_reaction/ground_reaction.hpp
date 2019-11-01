@@ -15,8 +15,8 @@ class GroundReaction
 	public:
 	GroundReaction(YAML::Node config, YAML::Node worldConfig);
 	virtual ~GroundReaction();
-	void readParametersGround(YAML::Node config);
-	void readParametersWorld(YAML::Node config);
+	virtual void readParametersGround(YAML::Node config);
+	virtual void readParametersWorld(YAML::Node config);
 	double dt;
 	Wrench_t wrenchGround;
 	double inputSteer, inputBrake;
