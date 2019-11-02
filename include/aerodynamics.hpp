@@ -87,6 +87,20 @@ class StdLinearAero : public Aerodynamics
     virtual double dragCoeff(double);
 };
 
+/////////////////////////////////////////////////////////////////////
+// Same as StdLinearAero but with linear-in-the-parameters drag model
+/////////////////////////////////////////////////////////////////////
+class SimpleDrag: public StdLinearAero
+{
+    public:
+    SimpleDrag(YAML::Node config);
+    ~SimpleDrag();
+    void readParametersAerodynamics(YAML::Node config);
+    double c_drag_a;
+    // Calculate drag coefficient from alpha
+    double dragCoeff(double);
+};
+
 ////////////////////////////////////////////////////////
 // Extension for fine specification of the drag polar //
 ////////////////////////////////////////////////////////

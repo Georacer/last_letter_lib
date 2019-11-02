@@ -6,7 +6,7 @@ groundTemp: 25 #in Celsius
 groundPres: 1013.25 #in mBar
 
 #Parameters for the wind model
-windRef: 5.0 #in m/s
+windRef: 0.0 #in m/s
 windRefAlt: 10.0 #in m
 windDir: 90.0 #in degrees
 surfSmooth: 0.28 #rural environment

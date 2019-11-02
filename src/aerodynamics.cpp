@@ -364,12 +364,35 @@ double HCUAVAero::dragCoeff (double alpha)
 }
 
 
+//////////////////////////
+// Define SimpleDrag class
+//////////////////////////
+SimpleDrag::SimpleDrag(YAML::Node config) : StdLinearAero(config)
+{
+	readParametersAerodynamics(config);
+}
+
+SimpleDrag::~SimpleDrag()
+{}
+
+void SimpleDrag::readParametersAerodynamics(YAML::Node config)
+{
+	StdLinearAero::readParametersAerodynamics(config);
+	getParameter(config, "c_drag_a", c_drag_a);
+}
+
+double SimpleDrag::dragCoeff(double alpha)
+{
+	return c_drag_p + c_drag_a * fabs(alpha);
+}
+
+
 // Build aerodynamics model
 Aerodynamics * buildAerodynamics(YAML::Node config)
 {
 	int aerodynamicsType;
 	getParameter(config, "aerodynamicsType", aerodynamicsType);
-	std::cout<< "building aerodynamics model: ";
+	std::cout<< "building aerodynamics model type " << aerodynamicsType << ":\n";
 	switch (aerodynamicsType)
 	{
 	case 0:
@@ -381,8 +404,13 @@ Aerodynamics * buildAerodynamics(YAML::Node config)
 	case 2:
 		std::cout << "selecting HCUAVAero aerodynamics" << std::endl;
 		return new HCUAVAero(config);
+	case 3:
+		std::cout << "selecting simplified drag aerodynamics" << std::endl;
+		return new SimpleDrag(config);
 	default:
-		throw runtime_error("Error while constructing aerodynamics");
+		stringstream ss;
+		ss << "Error while constructing aerodynamics: Unknown type " << aerodynamicsType;
+		throw runtime_error(ss.str());
 		break;
 	}
 }

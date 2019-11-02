@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import os
+import time
 from math import pi
 import numpy as np
 import ctypes as ct
@@ -64,6 +65,11 @@ if __name__ == '__main__':
     print('Successfully loaded Trimmer object')
 
     trim_states = np.array([0, 1*pi/180, 10, 1*pi/180, 0, 0])
+    print('Obtaining trim input: 1000 repetitions')
+    t_start = time.time()
+    for i in range(1000):
+        trim_ctrls = trimmer.find_trim_input(trim_states)
+    t_end = time.time()
 
-    trim_ctrls = trimmer.find_trim_input(trim_states)
     print("Trim found:\n" + "{}".format(trim_ctrls))
+    print("Time required: {}s".format(t_end-t_start))
