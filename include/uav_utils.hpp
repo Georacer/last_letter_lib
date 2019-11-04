@@ -101,6 +101,12 @@ class Airdata
 Vector3d getAirData (Vector3d speeds);
 Vector3d getVelocityFromAirdata(Vector3d airdata);
 
+////////////////////////////
+// Kinematic Transformations
+////////////////////////////
+
+Vector3d getEulerDerivatives(Vector3d euler, Vector3d rates);
+
 //////////////
 // Controllers
 //////////////

@@ -79,6 +79,26 @@ Vector3d getVelocityFromAirdata(Vector3d airdata)
 	return Vector3d(u, v, w);
 }
 
+////////////////////////////
+// Kinematic Transformations
+////////////////////////////
+
+Vector3d getEulerDerivatives(Vector3d euler, Vector3d rates)
+{
+	double phi = euler(0);
+	double theta = euler(1);
+	double psi = euler(2);
+	double p = rates(0);
+	double q = rates(1);
+	double r = rates(2);
+
+	double phiDot = p + sin(phi)*tan(theta)*q + cos(phi)*tan(theta)*r;
+	double thetaDot = cos(phi)*q - sin(phi)*r;
+	double psiDot = sin(phi)/cos(theta)*q + cos(phi)/cos(theta)*r;
+
+	return Vector3d(phiDot, thetaDot, psiDot);
+}
+
 
 ///////////////////
 // Define PID class

@@ -22,8 +22,8 @@ class Trimmer():
         self.dll = ct.cdll.LoadLibrary('/home/george/ros_workspaces/uav_ftc/src/last_letter/last_letter_lib/build/liblib_trimmer.so')
 
         # Set the exposed functions data types
-        self.dll.Trimmer_new.argtypes = [ct.c_char_p]
-        self.dll.Trimmer_new.restype = ct.c_void_p
+        self.dll.trimmer_new.argtypes = [ct.c_char_p]
+        self.dll.trimmer_new.restype = ct.c_void_p
         self.trim_func = self.dll.find_trim
         self.dll.find_trim.argtypes = [ct.c_void_p, self.input_type]
         self.dll.find_trim.restype = self.output_type
@@ -35,7 +35,7 @@ class Trimmer():
         self.dll.print_optimal_result.restype = ct.c_double
 
         self.uav_name = uav_name
-        self.obj = self.dll.Trimmer_new(uav_name)
+        self.obj = self.dll.trimmer_new(uav_name)
 
     # Convert trim states from a numpy array of [phi, theta, Va, alpha, beta ,r]
     # to a suitable input type for find_trim()

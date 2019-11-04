@@ -6,11 +6,11 @@
 
 int main(int argc, char * argv[])
 {
-    cout << "Testing Trimmer class functionality" << endl;
+    cout << "Testing TrimmerInput class functionality" << endl;
 
     string uavName = argv[1];
 
-    TrimParameters_t trimParams;
+    TrimStateParameters_t trimParams;
     trimParams.phi = 0;
     trimParams.theta = 0*M_PI/180;
     trimParams.Va = 10;
@@ -18,7 +18,7 @@ int main(int argc, char * argv[])
     trimParams.beta = 0;
     trimParams.r = 0*M_PI/180;
 
-    Trimmer trimmer(uavName);
+    TrimmerInput trimmer(uavName);
 
     // vector<double> initInput {0, 0, 0.5, 0};
     // trimmer.setInitInput(initInput);
