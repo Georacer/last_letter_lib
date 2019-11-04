@@ -38,8 +38,8 @@ airfoil1/c_l_b: -0.12
 airfoil1/c_l_r: 0.14
 airfoil1/c_l_deltaa: 0.25
 airfoil1/c_l_deltar: -0.037
-airfoil1/c_m_0: 0.03
-airfoil1/c_m_a: -0.7
+airfoil1/c_m_0: 0.01
+airfoil1/c_m_a: -1.3
 airfoil1/c_m_q: -20
 airfoil1/c_m_deltae: 1.0
 airfoil1/c_n_0: 0
