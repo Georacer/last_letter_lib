@@ -10,6 +10,11 @@ extern "C"
         trimmer->pyFindTrimInput(trimState, result);
         return result;
         }
+    double print_optimal_result(Trimmer* trimmer)
+    {
+        trimmer->printOptimalResult(true);
+        return 1;
+    }
     double * find_trim_2(char * uavName, double * trimState){
         static Trimmer trimmer(uavName);
         static double result[6];
@@ -42,8 +47,8 @@ Trimmer::Trimmer(const string uavName):
 
     opt.set_min_objective(objFunWrapper, this);
 
-    opt.set_xtol_abs(1e-2);
-    // opt.set_ftol_abs(1);
+    // opt.set_xtol_abs(1e-2);
+    opt.set_ftol_abs(0.001);
     // opt.set_xtol_rel(1e-4);
 }
 
@@ -128,18 +133,21 @@ double Trimmer::calcCost(const Derivatives_t stateDer, Eigen::Vector4d input)
     // of the u and w velocities.
     // Thus, for now we leave only airspeed in the juristiction of thrust and hope that alpha and beta can stay close to their
     // trimmed values, since control inputs will stabilize angular velocities
-    double derErrorWeight = 1000;
+    double derSpeedWeight = 100;
+    double derAngleWeight = 10000;
+    double derRateWeight = 100;
     double inputWeight = 10;
 
-    // double speedDerTerm = stateDer.speedDot.transpose()*derErrorWeight*stateDer.speedDot;
-    double speedDerTerm = stateDer.speedDot[0]*derErrorWeight*stateDer.speedDot[0];
-    double rateDerTerm = stateDer.rateDot.transpose()*10*derErrorWeight*stateDer.rateDot;
+    double speedDerTerm = stateDer.speedDot.transpose()*derSpeedWeight*stateDer.speedDot;
+    // double speedDerTerm = stateDer.speedDot[0]*derErrorWeight*stateDer.speedDot[0];
+    double angleDerTerm = stateDer.quatDot.coeffs().segment<2>(0).transpose()*derAngleWeight*stateDer.quatDot.coeffs().segment<2>(0);
+    double rateDerTerm = stateDer.rateDot.transpose()*derRateWeight*stateDer.rateDot;
     // The position and orientation derivatives are not taken into account, because they are designed to be optimal
     // and the optimized input vector does not affect them anyway.
 
     double inputTerm = input.transpose()*inputWeight*input;
 
-    return speedDerTerm + rateDerTerm + inputTerm;
+    return speedDerTerm + angleDerTerm + rateDerTerm + inputTerm;
 }
 
 // Wrapper to the cost function. Accepts input u under optimization and also passes the trimState parameter to the cost function
@@ -226,7 +234,7 @@ void Trimmer::pyFindTrimInput(double * trimParamArray, double * result)
     result[5] = (double)resultStruct.success;
 }
 
-string Trimmer::printOptimalResult()
+string Trimmer::printOptimalResult(bool verbose)
 {
     ostringstream oss;
     // Re-run the optimal state and input
@@ -245,6 +253,11 @@ string Trimmer::printOptimalResult()
     oss << "speedDot:\n" << vectorToString2(uav->kinematics.stateDot.speedDot, "\n");
     oss << "rateDot:\n" << vectorToString2(uav->kinematics.stateDot.rateDot, "\n");
     oss << endl;
+
+    if (verbose)
+    {
+        std::cout << oss.str();
+    }
 
     return oss.str();
 }

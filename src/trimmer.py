@@ -30,6 +30,9 @@ class Trimmer():
         self.trim_func_2 = self.dll.find_trim_2
         self.dll.find_trim_2.argtypes = [ct.c_char_p, self.input_type]
         self.dll.find_trim_2.restype = self.output_type
+        self.print_optimal_result = self.dll.print_optimal_result
+        self.dll.print_optimal_result.argtypes = [ct.c_void_p]
+        self.dll.print_optimal_result.restype = ct.c_double
 
         self.uav_name = uav_name
         self.obj = self.dll.Trimmer_new(uav_name)
@@ -58,13 +61,17 @@ class Trimmer():
         self.trim_input = self.convert_trim_controls(trim_input_ct)
         return self.trim_input
 
+    def print_result(self):
+        self.print_optimal_result(self.obj)
+
 if __name__ == '__main__':
     print('Testing trimmer module functionality')
     uav_name = 'skywalker_2013'
     trimmer = Trimmer(uav_name)
     print('Successfully loaded Trimmer object')
 
-    trim_states = np.array([0, 1*pi/180, 10, 1*pi/180, 0, 0])
+    trim_states = np.array([0, 0*pi/180, 15, -0.05, 0, 0])
+    # phi, theta, Va, alpha, beta, r
     print('Obtaining trim input: 1000 repetitions')
     t_start = time.time()
     for i in range(1000):
@@ -72,4 +79,5 @@ if __name__ == '__main__':
     t_end = time.time()
 
     print("Trim found:\n" + "{}".format(trim_ctrls))
+    trimmer.print_result()
     print("Time required: {}s".format(t_end-t_start))

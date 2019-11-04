@@ -61,7 +61,7 @@ class Trimmer
     static double objFunWrapper(const vector<double> &u, vector<double> &grad, void *trimmerObjPtr);
     OptimResult_t findTrimInput(const TrimParameters_t);
     void pyFindTrimInput(double * trimParamArray, double * result);
-    string printOptimalResult();
+    string printOptimalResult(bool verbose=false);
 };
 
 #endif
