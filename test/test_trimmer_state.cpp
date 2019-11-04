@@ -15,8 +15,8 @@ int main(int argc, char * argv[])
 
     TrimTrajectoryParameters_t trimParams;
     trimParams.Va = 15;
-    trimParams.Gamma = 0;
-    trimParams.R = inf;
+    trimParams.Gamma = 15*M_PI/180;
+    trimParams.R = -200;
 
     TrimmerState trimmer(uavName);
 

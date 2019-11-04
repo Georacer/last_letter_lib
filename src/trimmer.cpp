@@ -5,29 +5,34 @@
 
 extern "C"
 {
-    TrimmerInput * trimmer_input_new(char * uavName){return new TrimmerInput(uavName);}
-    double * find_input_trim(TrimmerInput* trimmer, double * trimState){
+    TrimmerInput * trimmer_input_new(char * uavName)
+    {
+        TrimmerInput * newTrimmer = new TrimmerInput(uavName);
+        return newTrimmer;
+    }
+    double * find_input_trim(TrimmerInput* trimmer, double * trimState)
+    {
         static double result[6];
         trimmer->pyFindTrimInput(trimState, result);
         return result;
-        }
+    }
     double print_optimal_input_result(TrimmerInput* trimmer)
     {
         trimmer->printOptimalResult(true);
         return 1;
     }
-    double * find_input_trim_2(char * uavName, double * trimState){
-        static TrimmerInput trimmer(uavName);
-        static double result[6];
-        trimmer.pyFindTrimInput(trimState, result);
-        return result;
-        }
-    TrimmerState * trimmer_state_new(char * uavName){return new TrimmerState(uavName);}
-    double * find_state_trim(TrimmerState* trimmer, double * trimTrajectory){
+
+    TrimmerState * trimmer_state_new(char * uavName)
+    {
+        TrimmerState * newTrimmer = new TrimmerState(uavName);
+        return newTrimmer;
+    }
+    double * find_state_trim(TrimmerState* trimmer, double * trimTrajectory)
+    {
         static double result[14];
         trimmer->pyFindTrimState(trimTrajectory, result);
         return result;
-        }
+    }
     double print_optimal_state_result(TrimmerState* trimmer)
     {
         trimmer->printOptimalResult(true);
@@ -88,7 +93,6 @@ TrimmerState::~TrimmerState()
 
 void TrimmerState::setInitState(const vector<double> inputVect)
 {
-    cout << "Initial State set to " << vectorToString2(inputVect) << endl;
     initState = inputVect;
 }
 
@@ -309,14 +313,14 @@ string TrimmerState::printOptimalResult(bool verbose)
     oss << endl;
 
     Eigen::Vector3d airdata = getAirData(trimState.trimState.linearVel);
-    double gamma = trimState.trimState.euler(2);
+    double gamma = trimState.trimState.euler(1) - airdata(1);
     Vector3d eulerDot = getEulerDerivatives(trimState.trimState.euler, trimState.trimState.angularVel);
     double R = airdata(0)*cos(gamma)/eulerDot(2);
 
     cout << setprecision(3);
     cout << "Resulting trajectory:\n";
     cout << "Airspeed:\t" << airdata(0) << "(" << targetTrajectory.Va << ")\n";
-    cout << "Gamma:\t" << gamma << "(" << targetTrajectory.Gamma << ")\n";
+    cout << "Gamma:\t" << gamma*180/M_PI << "(" << targetTrajectory.Gamma*180/M_PI << ")\n";
     cout << "R:\t" << R << "(" << targetTrajectory.R << ")\n";
     oss << endl;
 
@@ -367,7 +371,6 @@ TrimmerInput::~TrimmerInput()
 
 void TrimmerInput::setInitInput(const vector<double> inputVect)
 {
-    cout << "Initial Input set to " << vectorToString2(inputVect) << endl;
     initInput = inputVect;
 }
 
@@ -498,7 +501,6 @@ OptimResult_t TrimmerInput::findTrimInput(const TrimStateParameters_t p_trimPara
 //  Position 4: the optimization cost
 //  Position 5: the success flag (0/1)
 void TrimmerInput::pyFindTrimInput(double * trimParamArray, double * result)
-// double * TrimmerInput::pyFindTrimInput(double * trimParamArray)
 {
     TrimStateParameters_t trimParams;
     trimParams.phi = trimParamArray[0];

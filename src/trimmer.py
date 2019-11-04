@@ -8,11 +8,10 @@ import ctypes as ct
 
 print('Currently working on {}'.format(os.getcwd()))
 
-class Trimmer():
+class TrimmerInput():
     dll = None
     obj = None
     trim_func = None
-    trim_func_2 = None
     input_type = ct.c_double * 6
     output_type = ct.POINTER(ct.c_double)
     trim_input = None
@@ -22,20 +21,17 @@ class Trimmer():
         self.dll = ct.cdll.LoadLibrary('/home/george/ros_workspaces/uav_ftc/src/last_letter/last_letter_lib/build/liblib_trimmer.so')
 
         # Set the exposed functions data types
-        self.dll.trimmer_new.argtypes = [ct.c_char_p]
-        self.dll.trimmer_new.restype = ct.c_void_p
-        self.trim_func = self.dll.find_trim
-        self.dll.find_trim.argtypes = [ct.c_void_p, self.input_type]
-        self.dll.find_trim.restype = self.output_type
-        self.trim_func_2 = self.dll.find_trim_2
-        self.dll.find_trim_2.argtypes = [ct.c_char_p, self.input_type]
-        self.dll.find_trim_2.restype = self.output_type
-        self.print_optimal_result = self.dll.print_optimal_result
-        self.dll.print_optimal_result.argtypes = [ct.c_void_p]
-        self.dll.print_optimal_result.restype = ct.c_double
+        self.dll.trimmer_input_new.argtypes = [ct.c_char_p]
+        self.dll.trimmer_input_new.restype = ct.c_void_p
+        self.trim_func = self.dll.find_input_trim
+        self.dll.find_input_trim.argtypes = [ct.c_void_p, self.input_type]
+        self.dll.find_input_trim.restype = self.output_type
+        self.print_optimal_result = self.dll.print_optimal_input_result
+        self.dll.print_optimal_input_result.argtypes = [ct.c_void_p]
+        self.dll.print_optimal_input_result.restype = ct.c_double
 
         self.uav_name = uav_name
-        self.obj = self.dll.trimmer_new(uav_name)
+        self.obj = self.dll.trimmer_input_new(uav_name)
 
     # Convert trim states from a numpy array of [phi, theta, Va, alpha, beta ,r]
     # to a suitable input type for find_trim()
@@ -54,20 +50,77 @@ class Trimmer():
         self.trim_input = self.convert_trim_controls(trim_input_ct)
         return self.trim_input
 
-    # Do not use this function, it loads a new Trimmer object every time
-    def find_trim_input_2(self, trim_states):
-        trim_states_ct = self.convert_trim_states(trim_states)
-        trim_input_ct = self.trim_func_2(self.uav_name, trim_states_ct)
-        self.trim_input = self.convert_trim_controls(trim_input_ct)
-        return self.trim_input
+    def print_result(self):
+        self.print_optimal_result(self.obj)
+
+class TrimmerState():
+    dll = None
+    obj = None
+    trim_func = None
+    input_type = ct.c_double * 14
+    output_type = ct.POINTER(ct.c_double)
+    trim_state = None
+
+    def __init__(self, uav_name):
+        # Load the lib_trimmer dll
+        self.dll = ct.cdll.LoadLibrary('/home/george/ros_workspaces/uav_ftc/src/last_letter/last_letter_lib/build/liblib_trimmer.so')
+
+        # Set the exposed functions data types
+        self.dll.trimmer_state_new.argtypes = [ct.c_char_p]
+        self.dll.trimmer_state_new.restype = ct.c_void_p
+        self.trim_func = self.dll.find_state_trim
+        self.dll.find_state_trim.argtypes = [ct.c_void_p, self.input_type]
+        self.dll.find_state_trim.restype = self.output_type
+        self.print_optimal_result = self.dll.print_optimal_state_result
+        self.dll.print_optimal_state_result.argtypes = [ct.c_void_p]
+        self.dll.print_optimal_state_result.restype = ct.c_double
+
+        self.uav_name = uav_name
+        self.obj = self.dll.trimmer_state_new(uav_name)
+
+    # Convert trim trajectory from a numpy array of [Va, gamma, R]
+    # to a suitable input type for find_trim()
+    def convert_trim_trajectory(self, trim_trajectory_np):
+        return self.input_type(*trim_trajectory_np)
+
+    def convert_trim_state(self, trim_state_ct):
+        trim_state = np.zeros(14)
+        for i in range(14):
+            trim_state[i] = trim_state_ct[i]
+        return trim_state
+
+    def find_trim_input(self, trim_trajectory):
+        trim_trajectory_ct = self.convert_trim_trajectory(trim_trajectory)
+        trim_state_ct = self.trim_func(self.obj, trim_trajectory_ct)
+        self.trim_state = self.convert_trim_state(trim_state_ct)
+        return self.trim_state
 
     def print_result(self):
         self.print_optimal_result(self.obj)
 
 if __name__ == '__main__':
-    print('Testing trimmer module functionality')
-    uav_name = 'skywalker_2013'
-    trimmer = Trimmer(uav_name)
+
+    print('Testing TrimmerState class functionality')
+    uav_name = 'skywalker_2013_mod'
+    trimmer = TrimmerState(uav_name)
+    print('Successfully loaded Trimmer object')
+
+    trim_states = np.array([15, np.deg2rad(15), -200])
+    # Va, gamma, R
+    print('Obtaining trim input: 1000 repetitions')
+    t_start = time.time()
+    for i in range(1000):
+        trim_state = trimmer.find_trim_input(trim_states)
+    t_end = time.time()
+
+    print("Trim found:\n" + "{}".format(trim_state))
+    trimmer.print_result()
+    print("Time required: {}s".format(t_end-t_start))
+    print("\n")
+
+    print('Testing TrimmerInput class functionality')
+    uav_name = 'skywalker_2013_mod'
+    trimmer = TrimmerInput(uav_name)
     print('Successfully loaded Trimmer object')
 
     trim_states = np.array([0, 0*pi/180, 15, -0.05, 0, 0])
@@ -81,3 +134,4 @@ if __name__ == '__main__':
     print("Trim found:\n" + "{}".format(trim_ctrls))
     trimmer.print_result()
     print("Time required: {}s".format(t_end-t_start))
+
