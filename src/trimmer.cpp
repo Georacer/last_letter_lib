@@ -29,7 +29,7 @@ extern "C"
     }
     double * find_state_trim(TrimmerState* trimmer, double * trimTrajectory)
     {
-        static double result[13];
+        static double result[12];
         trimmer->pyFindTrimState(trimTrajectory, result);
         return result;
     }
@@ -41,41 +41,41 @@ extern "C"
 }
 
 TrimmerState::TrimmerState(const string uavName):
-    opt(nlopt::LN_BOBYQA, 11),
+    opt(nlopt::LN_BOBYQA, 10),
     initState(11, 0),
     trimInput(4,0)
 {
     ConfigsStruct_t configs = loadModelConfig(uavName);
     uav = new UavModel(configs);
 
-    // Optimization variables: phi, theta, aoa, aos, p, q, r, da, de, dt, dr: 11 in total
+    // Optimization variables: See TRAJ_ARG_IDX
 
-    std::vector<double> lb(11, 0); // Initialize lower bound vector
-    lb[0] = -M_PI/2; // Phi lower bound
-    lb[1] = -M_PI/2; // Theta lower bound
-    lb[2] = -M_PI/4; // aoa lower bound
-    lb[3] = -M_PI/4; // aos lower bound
-    lb[4] = -3; // p lower bound
-    lb[5] = -3; // q lower bound
-    lb[6] = -1; // r lower bound
-    lb[7] = -1; // deltaa lower bound
-    lb[8] = -1; // deltae lower bound
-    lb[9] = 0; // deltat lower bound
-    lb[10] = -1; // deltar lower bound
+    std::vector<double> lb(10, 0); // Initialize lower bound vector
+    lb[TRAJ_IDX_PHI] = -M_PI/2; // Phi lower bound
+    // lb[TRAJ_IDX_THETA] = -M_PI/2; // Theta lower bound
+    lb[TRAJ_IDX_AOA] = -M_PI/4; // aoa lower bound
+    lb[TRAJ_IDX_AOS] = -M_PI/4; // aos lower bound
+    lb[TRAJ_IDX_P] = -3; // p lower bound
+    lb[TRAJ_IDX_Q] = -3; // q lower bound
+    lb[TRAJ_IDX_R] = -1; // r lower bound
+    lb[TRAJ_IDX_DELTAA] = -1; // deltaa lower bound
+    lb[TRAJ_IDX_DELTAE] = -1; // deltae lower bound
+    lb[TRAJ_IDX_DELTAT] = 0; // deltat lower bound
+    lb[TRAJ_IDX_DELTAR] = -1; // deltar lower bound
     opt.set_lower_bounds(lb);
 
-    std::vector<double> ub(11, 0); // Initialize upper bound vector
-    ub[0] = M_PI/2; // Phi upper bound
-    ub[1] = M_PI/2; // Theta upper bound
-    ub[2] = M_PI/4; // aoa upper bound
-    ub[3] = M_PI/4; // aos upper bound
-    ub[4] = 3; // p upper bound
-    ub[5] = 3; // q upper bound
-    ub[6] = 1; // r upper bound
-    ub[7] = 1; // deltaa upper bound
-    ub[8] = 1; // deltae upper bound
-    ub[9] = 1; // deltat upper bound
-    ub[10] = 1; // deltar upper bound
+    std::vector<double> ub(10, 0); // Initialize upper bound vector
+    ub[TRAJ_IDX_PHI] = M_PI/2; // Phi upper bound
+    // ub[TRAJ_IDX_THETA] = M_PI/2; // Theta upper bound
+    ub[TRAJ_IDX_AOA] = M_PI/4; // aoa upper bound
+    ub[TRAJ_IDX_AOS] = M_PI/4; // aos upper bound
+    ub[TRAJ_IDX_P] = 3; // p upper bound
+    ub[TRAJ_IDX_Q] = 3; // q upper bound
+    ub[TRAJ_IDX_R] = 1; // r upper bound
+    ub[TRAJ_IDX_DELTAA] = 1; // deltaa upper bound
+    ub[TRAJ_IDX_DELTAE] = 1; // deltae upper bound
+    ub[TRAJ_IDX_DELTAT] = 1; // deltat upper bound
+    ub[TRAJ_IDX_DELTAR] = 1; // deltar upper bound
     opt.set_upper_bounds(ub);
 
     // Calculate trim derivatives
@@ -169,10 +169,10 @@ double TrimmerState::costWrapper(const vector<double> &optim_arg, vector<double>
 
     // Setup model input
     std::vector<double> u(4,0);
-    u[0] = optim_arg[7];
-    u[1] = optim_arg[8];
-    u[2] = optim_arg[9];
-    u[3] = optim_arg[10];
+    u[0] = optim_arg[TRAJ_IDX_DELTAA];
+    u[1] = optim_arg[TRAJ_IDX_DELTAE];
+    u[2] = optim_arg[TRAJ_IDX_DELTAT];
+    u[3] = optim_arg[TRAJ_IDX_DELTAR];
     Input_t input = convertInput4ll(u);
     Eigen::Vector4d inputVec;
     inputVec << u[0], u[1], u[2], u[3];
@@ -180,23 +180,28 @@ double TrimmerState::costWrapper(const vector<double> &optim_arg, vector<double>
     // Setup model state
     SimState_t state;
 
+    // Set height
     state.pose.position(2) = -10; // Lift from the ground the aircraft a bit
 
-    Vector3d euler;
-    euler(0) = optim_arg[0];
-    euler(1) = optim_arg[1];
-    euler(2) = 0;
-    Quaterniond orientation = euler2quat(euler).conjugate();
-    state.pose.orientation = orientation;
-
+    // Set linear velocities
     Vector3d airdata;
-    airdata << targetTrajectory.Va, optim_arg[2], optim_arg[3];
+    airdata << targetTrajectory.Va, optim_arg[TRAJ_IDX_AOA], optim_arg[TRAJ_IDX_AOS];
     Vector3d velLinear = getVelocityFromAirdata(airdata);
     state.velocity.linear = velLinear;
 
-    state.velocity.angular(0) = optim_arg[4];
-    state.velocity.angular(1) = optim_arg[5];
-    state.velocity.angular(2) = optim_arg[6];
+    // Set orientation
+    Vector3d euler;
+    euler(0) = optim_arg[TRAJ_IDX_PHI];
+    // euler(1) = optim_arg[TRAJ_IDX_THETA];
+    euler(1) = targetTrajectory.Gamma + airdata(1);
+    euler(2) = 0;
+    Quaterniond orientation = euler2quat(euler).conjugate(); // euler2quat produces q_eb
+    state.pose.orientation = orientation; // but model needs q_be
+
+    // Set angular velocities
+    state.velocity.angular(0) = optim_arg[TRAJ_IDX_P];
+    state.velocity.angular(1) = optim_arg[TRAJ_IDX_Q];
+    state.velocity.angular(2) = optim_arg[TRAJ_IDX_R];
 
     // If your motors have state as well (RPM) you need to set it here again
 
@@ -222,10 +227,10 @@ OptimResult_t TrimmerState::findTrimState(const TrimTrajectoryParameters_t p_tri
     resetFunCallCount();
 
     // Build the initializing input
-    vector<double> vectorInit(11,0);
-    vectorInit[1] = p_trimParams.Gamma; // Set initial theta to gamma
-    vectorInit[6] = p_trimParams.Va/p_trimParams.R*cos(p_trimParams.Gamma); // Set initial r to psi_dot
-    vectorInit[9] = 0.5; // Set initial throttle to half
+    vector<double> vectorInit(10,0);
+    // vectorInit[TRAJ_IDX_THETA] = p_trimParams.Gamma; // Set initial theta to gamma
+    vectorInit[TRAJ_IDX_R] = p_trimParams.Va/p_trimParams.R*cos(p_trimParams.Gamma); // Set initial r to psi_dot
+    vectorInit[TRAJ_IDX_DELTAT] = 0.5; // Set initial throttle to half
     setInitState(vectorInit);
 
     targetTrajectory = p_trimParams;
@@ -241,23 +246,27 @@ OptimResult_t TrimmerState::findTrimState(const TrimTrajectoryParameters_t p_tri
 
         // Store locally the trim state
         trimState.trimState.position(2) = -10;
-        trimState.trimState.euler(0) = result.trimInput[0];
-        trimState.trimState.euler(1) = result.trimInput[1];
+
         Vector3d airdata;
         airdata(0) = targetTrajectory.Va;
-        airdata(1) = result.trimInput[2];
-        airdata(2) = result.trimInput[3];
+        airdata(1) = result.trimInput[TRAJ_IDX_AOA];
+        airdata(2) = result.trimInput[TRAJ_IDX_AOS];
         Vector3d velocities = getVelocityFromAirdata(airdata);
         trimState.trimState.linearVel = velocities;
-        trimState.trimState.angularVel(0) = result.trimInput[4];
-        trimState.trimState.angularVel(1) = result.trimInput[5];
-        trimState.trimState.angularVel(2) = result.trimInput[6];
+
+        trimState.trimState.euler(0) = result.trimInput[TRAJ_IDX_PHI];
+        // trimState.trimState.euler(1) = result.trimInput[TRAJ_IDX_THETA];
+        trimState.trimState.euler(1) = targetTrajectory.Gamma + airdata(1);
+
+        trimState.trimState.angularVel(0) = result.trimInput[TRAJ_IDX_P];
+        trimState.trimState.angularVel(1) = result.trimInput[TRAJ_IDX_Q];
+        trimState.trimState.angularVel(2) = result.trimInput[TRAJ_IDX_R];
 
         // Store locally the trim input
-        trimInput[0] = result.trimInput[7];
-        trimInput[1] = result.trimInput[8];
-        trimInput[2] = result.trimInput[9];
-        trimInput[3] = result.trimInput[10];
+        trimInput[0] = result.trimInput[TRAJ_IDX_DELTAA];
+        trimInput[1] = result.trimInput[TRAJ_IDX_DELTAE];
+        trimInput[2] = result.trimInput[TRAJ_IDX_DELTAT];
+        trimInput[3] = result.trimInput[TRAJ_IDX_DELTAR];
     }
     catch (exception &e)
     {

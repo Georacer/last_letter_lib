@@ -45,6 +45,22 @@ struct OptimResult_t {
     bool success;
 };
 
+// Indices of optimization variables within the trajectory optimizer argument vector
+enum TRAJ_ARG_IDX
+{
+    TRAJ_IDX_PHI = 0,
+    // TRAJ_IDX_THETA,
+    TRAJ_IDX_AOA,
+    TRAJ_IDX_AOS,
+    TRAJ_IDX_P,
+    TRAJ_IDX_Q,
+    TRAJ_IDX_R,
+    TRAJ_IDX_DELTAA,
+    TRAJ_IDX_DELTAE,
+    TRAJ_IDX_DELTAT,
+    TRAJ_IDX_DELTAR
+};
+
 class TrimmerState
 {
     public:
