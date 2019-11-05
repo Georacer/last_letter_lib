@@ -29,7 +29,7 @@ extern "C"
     }
     double * find_state_trim(TrimmerState* trimmer, double * trimTrajectory)
     {
-        static double result[14];
+        static double result[13];
         trimmer->pyFindTrimState(trimTrajectory, result);
         return result;
     }
@@ -41,43 +41,41 @@ extern "C"
 }
 
 TrimmerState::TrimmerState(const string uavName):
-    opt(nlopt::LN_BOBYQA, 12),
-    initState(12, 0),
+    opt(nlopt::LN_BOBYQA, 11),
+    initState(11, 0),
     trimInput(4,0)
 {
     ConfigsStruct_t configs = loadModelConfig(uavName);
     uav = new UavModel(configs);
 
-    // Optimization variables: phi, theta, Va, aoa, aos, p, q, r, da, de, dt, dr: 12 in total
+    // Optimization variables: phi, theta, aoa, aos, p, q, r, da, de, dt, dr: 11 in total
 
-    std::vector<double> lb(12, 0); // Initialize lower bound vector
+    std::vector<double> lb(11, 0); // Initialize lower bound vector
     lb[0] = -M_PI/2; // Phi lower bound
     lb[1] = -M_PI/2; // Theta lower bound
-    lb[2] = 1; // Va lower bound
-    lb[3] = -M_PI/4; // aoa lower bound
-    lb[4] = -M_PI/4; // aos lower bound
-    lb[5] = -3; // p lower bound
-    lb[6] = -3; // q lower bound
-    lb[7] = -1; // r lower bound
-    lb[8] = -1; // deltaa lower bound
-    lb[9] = -1; // deltae lower bound
-    lb[10] = 0; // deltat lower bound
-    lb[11] = -1; // deltar lower bound
+    lb[2] = -M_PI/4; // aoa lower bound
+    lb[3] = -M_PI/4; // aos lower bound
+    lb[4] = -3; // p lower bound
+    lb[5] = -3; // q lower bound
+    lb[6] = -1; // r lower bound
+    lb[7] = -1; // deltaa lower bound
+    lb[8] = -1; // deltae lower bound
+    lb[9] = 0; // deltat lower bound
+    lb[10] = -1; // deltar lower bound
     opt.set_lower_bounds(lb);
 
-    std::vector<double> ub(12, 0); // Initialize upper bound vector
+    std::vector<double> ub(11, 0); // Initialize upper bound vector
     ub[0] = M_PI/2; // Phi upper bound
     ub[1] = M_PI/2; // Theta upper bound
-    ub[2] = 50; // Va upper bound
-    ub[3] = M_PI/4; // aoa upper bound
-    ub[4] = M_PI/4; // aos upper bound
-    ub[5] = 3; // p upper bound
-    ub[6] = 3; // q upper bound
-    ub[7] = 1; // r upper bound
-    ub[8] = 1; // deltaa upper bound
-    ub[9] = 1; // deltae upper bound
-    ub[10] = 1; // deltat upper bound
-    ub[11] = 1; // deltar upper bound
+    ub[2] = M_PI/4; // aoa upper bound
+    ub[3] = M_PI/4; // aos upper bound
+    ub[4] = 3; // p upper bound
+    ub[5] = 3; // q upper bound
+    ub[6] = 1; // r upper bound
+    ub[7] = 1; // deltaa upper bound
+    ub[8] = 1; // deltae upper bound
+    ub[9] = 1; // deltat upper bound
+    ub[10] = 1; // deltar upper bound
     opt.set_upper_bounds(ub);
 
     // Calculate trim derivatives
@@ -104,11 +102,11 @@ void TrimmerState::resetFunCallCount()
 // Calculate the optimization error cost, based on the optimized input and the corresponding derivative
 double TrimmerState::calcCost(const SimState_t state, const Derivatives_t stateDer, Eigen::Vector4d input)
 {
-    double derPositionWeight = 10;
-    double derSpeedWeight = 10;
-    double derAngleWeight = 1000;
+    double derPositionWeight = 1000;
+    double derSpeedWeight = 100;
+    double derAngleWeight = 100000;
     double derRateWeight = 100;
-    double airspeedWeight = 100;
+    // double airspeedWeight = 100;
     double aosWeight = 1;
     double inputWeight = 1;
 
@@ -141,8 +139,8 @@ double TrimmerState::calcCost(const SimState_t state, const Derivatives_t stateD
 
     // Calculate output error
     Vector3d airdata = getAirData(state.velocity.linear);
-    double airspeedError = targetVa - airdata(0);
-    double airspeedTerm = airspeedError * airspeedWeight * airspeedError;
+    // double airspeedError = targetVa - airdata(0);
+    // double airspeedTerm = airspeedError * airspeedWeight * airspeedError;
 
     double aosTerm = airdata(2) * aosWeight * airdata(2);
 
@@ -150,7 +148,8 @@ double TrimmerState::calcCost(const SimState_t state, const Derivatives_t stateD
     double inputTerm = input.transpose()*inputWeight*input;
 
     return posDerTerm + speedDerTerm + angleDerTerm + rateDerTerm
-           + airspeedTerm + aosTerm
+           + aosTerm
+        //    + airspeedTerm + aosTerm
            + inputTerm;
 }
 
@@ -161,10 +160,10 @@ double TrimmerState::costWrapper(const vector<double> &optim_arg, vector<double>
 
     // Setup model input
     std::vector<double> u(4,0);
-    u[0] = optim_arg[8];
-    u[1] = optim_arg[9];
-    u[2] = optim_arg[10];
-    u[3] = optim_arg[11];
+    u[0] = optim_arg[7];
+    u[1] = optim_arg[8];
+    u[2] = optim_arg[9];
+    u[3] = optim_arg[10];
     Input_t input = convertInput4ll(u);
     Eigen::Vector4d inputVec;
     inputVec << u[0], u[1], u[2], u[3];
@@ -182,13 +181,13 @@ double TrimmerState::costWrapper(const vector<double> &optim_arg, vector<double>
     state.pose.orientation = orientation;
 
     Vector3d airdata;
-    airdata << optim_arg[2], optim_arg[3], optim_arg[4];
+    airdata << targetTrajectory.Va, optim_arg[2], optim_arg[3];
     Vector3d velLinear = getVelocityFromAirdata(airdata);
     state.velocity.linear = velLinear;
 
-    state.velocity.angular(0) = optim_arg[5];
-    state.velocity.angular(1) = optim_arg[6];
-    state.velocity.angular(2) = optim_arg[7];
+    state.velocity.angular(0) = optim_arg[4];
+    state.velocity.angular(1) = optim_arg[5];
+    state.velocity.angular(2) = optim_arg[6];
 
     // If your motors have state as well (RPM) you need to set it here again
 
@@ -214,11 +213,10 @@ OptimResult_t TrimmerState::findTrimState(const TrimTrajectoryParameters_t p_tri
     resetFunCallCount();
 
     // Build the initializing input
-    vector<double> vectorInit(12,0);
+    vector<double> vectorInit(11,0);
     vectorInit[1] = p_trimParams.Gamma; // Set initial theta to gamma
-    vectorInit[2] = p_trimParams.Va; // Set initial Va to trim Va
-    vectorInit[7] = p_trimParams.Va/p_trimParams.R*cos(p_trimParams.Gamma); // Set initial r to psi_dot
-    vectorInit[10] = 0.5; // Set initial throttle to half
+    vectorInit[6] = p_trimParams.Va/p_trimParams.R*cos(p_trimParams.Gamma); // Set initial r to psi_dot
+    vectorInit[9] = 0.5; // Set initial throttle to half
     setInitState(vectorInit);
 
     targetTrajectory = p_trimParams;
@@ -237,20 +235,20 @@ OptimResult_t TrimmerState::findTrimState(const TrimTrajectoryParameters_t p_tri
         trimState.trimState.euler(0) = result.trimInput[0];
         trimState.trimState.euler(1) = result.trimInput[1];
         Vector3d airdata;
-        airdata(0) = result.trimInput[2];
-        airdata(1) = result.trimInput[3];
-        airdata(2) = result.trimInput[4];
+        airdata(0) = targetTrajectory.Va;
+        airdata(1) = result.trimInput[2];
+        airdata(2) = result.trimInput[3];
         Vector3d velocities = getVelocityFromAirdata(airdata);
         trimState.trimState.linearVel = velocities;
-        trimState.trimState.angularVel(0) = result.trimInput[5];
-        trimState.trimState.angularVel(1) = result.trimInput[6];
-        trimState.trimState.angularVel(2) = result.trimInput[7];
+        trimState.trimState.angularVel(0) = result.trimInput[4];
+        trimState.trimState.angularVel(1) = result.trimInput[5];
+        trimState.trimState.angularVel(2) = result.trimInput[6];
 
         // Store locally the trim input
-        trimInput[0] = result.trimInput[8];
-        trimInput[1] = result.trimInput[9];
-        trimInput[2] = result.trimInput[10];
-        trimInput[3] = result.trimInput[11];
+        trimInput[0] = result.trimInput[7];
+        trimInput[1] = result.trimInput[8];
+        trimInput[2] = result.trimInput[9];
+        trimInput[3] = result.trimInput[10];
     }
     catch (exception &e)
     {
@@ -282,8 +280,8 @@ void TrimmerState::pyFindTrimState(double * trimParamArray, double * result)
     {
         result[i] = resultStruct.trimInput[i];
     }
-    result[12] = resultStruct.cost;
-    result[13] = (double)resultStruct.success;
+    result[11] = resultStruct.cost;
+    result[12] = (double)resultStruct.success;
 }
 
 string TrimmerState::printOptimalResult(bool verbose)
@@ -322,6 +320,7 @@ string TrimmerState::printOptimalResult(bool verbose)
     cout << "Airspeed:\t" << airdata(0) << "(" << targetTrajectory.Va << ")\n";
     cout << "Gamma:\t" << gamma*180/M_PI << "(" << targetTrajectory.Gamma*180/M_PI << ")\n";
     cout << "R:\t" << R << "(" << targetTrajectory.R << ")\n";
+    cout << "AoS:\t" << airdata(2) << "\n";
     oss << endl;
 
     if (verbose)

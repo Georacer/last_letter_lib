@@ -20,8 +20,8 @@ int main(int argc, char * argv[])
 
     TrimmerState trimmer(uavName);
 
-    // uint32_t loopNum=1000;
-    uint32_t loopNum=1;
+    uint32_t loopNum=1000;
+    // uint32_t loopNum=1;
     double seconds;
 
     cout << "Testing optimization time requirement." << endl;

@@ -57,7 +57,7 @@ class TrimmerState():
     dll = None
     obj = None
     trim_func = None
-    input_type = ct.c_double * 14
+    input_type = ct.c_double * 13
     output_type = ct.POINTER(ct.c_double)
     trim_state = None
 
@@ -84,8 +84,8 @@ class TrimmerState():
         return self.input_type(*trim_trajectory_np)
 
     def convert_trim_state(self, trim_state_ct):
-        trim_state = np.zeros(14)
-        for i in range(14):
+        trim_state = np.zeros(13)
+        for i in range(13):
             trim_state[i] = trim_state_ct[i]
         return trim_state
 
