@@ -29,7 +29,7 @@ extern "C"
     }
     double * find_state_trim(TrimmerState* trimmer, double * trimTrajectory)
     {
-        static double result[12];
+        static double result[9];
         trimmer->pyFindTrimState(trimTrajectory, result);
         return result;
     }
@@ -41,51 +41,40 @@ extern "C"
 }
 
 TrimmerState::TrimmerState(const string uavName):
-    opt(nlopt::LN_BOBYQA, 10),
-    initState(11, 0),
-    trimInput(4,0)
+    opt(nlopt::LN_BOBYQA, 7),
+    initState(7, 0)
 {
     ConfigsStruct_t configs = loadModelConfig(uavName);
     uav = new UavModel(configs);
 
     // Optimization variables: See TRAJ_ARG_IDX
 
-    std::vector<double> lb(10, 0); // Initialize lower bound vector
+    std::vector<double> lb(7, 0); // Initialize lower bound vector
     lb[TRAJ_IDX_PHI] = -M_PI/2; // Phi lower bound
-    // lb[TRAJ_IDX_THETA] = -M_PI/2; // Theta lower bound
     lb[TRAJ_IDX_AOA] = -M_PI/4; // aoa lower bound
     lb[TRAJ_IDX_AOS] = -M_PI/4; // aos lower bound
-    lb[TRAJ_IDX_P] = -3; // p lower bound
-    lb[TRAJ_IDX_Q] = -3; // q lower bound
-    lb[TRAJ_IDX_R] = -1; // r lower bound
     lb[TRAJ_IDX_DELTAA] = -1; // deltaa lower bound
     lb[TRAJ_IDX_DELTAE] = -1; // deltae lower bound
     lb[TRAJ_IDX_DELTAT] = 0; // deltat lower bound
     lb[TRAJ_IDX_DELTAR] = -1; // deltar lower bound
     opt.set_lower_bounds(lb);
 
-    std::vector<double> ub(10, 0); // Initialize upper bound vector
+    std::vector<double> ub(7, 0); // Initialize upper bound vector
     ub[TRAJ_IDX_PHI] = M_PI/2; // Phi upper bound
-    // ub[TRAJ_IDX_THETA] = M_PI/2; // Theta upper bound
     ub[TRAJ_IDX_AOA] = M_PI/4; // aoa upper bound
     ub[TRAJ_IDX_AOS] = M_PI/4; // aos upper bound
-    ub[TRAJ_IDX_P] = 3; // p upper bound
-    ub[TRAJ_IDX_Q] = 3; // q upper bound
-    ub[TRAJ_IDX_R] = 1; // r upper bound
     ub[TRAJ_IDX_DELTAA] = 1; // deltaa upper bound
     ub[TRAJ_IDX_DELTAE] = 1; // deltae upper bound
     ub[TRAJ_IDX_DELTAT] = 1; // deltat upper bound
     ub[TRAJ_IDX_DELTAR] = 1; // deltar upper bound
     opt.set_upper_bounds(ub);
 
-    // Calculate trim derivatives
-
     opt.set_min_objective(objFunWrapper, this);
 
     // opt.set_xtol_abs(1e-2);
     // opt.set_xtol_rel(1e-4);
-    // opt.set_ftol_abs(0.0001);
-    opt.set_ftol_rel(1e-5);
+    // opt.set_ftol_abs(1e-7);
+    opt.set_ftol_rel(1e-4);
 }
 TrimmerState::~TrimmerState()
 {}
@@ -101,87 +90,57 @@ void TrimmerState::resetFunCallCount()
 }
 
 // Calculate the optimization error cost, based on the optimized input and the corresponding derivative
-double TrimmerState::calcCost(const SimState_t state, const Derivatives_t stateDer, Eigen::Vector4d input)
+double TrimmerState::calcCost(const SimState_t state, const Derivatives_t stateDer, const Input_t input)
 {
-    double derPositionWeight = 1000;
-    double derSpeedWeight = 100;
-    double derAngleWeight = 1000;
-    double derRateWeight = 1000;
-    // double airspeedWeight = 100;
-    double aosWeight = 1;
-    double gammaWeight = 0;
+    // State derivative weights
+    double derSpeedWeight = 10;
+    double derRateWeight = 10;
+    // State weights
+    double aosWeight = 10;
+    // Input weights
     Eigen::Matrix<double, 4, 4> inputWeight;
     inputWeight.setZero();
     inputWeight.diagonal() << 0, 0, 1, 0;
 
-    double targetVa = targetTrajectory.Va;
-    double targetGamma = targetTrajectory.Gamma;
-    double targetR = targetTrajectory.R;
-
-    double posDownDotDesired = -targetVa*sin(targetGamma);
-    double psiDotDesired = targetVa/targetR*cos(targetGamma);
-
-    // Calculate position derivative error
-    double posDotError = posDownDotDesired - stateDer.posDot(2);
-    double posDerTerm = posDotError * derPositionWeight * posDotError;
+    /////////////////////////
+    // State derivative error costs
+    // The position and orientation derivatives are not taken into account, because they are designed to be optimal
+    // and the optimized input vector does not affect them anyway.
 
     // Calculate velocity derivative error
     double speedDerTerm = stateDer.speedDot.transpose()*derSpeedWeight*stateDer.speedDot;
 
-    // Calculate angle derivative error
-    Vector3d angleDerDesired;
-    angleDerDesired << 0, 0, psiDotDesired;
-    Vector3d eulerAngles = quat2euler(state.pose.orientation);
-    Vector3d eulerDerivatives(getEulerDerivatives(eulerAngles, state.velocity.angular));
-    Vector3d angleDerError = angleDerDesired - eulerDerivatives;
-    double angleDerTerm = angleDerError.transpose() * derAngleWeight * angleDerError;
-
     // Calculate rate derivative error
     double rateDerTerm = stateDer.rateDot.transpose()*derRateWeight*stateDer.rateDot;
-    // The position and orientation derivatives are not taken into account, because they are designed to be optimal
-    // and the optimized input vector does not affect them anyway.
 
+    ////////////////////
+    // State error costs
     // Calculate output error
     Vector3d airdata = getAirData(state.velocity.linear);
-    // double airspeedError = targetVa - airdata(0);
-    // double airspeedTerm = airspeedError * airspeedWeight * airspeedError;
-
-    double gamma = eulerAngles(1) - airdata(1);
-    double gammaError = targetGamma - gamma;
-    double gammaTerm = gammaError * gammaWeight * gammaError;
 
     double aosTerm = airdata(2) * aosWeight * airdata(2);
 
-    // Calculate input cost
-    double inputTerm = input.transpose()*inputWeight*input;
+    //////////////
+    // Input costs
+    Eigen::Vector4d inputVec;
+    inputVec << input.value[0],  input.value[1], input.value[2], input.value[3];
+    double inputTerm = inputVec.transpose()*inputWeight*inputVec;
 
-    return posDerTerm + speedDerTerm + angleDerTerm + rateDerTerm
+    /////////
+    // Sum up
+    return + speedDerTerm + rateDerTerm
            + aosTerm
-        //    + airspeedTerm + aosTerm
-           + gammaTerm
            + inputTerm;
 }
 
-// Wrapper to the cost function. Accepts concatenated state and input x under optimization and also passes the trimState parameter to the cost function
-double TrimmerState::costWrapper(const vector<double> &optim_arg, vector<double> &grad)
+SimState_t TrimmerState::buildStateFromArgs(const vector<double> optim_arg)
 {
-    ++funCallCount;
-
-    // Setup model input
-    std::vector<double> u(4,0);
-    u[0] = optim_arg[TRAJ_IDX_DELTAA];
-    u[1] = optim_arg[TRAJ_IDX_DELTAE];
-    u[2] = optim_arg[TRAJ_IDX_DELTAT];
-    u[3] = optim_arg[TRAJ_IDX_DELTAR];
-    Input_t input = convertInput4ll(u);
-    Eigen::Vector4d inputVec;
-    inputVec << u[0], u[1], u[2], u[3];
-
-    // Setup model state
     SimState_t state;
 
     // Set height
-    state.pose.position(2) = -10; // Lift from the ground the aircraft a bit
+    state.pose.position(0) = 0;
+    state.pose.position(1) = 0;
+    state.pose.position(2) = -10; // Lift from the ground the aircraft a bit to avoid ground reactions
 
     // Set linear velocities
     Vector3d airdata;
@@ -199,11 +158,35 @@ double TrimmerState::costWrapper(const vector<double> &optim_arg, vector<double>
     state.pose.orientation = orientation; // but model needs q_be
 
     // Set angular velocities
-    state.velocity.angular(0) = optim_arg[TRAJ_IDX_P];
-    state.velocity.angular(1) = optim_arg[TRAJ_IDX_Q];
-    state.velocity.angular(2) = optim_arg[TRAJ_IDX_R];
+    double targetPsiDot = targetTrajectory.Va*cos(targetTrajectory.Gamma)/targetTrajectory.R;
+    Vector3d targetEulerDot(0, 0, targetPsiDot);
+    Vector3d angularRates = getAngularRatesFromEulerDerivatives(euler, targetEulerDot);
+    state.velocity.angular = angularRates;
 
     // If your motors have state as well (RPM) you need to set it here again
+    return state;
+}
+
+Input_t TrimmerState::buildInputFromArgs(const vector<double> optim_arg)
+{
+    Input_t input;
+    // Setup model input
+    input.value[0] = optim_arg[TRAJ_IDX_DELTAA];
+    input.value[1] = optim_arg[TRAJ_IDX_DELTAE];
+    input.value[2] = optim_arg[TRAJ_IDX_DELTAT];
+    input.value[3] = optim_arg[TRAJ_IDX_DELTAR];
+
+    return input;
+}
+
+// Wrapper to the cost function. Accepts concatenated state and input x under optimization and also passes the trimState parameter to the cost function
+double TrimmerState::costWrapper(const vector<double> &optim_arg, vector<double> &grad)
+{
+    ++funCallCount;
+
+    // Setup model state
+    SimState_t state = buildStateFromArgs(optim_arg);
+    Input_t input = buildInputFromArgs(optim_arg);
 
     // Simulate the optimization arguments
     uav->setState(state);
@@ -213,7 +196,7 @@ double TrimmerState::costWrapper(const vector<double> &optim_arg, vector<double>
     Derivatives_t stateDot = uav->kinematics.stateDot;
 
     // Calculate the optimization cost
-    return calcCost(state, stateDot, inputVec);
+    return calcCost(state, stateDot, input);
 }
 
 double TrimmerState::objFunWrapper(const vector<double> &u, vector<double> &grad, void *trimmerObjPtr)
@@ -227,46 +210,23 @@ OptimResult_t TrimmerState::findTrimState(const TrimTrajectoryParameters_t p_tri
     resetFunCallCount();
 
     // Build the initializing input
-    vector<double> vectorInit(10,0);
-    // vectorInit[TRAJ_IDX_THETA] = p_trimParams.Gamma; // Set initial theta to gamma
-    vectorInit[TRAJ_IDX_R] = p_trimParams.Va/p_trimParams.R*cos(p_trimParams.Gamma); // Set initial r to psi_dot
+    vector<double> vectorInit(7,0);
     vectorInit[TRAJ_IDX_DELTAT] = 0.5; // Set initial throttle to half
     setInitState(vectorInit);
 
     targetTrajectory = p_trimParams;
 
-    result.trimInput = initState;
+    result.trimValues = initState;
 
     try
     {
-        nlopt::result returnCode = opt.optimize(result.trimInput, result.cost);
+        nlopt::result returnCode = opt.optimize(result.trimValues, result.cost);
 
         result.returnCode = returnCode;
         result.success = true;
 
-        // Store locally the trim state
-        trimState.trimState.position(2) = -10;
-
-        Vector3d airdata;
-        airdata(0) = targetTrajectory.Va;
-        airdata(1) = result.trimInput[TRAJ_IDX_AOA];
-        airdata(2) = result.trimInput[TRAJ_IDX_AOS];
-        Vector3d velocities = getVelocityFromAirdata(airdata);
-        trimState.trimState.linearVel = velocities;
-
-        trimState.trimState.euler(0) = result.trimInput[TRAJ_IDX_PHI];
-        // trimState.trimState.euler(1) = result.trimInput[TRAJ_IDX_THETA];
-        trimState.trimState.euler(1) = targetTrajectory.Gamma + airdata(1);
-
-        trimState.trimState.angularVel(0) = result.trimInput[TRAJ_IDX_P];
-        trimState.trimState.angularVel(1) = result.trimInput[TRAJ_IDX_Q];
-        trimState.trimState.angularVel(2) = result.trimInput[TRAJ_IDX_R];
-
-        // Store locally the trim input
-        trimInput[0] = result.trimInput[TRAJ_IDX_DELTAA];
-        trimInput[1] = result.trimInput[TRAJ_IDX_DELTAE];
-        trimInput[2] = result.trimInput[TRAJ_IDX_DELTAT];
-        trimInput[3] = result.trimInput[TRAJ_IDX_DELTAR];
+        trimState = buildStateFromArgs(result.trimValues);
+        trimInput = buildInputFromArgs(result.trimValues);
     }
     catch (exception &e)
     {
@@ -281,10 +241,10 @@ OptimResult_t TrimmerState::findTrimState(const TrimTrajectoryParameters_t p_tri
 // Input: a double array[3] holding the trim values for (in order):
 //  Va, gamma, R
 // Ouptut: a double array[14] holding:
-//  Positions 0-8: the trim state (phi, theta, Va, alpha, beta, p, q, r)
-//  Positions 9-11: the trim control inputs
-//  Position 12: the optimization cost
-//  Position 13: the success flag (0/1)
+//  Positions 0-2: the trim state (phi, aoa, aos)
+//  Positions 3-6: the trim control inputs (da, de, dt, dr)
+//  Position 7: the optimization cost
+//  Position 8: the success flag (0/1)
 void TrimmerState::pyFindTrimState(double * trimParamArray, double * result)
 {
     TrimTrajectoryParameters_t trimParams;
@@ -294,20 +254,20 @@ void TrimmerState::pyFindTrimState(double * trimParamArray, double * result)
 
     OptimResult_t resultStruct = findTrimState(trimParams);
 
-    for (int i=0; i<12; i++)
+    for (int i=0; i<7; i++)
     {
-        result[i] = resultStruct.trimInput[i];
+        result[i] = resultStruct.trimValues[i];
     }
-    result[11] = resultStruct.cost;
-    result[12] = (double)resultStruct.success;
+    result[7] = resultStruct.cost;
+    result[8] = (double)resultStruct.success;
 }
 
 string TrimmerState::printOptimalResult(bool verbose)
 {
     ostringstream oss;
     // Re-run the optimal state and input
-    uav->setState(convertState4ll(trimState.trimState));
-    uav->setInput(convertInput4ll(trimInput));
+    uav->setState(trimState);
+    uav->setInput(trimInput);
     uav->step();
 
     Vector3d eulerAngles = quat2euler(uav->state.pose.orientation);
@@ -332,8 +292,8 @@ string TrimmerState::printOptimalResult(bool verbose)
     oss << endl;
     oss << endl;
 
-    Eigen::Vector3d airdata = getAirData(trimState.trimState.linearVel);
-    double gamma = trimState.trimState.euler(1) - airdata(1);
+    Eigen::Vector3d airdata = getAirData(trimState.velocity.linear);
+    double gamma = eulerAngles(1) - airdata(1);
     double R = airdata(0)*cos(gamma)/eulerDot(2);
 
     cout << setprecision(3);
@@ -495,11 +455,11 @@ OptimResult_t TrimmerInput::findTrimInput(const TrimStateParameters_t p_trimPara
     trimState = calcTrimState(p_trimParams);
 
     // Copy the initializing input
-    result.trimInput = initInput;
+    result.trimValues = initInput;
 
     try
     {
-        nlopt::result returnCode = opt.optimize(result.trimInput, result.cost);
+        nlopt::result returnCode = opt.optimize(result.trimValues, result.cost);
 
         result.returnCode = returnCode;
         result.success = true;
@@ -533,10 +493,10 @@ void TrimmerInput::pyFindTrimInput(double * trimParamArray, double * result)
     OptimResult_t resultStruct = findTrimInput(trimParams);
 
     // double result[6];
-    result[0] = resultStruct.trimInput[0];
-    result[1] = resultStruct.trimInput[1];
-    result[2] = resultStruct.trimInput[2];
-    result[3] = resultStruct.trimInput[3];
+    result[0] = resultStruct.trimValues[0];
+    result[1] = resultStruct.trimValues[1];
+    result[2] = resultStruct.trimValues[2];
+    result[3] = resultStruct.trimValues[3];
     result[4] = resultStruct.cost;
     result[5] = (double)resultStruct.success;
 }
@@ -546,7 +506,7 @@ string TrimmerInput::printOptimalResult(bool verbose)
     ostringstream oss;
     // Re-run the optimal state and input
     uav->setState(convertState4ll(trimState.trimState));
-    uav->setInput(convertInput4ll(result.trimInput));
+    uav->setInput(convertInput4ll(result.trimValues));
     uav->step();
 
     oss << "Optimal calculated propagated state:\n";

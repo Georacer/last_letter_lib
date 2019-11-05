@@ -39,7 +39,7 @@ struct TrimState_t {
 }; 
 
 struct OptimResult_t {
-    vector<double> trimInput;
+    vector<double> trimValues;
     double cost;
     int returnCode;
     bool success;
@@ -52,9 +52,9 @@ enum TRAJ_ARG_IDX
     // TRAJ_IDX_THETA,
     TRAJ_IDX_AOA,
     TRAJ_IDX_AOS,
-    TRAJ_IDX_P,
-    TRAJ_IDX_Q,
-    TRAJ_IDX_R,
+    // TRAJ_IDX_P,
+    // TRAJ_IDX_Q,
+    // TRAJ_IDX_R,
     TRAJ_IDX_DELTAA,
     TRAJ_IDX_DELTAE,
     TRAJ_IDX_DELTAT,
@@ -71,8 +71,8 @@ class TrimmerState
     OptimResult_t result;
     vector<double> initState;
 
-    TrimState_t trimState;
-    vector<double> trimInput;
+    SimState_t trimState;
+    Input_t trimInput;
 
     TrimTrajectoryParameters_t targetTrajectory;
 
@@ -80,8 +80,9 @@ class TrimmerState
     ~TrimmerState();
     void setInitState(vector<double>);
     void resetFunCallCount();
-    TrimState_t calcTrimState(const TrimTrajectoryParameters_t);
-    double calcCost(const SimState_t state, const Derivatives_t stateDer, Eigen::Vector4d input);
+    double calcCost(const SimState_t state, const Derivatives_t stateDer, const Input_t input);
+    SimState_t buildStateFromArgs(const vector<double> optim_arg);
+    Input_t buildInputFromArgs(const vector<double> optim_arg);
     double costWrapper(const vector<double> &u, vector<double> &grad);
     static double objFunWrapper(const vector<double> &u, vector<double> &grad, void *trimmerObjPtr);
     OptimResult_t findTrimState(const TrimTrajectoryParameters_t);

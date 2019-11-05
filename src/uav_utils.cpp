@@ -87,7 +87,6 @@ Vector3d getEulerDerivatives(Vector3d euler, Vector3d rates)
 {
 	double phi = euler(0);
 	double theta = euler(1);
-	double psi = euler(2);
 	double p = rates(0);
 	double q = rates(1);
 	double r = rates(2);
@@ -98,6 +97,22 @@ Vector3d getEulerDerivatives(Vector3d euler, Vector3d rates)
 
 	Vector3d result;
 	result << phiDot, thetaDot, psiDot;
+	return result;
+}
+
+Vector3d getAngularRatesFromEulerDerivatives(Vector3d euler, Vector3d eulerDot)
+{
+	double phi = euler(0);
+	double theta = euler(1);
+	double phiDot = eulerDot(0);
+	double thetaDot = eulerDot(1);
+	double psiDot = eulerDot(2);
+
+	double pDot = phiDot -sin(theta)*psiDot;
+	double qDot = cos(phi)*thetaDot + sin(phi)*cos(theta)*psiDot;
+	double rDot = -sin(phi)*thetaDot + cos(phi)*cos(theta)*psiDot;
+
+	Vector3d result(pDot, qDot, rDot);
 	return result;
 }
 

@@ -54,7 +54,7 @@ int main(int argc, char * argv[])
     auto t_end = chrono::steady_clock::now();
     seconds = (double)chrono::duration_cast<chrono::milliseconds>(t_end-t_start).count()/1000;
 
-    cout << "Found minimum at\n" << vectorToString2(result.trimInput) << "\n with value = " << setprecision(10) << result.cost << endl;
+    cout << "Found minimum at\n" << vectorToString2(result.trimValues) << "\n with value = " << setprecision(10) << result.cost << endl;
     cout << "after " << trimmer.funCallCount << " function calls.\n";
     cout << "Optimization return code: " << result.returnCode << endl;
     cout << endl;

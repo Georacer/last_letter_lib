@@ -57,7 +57,8 @@ class TrimmerState():
     dll = None
     obj = None
     trim_func = None
-    input_type = ct.c_double * 13
+    n_args = 7 # Number of optimization arguments
+    input_type = ct.c_double * (n_args+2)  # Plus 2 values for optimization cost and success flag
     output_type = ct.POINTER(ct.c_double)
     trim_state = None
 
@@ -84,8 +85,8 @@ class TrimmerState():
         return self.input_type(*trim_trajectory_np)
 
     def convert_trim_state(self, trim_state_ct):
-        trim_state = np.zeros(13)
-        for i in range(13):
+        trim_state = np.zeros(self.n_args+2)
+        for i in range(self.n_args+2):
             trim_state[i] = trim_state_ct[i]
         return trim_state
 
@@ -105,7 +106,7 @@ if __name__ == '__main__':
     trimmer = TrimmerState(uav_name)
     print('Successfully loaded Trimmer object')
 
-    trim_states = np.array([15, np.deg2rad(15), -200])
+    trim_states = np.array([10, np.deg2rad(30), 200])
     # Va, gamma, R
     print('Obtaining trim input: 1000 repetitions')
     t_start = time.time()

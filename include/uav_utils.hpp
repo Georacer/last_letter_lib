@@ -106,6 +106,7 @@ Vector3d getVelocityFromAirdata(Vector3d airdata);
 ////////////////////////////
 
 Vector3d getEulerDerivatives(Vector3d euler, Vector3d rates);
+Vector3d getAngularRatesFromEulerDerivatives(Vector3d euler, Vector3d eulerDot);
 
 //////////////
 // Controllers
