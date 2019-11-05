@@ -83,8 +83,9 @@ TrimmerState::TrimmerState(const string uavName):
     opt.set_min_objective(objFunWrapper, this);
 
     // opt.set_xtol_abs(1e-2);
-    opt.set_ftol_abs(0.001);
     // opt.set_xtol_rel(1e-4);
+    // opt.set_ftol_abs(0.0001);
+    opt.set_ftol_rel(1e-5);
 }
 TrimmerState::~TrimmerState()
 {}
@@ -104,11 +105,14 @@ double TrimmerState::calcCost(const SimState_t state, const Derivatives_t stateD
 {
     double derPositionWeight = 1000;
     double derSpeedWeight = 100;
-    double derAngleWeight = 100000;
-    double derRateWeight = 100;
+    double derAngleWeight = 1000;
+    double derRateWeight = 1000;
     // double airspeedWeight = 100;
     double aosWeight = 1;
-    double inputWeight = 1;
+    double gammaWeight = 0;
+    Eigen::Matrix<double, 4, 4> inputWeight;
+    inputWeight.setZero();
+    inputWeight.diagonal() << 0, 0, 1, 0;
 
     double targetVa = targetTrajectory.Va;
     double targetGamma = targetTrajectory.Gamma;
@@ -142,6 +146,10 @@ double TrimmerState::calcCost(const SimState_t state, const Derivatives_t stateD
     // double airspeedError = targetVa - airdata(0);
     // double airspeedTerm = airspeedError * airspeedWeight * airspeedError;
 
+    double gamma = eulerAngles(1) - airdata(1);
+    double gammaError = targetGamma - gamma;
+    double gammaTerm = gammaError * gammaWeight * gammaError;
+
     double aosTerm = airdata(2) * aosWeight * airdata(2);
 
     // Calculate input cost
@@ -150,6 +158,7 @@ double TrimmerState::calcCost(const SimState_t state, const Derivatives_t stateD
     return posDerTerm + speedDerTerm + angleDerTerm + rateDerTerm
            + aosTerm
         //    + airspeedTerm + aosTerm
+           + gammaTerm
            + inputTerm;
 }
 
@@ -292,14 +301,18 @@ string TrimmerState::printOptimalResult(bool verbose)
     uav->setInput(convertInput4ll(trimInput));
     uav->step();
 
+    Vector3d eulerAngles = quat2euler(uav->state.pose.orientation);
+    Vector3d eulerDot = getEulerDerivatives(eulerAngles, uav->state.velocity.angular);
+
     oss << "Optimal calculated propagated state:\n";
     oss << "position:\n" << vectorToString2(uav->state.pose.position, "\n");
-    oss << "orientation:\n" << vectorToString2(uav->state.pose.orientation, "\n");
+    oss << "orientation:\n" << vectorToString2(eulerAngles, "\n");
     oss << "linearVel:\n" << vectorToString2(uav->state.velocity.linear, "\n");
     oss << "angularVel:\n" << vectorToString2(uav->state.velocity.angular, "\n");
     oss << endl;
     oss << "Optimal state derivatives:\n";
     oss << "posDot:\n" << vectorToString2(uav->kinematics.stateDot.posDot, "\n");
+    oss << "AngleDot:\n" << vectorToString2(eulerDot, "\n");
     oss << "speedDot:\n" << vectorToString2(uav->kinematics.stateDot.speedDot, "\n");
     oss << "rateDot:\n" << vectorToString2(uav->kinematics.stateDot.rateDot, "\n");
     oss << "Trim input:\n";
@@ -312,7 +325,6 @@ string TrimmerState::printOptimalResult(bool verbose)
 
     Eigen::Vector3d airdata = getAirData(trimState.trimState.linearVel);
     double gamma = trimState.trimState.euler(1) - airdata(1);
-    Vector3d eulerDot = getEulerDerivatives(trimState.trimState.euler, trimState.trimState.angularVel);
     double R = airdata(0)*cos(gamma)/eulerDot(2);
 
     cout << setprecision(3);

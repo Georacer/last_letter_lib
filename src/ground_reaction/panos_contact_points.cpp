@@ -71,7 +71,7 @@ Vector3d PanosContactPoints::getForce(const SimState_t states, const WrenchSum_t
 
 	// Read vehicle orientation quaternion.
 	// Vehicle quaternion refers to the Body-to-Earth rotation
-	Quaterniond orientation = states.pose.orientation.conjugate();
+	Quaterniond orientation = states.pose.orientation.conjugate(); // TODO: conjugate seems to be wrong here. See quat2euler definition
 	Euler = quat2euler(orientation);
 
 	Wrench_t tempE, totalE; 

@@ -14,14 +14,14 @@ int main(int argc, char * argv[])
     double inf = std::numeric_limits<double>::infinity();
 
     TrimTrajectoryParameters_t trimParams;
-    trimParams.Va = 15;
-    trimParams.Gamma = 15*M_PI/180;
+    trimParams.Va = 12;
+    trimParams.Gamma = -15*M_PI/180;
     trimParams.R = -200;
 
     TrimmerState trimmer(uavName);
 
-    uint32_t loopNum=1000;
-    // uint32_t loopNum=1;
+    // uint32_t loopNum=1000;
+    uint32_t loopNum=1;
     double seconds;
 
     cout << "Testing optimization time requirement." << endl;
@@ -44,17 +44,17 @@ int main(int argc, char * argv[])
 
     cout << seconds << " second(s) elapsed for " << loopNum << " steps" << endl;
 
-    cout << "Testing pyFindTrimState interface" << endl;
-    double trajArray[3], resultArray[14];
-    trajArray[0] = trimParams.Va;
-    trajArray[1] = trimParams.Gamma;
-    trajArray[2] = trimParams.R;
+    // cout << "Testing pyFindTrimState interface" << endl;
+    // double trajArray[3], resultArray[14];
+    // trajArray[0] = trimParams.Va;
+    // trajArray[1] = trimParams.Gamma;
+    // trajArray[2] = trimParams.R;
     
-    trimmer.pyFindTrimState(trajArray, resultArray);
+    // trimmer.pyFindTrimState(trajArray, resultArray);
 
-    printf("Got result:\n");
-    for (int i=0; i<14; i++)
-    {
-        printf("%f", resultArray[i]); printf("\n");
-    }
+    // printf("Got result:\n");
+    // for (int i=0; i<14; i++)
+    // {
+    //     printf("%f", resultArray[i]); printf("\n");
+    // }
 }

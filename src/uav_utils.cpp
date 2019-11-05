@@ -96,7 +96,9 @@ Vector3d getEulerDerivatives(Vector3d euler, Vector3d rates)
 	double thetaDot = cos(phi)*q - sin(phi)*r;
 	double psiDot = sin(phi)/cos(theta)*q + cos(phi)/cos(theta)*r;
 
-	return Vector3d(phiDot, thetaDot, psiDot);
+	Vector3d result;
+	result << phiDot, thetaDot, psiDot;
+	return result;
 }
 
 
