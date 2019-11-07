@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(uav_model)
+# Stand-alone compilation CMakeLists
 
 add_compile_options(-Wall -O3)
+# set(COMPILE_FLAGS "-O3 -Wall")
 
 set(BUILD_SHARED_LIBS "Enabling shared library building" ON)
 
@@ -117,8 +119,14 @@ target_link_libraries(test_kinematics uav_utils
 add_executable(test_uav_model test/test_uav_model.cpp)
 target_link_libraries(test_uav_model lib_uav_model)
 
+add_executable(test_parameters test/test_parameters.cpp)
+target_link_libraries(test_parameters lib_uav_model)
+
 add_executable(test_loop_rate test/test_loop_rate.cpp)
 target_link_libraries(test_loop_rate lib_uav_model)
 
-add_executable(test_trimmer test/test_trimmer.cpp)
-target_link_libraries(test_trimmer lib_trimmer)
+add_executable(test_trimmer_input test/test_trimmer_input.cpp)
+target_link_libraries(test_trimmer_input lib_trimmer)
+
+add_executable(test_trimmer_state test/test_trimmer_state.cpp)
+target_link_libraries(test_trimmer_state lib_trimmer)

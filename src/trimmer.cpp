@@ -38,6 +38,39 @@ extern "C"
         trimmer->printOptimalResult(true);
         return 1;
     }
+    bool set_parameter(TrimmerState * obj, ParamType_t paramType, char * name, double value)
+    {
+        switch (paramType)
+        {
+            case PARAM_TYPE_WORLD :
+                return setParameter(obj->uav->configs.world, name, value);
+                break;
+            case PARAM_TYPE_ENV :
+                return setParameter(obj->uav->configs.env, name, value);
+                break;
+            case PARAM_TYPE_INIT :
+                return setParameter(obj->uav->configs.init, name, value);
+                break;
+            case PARAM_TYPE_INERTIAL :
+                return setParameter(obj->uav->configs.inertial, name, value);
+                break;
+            case PARAM_TYPE_AERO :
+                return setParameter(obj->uav->configs.aero, name, value);
+                break;
+            case PARAM_TYPE_PROP :
+                return setParameter(obj->uav->configs.prop, name, value);
+                break;
+            case PARAM_TYPE_GROUND :
+                return setParameter(obj->uav->configs.ground, name, value);
+                break;
+            default:
+                throw runtime_error("Cannot handle this parameter type");
+        }
+    }
+    void update_model(TrimmerState * obj)
+    {
+        obj->uav->updateConfigAll();
+    }
 }
 
 TrimmerState::TrimmerState(const string uavName):
@@ -93,10 +126,10 @@ void TrimmerState::resetFunCallCount()
 double TrimmerState::calcCost(const SimState_t state, const Derivatives_t stateDer, const Input_t input)
 {
     // State derivative weights
-    double derSpeedWeight = 10;
-    double derRateWeight = 10;
+    double derSpeedWeight = 100;
+    double derRateWeight = 100;
     // State weights
-    double aosWeight = 10;
+    double aosWeight = 1;
     // Input weights
     Eigen::Matrix<double, 4, 4> inputWeight;
     inputWeight.setZero();

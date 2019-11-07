@@ -22,6 +22,16 @@ struct ConfigsStruct_t {
 	YAML::Node ground;
 };
 
+typedef enum {
+    PARAM_TYPE_WORLD = 0,
+    PARAM_TYPE_ENV,
+    PARAM_TYPE_INIT,
+    PARAM_TYPE_INERTIAL,
+    PARAM_TYPE_AERO,
+    PARAM_TYPE_PROP,
+    PARAM_TYPE_GROUND
+} ParamType_t;
+
 
 template<typename T>
 bool getParameter(const YAML::Node configFile, string paramName, T &targetVar, bool isFatal = true)
