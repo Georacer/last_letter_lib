@@ -199,19 +199,22 @@ void StdLinearAero::readParametersAerodynamics(YAML::Node config)
 {
 	Aerodynamics::readParametersAerodynamics(config);
 	// Read aerodynamic coefficients from parameter server
-	getParameter(config, "c_lift_q", c_lift_q);
-	getParameter(config, "c_lift_deltae", c_lift_deltae);
-	getParameter(config, "c_drag_q", c_drag_q);
-	getParameter(config, "c_drag_deltae", c_drag_deltae);
 	getParameter(config, "c", c);
 	getParameter(config, "b", b);
 	getParameter(config, "s", s);
-	getParameter(config, "c_y_0", c_y_0);
-	getParameter(config, "c_y_b", c_y_b);
-	getParameter(config, "c_y_p", c_y_p);
-	getParameter(config, "c_y_r", c_y_r);
-	getParameter(config, "c_y_deltaa", c_y_deltaa);	
-	getParameter(config, "c_y_deltar", c_y_deltar);	
+	getParameter(config, "c_L_0", c_lift_0);
+	getParameter(config, "c_L_a", c_lift_a0);
+	getParameter(config, "c_L_q", c_lift_q);
+	getParameter(config, "c_L_deltae", c_lift_deltae);
+	getParameter(config, "c_D_q", c_drag_q);
+	getParameter(config, "c_D_p", c_drag_p);
+	getParameter(config, "c_D_deltae", c_drag_deltae);
+	getParameter(config, "c_Y_0", c_y_0);
+	getParameter(config, "c_Y_b", c_y_b);
+	getParameter(config, "c_Y_p", c_y_p);
+	getParameter(config, "c_Y_r", c_y_r);
+	getParameter(config, "c_Y_deltaa", c_y_deltaa);	
+	getParameter(config, "c_Y_deltar", c_y_deltar);	
 	getParameter(config, "c_l_0", c_l_0);
 	getParameter(config, "c_l_b", c_l_b);
 	getParameter(config, "c_l_p", c_l_p);
@@ -228,9 +231,6 @@ void StdLinearAero::readParametersAerodynamics(YAML::Node config)
 	getParameter(config, "c_n_r", c_n_r);
 	getParameter(config, "c_n_deltaa", c_n_deltaa);
 	getParameter(config, "c_n_deltar", c_n_deltar);
-	getParameter(config, "c_drag_p", c_drag_p);
-	getParameter(config, "c_lift_0", c_lift_0);
-	getParameter(config, "c_lift_a", c_lift_a0);
 	getParameter(config, "oswald", oswald);
 	getParameter(config, "mcoeff", M);
 	getParameter(config, "alpha_stall", alpha0);
@@ -378,7 +378,7 @@ SimpleDrag::~SimpleDrag()
 void SimpleDrag::readParametersAerodynamics(YAML::Node config)
 {
 	StdLinearAero::readParametersAerodynamics(config);
-	getParameter(config, "c_drag_a", c_drag_a);
+	getParameter(config, "c_D_a", c_drag_a);
 }
 
 double SimpleDrag::dragCoeff(double alpha)
