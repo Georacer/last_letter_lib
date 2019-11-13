@@ -64,7 +64,10 @@ class TrimmerState():
 
     def __init__(self, uav_name):
         # Load the lib_trimmer dll
-        self.dll = ct.cdll.LoadLibrary('/home/george/ros_workspaces/uav_ftc/src/last_letter/last_letter_lib/build/liblib_trimmer.so')
+        # This is for the standalone cmake build
+        # self.dll = ct.cdll.LoadLibrary('/home/george/ros_workspaces/uav_ftc/src/last_letter/last_letter_lib/build/liblib_trimmer.so')
+        # This is for the catkin-made build
+        self.dll = ct.cdll.LoadLibrary('/home/george/ros_workspaces/uav_ftc/devel/lib/liblib_trimmer.so')
 
         # Set the exposed functions data types
         self.dll.trimmer_state_new.argtypes = [ct.c_char_p]
@@ -90,7 +93,7 @@ class TrimmerState():
         self.obj = self.dll.trimmer_state_new(uav_name)
 
     def set_model_parameter(self, param_type, name, value):
-        print('Received new model parameter: {}/{}:{}'.format(param_type, name, value))
+        # print('Received new model parameter: {}/{}:{}'.format(param_type, name, value))
         # Set the model parameters. They will not take effect (be written)
         # param_type defined as:
         # typedef enum {
