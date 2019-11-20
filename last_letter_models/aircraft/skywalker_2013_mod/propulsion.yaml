@@ -20,4 +20,4 @@ motor1/s_prop: 1
 motor1/c_prop: 0.05
 motor1/k_motor: 25
 motor1/k_t_p: 0
-motor1/k_omega: 0
+motor1/k_omega: 20

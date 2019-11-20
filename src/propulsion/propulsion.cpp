@@ -107,7 +107,7 @@ void Propulsion::rotateProp() // Update propeller angle
 	if (theta > 2.0*M_PI) theta -= 2*M_PI;
 	if (theta < 0.0) theta += 2*M_PI;
 
-	gimbal_to_prop = Eigen::AngleAxis<double>(theta, Vector3d::UnitZ());
+	gimbal_to_prop = Eigen::AngleAxis<double>(theta, Vector3d::UnitX());
 	gimbal_to_prop_rot = gimbal_to_prop;
 
 	body_to_prop = body_to_mount * mount_to_gimbal * gimbal_to_prop;
