@@ -40,36 +40,11 @@ extern "C"
     }
     bool set_parameter(TrimmerState * obj, ParamType_t paramType, char * name, double value)
     {
-        switch (paramType)
-        {
-            case PARAM_TYPE_WORLD :
-                return setParameter(obj->uav->configs.world, name, value);
-                break;
-            case PARAM_TYPE_ENV :
-                return setParameter(obj->uav->configs.env, name, value);
-                break;
-            case PARAM_TYPE_INIT :
-                return setParameter(obj->uav->configs.init, name, value);
-                break;
-            case PARAM_TYPE_INERTIAL :
-                return setParameter(obj->uav->configs.inertial, name, value);
-                break;
-            case PARAM_TYPE_AERO :
-                return setParameter(obj->uav->configs.aero, name, value);
-                break;
-            case PARAM_TYPE_PROP :
-                return setParameter(obj->uav->configs.prop, name, value);
-                break;
-            case PARAM_TYPE_GROUND :
-                return setParameter(obj->uav->configs.ground, name, value);
-                break;
-            default:
-                throw runtime_error("Cannot handle this parameter type");
-        }
+        obj->uav->set_parameter(paramType, name, value);
     }
     void update_model(TrimmerState * obj)
     {
-        obj->uav->updateConfigAll();
+        obj->uav->update_model();
     }
 }
 

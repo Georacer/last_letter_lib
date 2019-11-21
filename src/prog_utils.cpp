@@ -177,7 +177,7 @@ Polynomial * buildPolynomial(YAML::Node config)
 	switch (polyType)
 	{
 	case 0: {
-		std::cout << "selecting 1D polynomial" << std::endl;
+		// std::cout << "selecting 1D polynomial" << std::endl;
         uint polyNo;
         getParameter(config, "polyNo", polyNo);
         std::vector<double> coeffVect;
@@ -191,7 +191,7 @@ Polynomial * buildPolynomial(YAML::Node config)
 		return new Polynomial1D(polyNo, coeffs);
 		}
 	case 1: {
-		std::cout << "selecting 2D polynomial" << std::endl;
+		// std::cout << "selecting 2D polynomial" << std::endl;
         std::vector<int> polyNoVect;
         getParameterList(config, "polyNo", polyNoVect);
         std::vector<double> coeffVect;
@@ -207,7 +207,7 @@ Polynomial * buildPolynomial(YAML::Node config)
 		return new Polynomial2D(polyOrder1, polyOrder2, coeffs);
 		}
 	case 2: {
-		std::cout << "selecting cubic spline" << std::endl;
+		// std::cout << "selecting cubic spline" << std::endl;
         uint breaksNo;
         getParameter(config, "breaksNo", breaksNo);
         std::vector<double> breaksVect;

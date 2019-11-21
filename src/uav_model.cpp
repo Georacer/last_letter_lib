@@ -241,6 +241,47 @@ void UavModel::setInputPwm(const InputPwm_t p_input)
 	}
 }
 
+
+////////////////////////
+// Set a model parameter
+bool UavModel::set_parameter(ParamType_t paramType, std::string name, double value)
+{
+	switch (paramType)
+	{
+		case PARAM_TYPE_WORLD :
+			return setParameter(configs.world, name, value);
+			break;
+		case PARAM_TYPE_ENV :
+			return setParameter(configs.env, name, value);
+			break;
+		case PARAM_TYPE_INIT :
+			return setParameter(configs.init, name, value);
+			break;
+		case PARAM_TYPE_INERTIAL :
+			return setParameter(configs.inertial, name, value);
+			break;
+		case PARAM_TYPE_AERO :
+			return setParameter(configs.aero, name, value);
+			break;
+		case PARAM_TYPE_PROP :
+			return setParameter(configs.prop, name, value);
+			break;
+		case PARAM_TYPE_GROUND :
+			return setParameter(configs.ground, name, value);
+			break;
+		default:
+			std::cerr << "Cannot handle this parameter type" << std::endl;
+			return false;
+	}
+}
+
+//////////////////////////////
+// Update all model parameters
+void UavModel::update_model()
+{
+	updateConfigAll();
+}
+
 //////////////////
 //Class destructor
 UavModel::~UavModel ()

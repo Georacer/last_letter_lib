@@ -3,6 +3,7 @@
 #define PROG_UTILS
 
 #include <random>
+#include <iostream>
 
 #include <Eigen/Eigen>
 
@@ -41,7 +42,8 @@ bool getParameter(const YAML::Node configFile, string paramName, T &targetVar, b
         return true;
     }
     else if (isFatal) {
-        throw invalid_argument("Unknown parameter " + paramName);
+        std::cerr << "Unknown parameter " << paramName << std::endl;
+        return false;
     }
     else {
         return false;
@@ -55,12 +57,17 @@ bool setParameter(YAML::Node &configFile, string paramName, const T newValue, bo
         configFile[paramName] = newValue;
         return true;
     }
-    else if (editOnly) {
-        throw invalid_argument("Unknown parameter " + paramName);
-    }
-    else {
-        return false;
-    }
+    else
+    {
+        if (editOnly) {
+            std::cerr << "Unknown parameter " << paramName << std::endl;
+            return false;
+        }
+        else {
+            configFile[paramName] = newValue;
+            return true;
+        }
+    } 
 }
 
 // Same as above but for vectors

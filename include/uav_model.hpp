@@ -56,6 +56,8 @@ class UavModel
 	void setState(const SimState_t p_state);
 	void setInput(Input_t inputMsg);
 	void setInputPwm(InputPwm_t inputMsg);
+	bool set_parameter(ParamType_t paramType, std::string name, double value);
+	void update_model();
 
 	// Force all models to re-read configuration parameters
 	void updateConfigWorld();
