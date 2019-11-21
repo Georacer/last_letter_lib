@@ -61,4 +61,6 @@ class Propulsion
 
 #include "electric_engine.hpp"
 
+#include "omega_control_engine.hpp"
+
 Propulsion * buildPropulsion(YAML::Node propConfig, YAML::Node worldConfig);

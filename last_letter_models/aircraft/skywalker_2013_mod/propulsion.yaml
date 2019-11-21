@@ -1,5 +1,5 @@
 # Airframe Propulsion Parameters
-# Motor types: 0 No motor, 1 Beard Engine, 2 Piston engine, 3 Electric Engine
+# Motor types: 0 No motor, 1 Beard Engine, 2 Piston engine, 3 Electric Engine, 4 Controlled Omega
 # Polynomial types: 0 1D, 1 2D, 2 cubic spline
 
 nMotors: 1
@@ -15,9 +15,13 @@ motor1/gimbalAngle_max: 0.0
 
 motor1/rotationDir: 1.0
 
-motor1/motorType: 1
-motor1/s_prop: 1
-motor1/c_prop: 0.05
-motor1/k_motor: 25
-motor1/k_t_p: 0
-motor1/k_omega: 20
+motor1/motorType: 4
+motor1/omega_max: 1050
+motor1/j_max: 0.7630
+motor1/propDiam: 0.28
+motor1/thrust_poly/polyType: 0
+motor1/thrust_poly/polyNo: 2
+motor1/thrust_poly/coeffs: [0.1133, -0.0740, -0.1849]
+motor1/power_poly/polyType: 0
+motor1/power_poly/polyNo: 2
+motor1/power_poly/coeffs: [0.0440, 0.0059, -0.0732]

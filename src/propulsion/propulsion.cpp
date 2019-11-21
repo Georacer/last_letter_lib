@@ -158,6 +158,8 @@ void Propulsion::rotateTorque(Inertial_t inertial)
 
 #include "electric_engine.cpp"
 
+#include "omega_control_engine.cpp"
+
 
 // Build engine model
 Propulsion * buildPropulsion(YAML::Node propConfig, YAML::Node worldConfig)
@@ -179,6 +181,9 @@ Propulsion * buildPropulsion(YAML::Node propConfig, YAML::Node worldConfig)
 		case 3:
 			std::cout << "selecting electric engine" << std::endl;
 			return new ElectricEng(propConfig, worldConfig);
+		case 4:
+			std::cout << "selecting omega-controlled engine" << std::endl;
+			return new EngOmegaControl(propConfig, worldConfig);
 		default:
 			throw runtime_error("Error while constructing motor");
 			break;

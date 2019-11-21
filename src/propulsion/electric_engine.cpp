@@ -39,10 +39,10 @@ void ElectricEng::readParametersProp(YAML::Node config)
 	omegaMax = doubleVect[1];
 
 	// Create propeller efficiency polynomial
-	YAML::Node nCoeffPolyConfig = filterConfig(config, "nCoeffPoly");
+	YAML::Node nCoeffPolyConfig = filterConfig(config, "nCoeffPoly/");
 	npPoly =  buildPolynomial(nCoeffPolyConfig);
 	// Create propeller power polynomial
-	YAML::Node propPowerPolyConfig = filterConfig(config, "propPowerPoly");
+	YAML::Node propPowerPolyConfig = filterConfig(config, "propPowerPoly/");
 	propPowerPoly =  buildPolynomial(propPowerPolyConfig);
 }
 
