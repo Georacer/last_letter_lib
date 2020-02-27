@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(uav_model)
-# Stand-alone compilation CMakeLists
+project(last_letter_lib)
+# Catkin compilation CMakeLists
 
-add_compile_options(-Wall -O3)
-# set(COMPILE_FLAGS "-O3 -Wall")
-
-set(BUILD_SHARED_LIBS "Enabling shared library building" ON)
+find_package(catkin REQUIRED COMPONENTS
+	roscpp
+	rospy
+	std_msgs
+)
 
 find_package(Eigen3 REQUIRED)
 
@@ -20,6 +21,19 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
   ${LAPACK_INCLUDE_DIRS}
 	"/usr/local/inlcude" # Used to include nlopt
+)
+
+catkin_package(
+	INCLUDE_DIRS include include/propulsion include/ground_reaction
+	LIBRARIES math_utils
+            uav_utils
+            prog_utils
+            lib_environment
+            lib_gravity
+            lib_aerodynamics
+            lib_propulsion
+            lib_ground_reaction
+            lib_uav_model
 )
 
 add_library(math_utils src/math_utils.cpp)
@@ -67,10 +81,10 @@ target_link_libraries(lib_trimmer
 file(COPY last_letter_models DESTINATION $ENV{HOME})
 
 
-# Compile test files
-add_executable(test_rotations test/test_rotations.cpp)
-target_link_libraries(test_rotations math_utils uav_utils Eigen3::Eigen)
+add_dependencies(lib_uav_model ${catkin_EXPORTED_TARGETS} )
 
+
+# Compile test files
 add_executable(test_yaml test/test_yaml.cpp)
 target_link_libraries(test_yaml prog_utils yaml-cpp)
 
