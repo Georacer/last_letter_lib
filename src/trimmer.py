@@ -18,7 +18,8 @@ class TrimmerInput():
 
     def __init__(self, uav_name):
         # Load the lib_trimmer dll
-        self.dll = ct.cdll.LoadLibrary('/home/george/ros_workspaces/uav_ftc/src/last_letter/last_letter_lib/build/liblib_trimmer.so')
+        # self.dll = ct.cdll.LoadLibrary('/home/george/ros_workspaces/uav_ftc/src/last_letter/last_letter_lib/build/liblib_trimmer.so')
+        self.dll = ct.cdll.LoadLibrary('/home/george/ros_workspaces/uav_ftc/devel/lib/liblib_trimmer.so')
 
         # Set the exposed functions data types
         self.dll.trimmer_input_new.argtypes = [ct.c_char_p]
