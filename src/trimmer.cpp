@@ -40,7 +40,7 @@ extern "C"
     }
     bool set_parameter(TrimmerState * obj, ParamType_t paramType, char * name, double value)
     {
-        obj->uav->set_parameter(paramType, name, value);
+        return obj->uav->set_parameter(paramType, name, value);
     }
     void update_model(TrimmerState * obj)
     {

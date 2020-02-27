@@ -273,6 +273,7 @@ bool UavModel::set_parameter(ParamType_t paramType, std::string name, double val
 			std::cerr << "Cannot handle this parameter type" << std::endl;
 			return false;
 	}
+	return true;
 }
 
 //////////////////////////////
