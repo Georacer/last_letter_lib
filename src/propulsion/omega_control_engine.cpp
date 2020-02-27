@@ -37,7 +37,7 @@ void EngOmegaControl::updateRadPS(SimState_t states, Inertial_t inertial, Enviro
 	double eps = 1e-4;
 
 	double advRatio = normalWind / (std::fabs(omega)/2.0/M_PI + eps) / prop_diam; // Convert advance ratio to dimensionless units, not 1/rad
-	torque = power_poly->evaluate(advRatio) /2/M_PI * rho * pow(std::fabs(omega)/2.0/M_PI,2) * pow(prop_diam,4);
+	torque = power_poly->evaluate(advRatio) /2/M_PI * rho * pow(std::fabs(omega)/2.0/M_PI,2) * pow(prop_diam,5);
 	thrust = thrust_poly->evaluate(advRatio) * rho * pow(std::fabs(omega)/2.0/M_PI,2) * pow(prop_diam,4);
 }
 
