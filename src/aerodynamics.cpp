@@ -308,6 +308,8 @@ double StdLinearAero::liftCoeff (double alpha)
 	double linear = (1.0-sigmoid) * (c_lift_0 + c_lift_a0*alpha); //Lift at small AoA
 	double flatPlate = sigmoid*(2*copysign(1,alpha)*pow(sin(alpha),2)*cos(alpha)); //Lift beyond stall
 
+	// std::cout << c_lift_0 << " " << c_lift_a0 << std::endl;
+
 	double result  = linear+flatPlate;
 	return result;
 }

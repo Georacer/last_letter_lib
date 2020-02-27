@@ -173,7 +173,7 @@ Polynomial * buildPolynomial(YAML::Node config)
 {
 	int polyType;
     getParameter(config, "polyType", polyType);
-	std::cout<< "building a new polynomial: ";
+	// std::cout<< "building a new polynomial: ";
 	switch (polyType)
 	{
 	case 0: {
