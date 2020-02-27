@@ -385,7 +385,8 @@ void SimpleDrag::readParametersAerodynamics(YAML::Node config)
 
 double SimpleDrag::dragCoeff(double alpha)
 {
-	return c_drag_p + c_drag_a * fabs(alpha);
+	// std::cout << c_drag_p << " " << c_drag_a << std::endl;
+	return c_drag_p + c_drag_a * alpha;
 }
 
 
