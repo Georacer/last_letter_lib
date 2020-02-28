@@ -118,6 +118,31 @@ public:
 	double evaluate(double x);
 };
 
+// Parameters for the definition of the Flight Envelope ellipsoid
+// Ax^2 + By^2 + Cz^2 + 2Dxy + 2Exz + 2Fyz + 2Gx + 2Hy + 2Iz + J = 0
+struct Ellipsoid3DCoefficients_t {
+	double A;
+	double B;
+	double C;
+	double D;
+	double E;
+	double F;
+	double G;
+	double H;
+	double I;
+	double J;
+};
+
+class Ellipsoid3D
+{
+public:
+	Ellipsoid3DCoefficients_t coeffs;
+
+	Ellipsoid3D(const Ellipsoid3DCoefficients_t); // Constructor
+	void update_coeffs(const Ellipsoid3DCoefficients_t);
+	double evaluate(double x, double y, double z);
+};
+
 
 // Discrete transfer function implementation
 // for strictly proper TFs
