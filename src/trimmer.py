@@ -18,8 +18,8 @@ class TrimmerInput():
 
     def __init__(self, uav_name):
         # Load the lib_trimmer dll
-        # self.dll = ct.cdll.LoadLibrary('/home/george/ros_workspaces/uav_ftc/src/last_letter/last_letter_lib/build/liblib_trimmer.so')
-        self.dll = ct.cdll.LoadLibrary('/home/george/ros_workspaces/uav_ftc/devel/lib/liblib_trimmer.so')
+        dll_path = os.path.expanduser('~/ros_workspaces/uav_ftc/devel/lib/liblib_trimmer.so')
+        self.dll = ct.cdll.LoadLibrary(dll_path)
 
         # Set the exposed functions data types
         self.dll.trimmer_input_new.argtypes = [ct.c_char_p]
@@ -68,7 +68,8 @@ class TrimmerState():
         # This is for the standalone cmake build
         # self.dll = ct.cdll.LoadLibrary('/home/george/ros_workspaces/uav_ftc/src/last_letter/last_letter_lib/build/liblib_trimmer.so')
         # This is for the catkin-made build
-        self.dll = ct.cdll.LoadLibrary('/home/george/ros_workspaces/uav_ftc/devel/lib/liblib_trimmer.so')
+        dll_path = os.path.expanduser('~/ros_workspaces/uav_ftc/devel/lib/liblib_trimmer.so')
+        self.dll = ct.cdll.LoadLibrary(dll_path)
 
         # Set the exposed functions data types
         self.dll.trimmer_state_new.argtypes = [ct.c_char_p]
