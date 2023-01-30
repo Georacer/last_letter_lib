@@ -4,7 +4,6 @@
 
 nMotors: 1
 
-
 motor1/chanMotor: 2
 
 # motor1/CGOffset: [-0.25, 0.0, -0.13] # location offset of the motor mount relative to CG

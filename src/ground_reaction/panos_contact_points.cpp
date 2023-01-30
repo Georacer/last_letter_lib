@@ -61,7 +61,7 @@ void PanosContactPoints::readParametersGround(YAML::Node config)
 }
 
 // Wrench calculation function
-Vector3d PanosContactPoints::getForce(const SimState_t states, const WrenchSum_t wrenchSum)
+Vector3d PanosContactPoints::getForce(const SimState_t states, const WrenchSum_t /* wrenchSum */)
 {
 	double kFLong, kFLat;
 	int i;
@@ -74,7 +74,7 @@ Vector3d PanosContactPoints::getForce(const SimState_t states, const WrenchSum_t
 	Quaterniond orientation = states.pose.orientation.conjugate(); // TODO: conjugate seems to be wrong here. See quat2euler definition
 	Euler = quat2euler(orientation);
 
-	Wrench_t tempE, totalE; 
+	Wrench_t tempE, totalE;
 	Vector3d we,vpoint,Ve;
 
 	// Get velocity in the inertial frame
@@ -190,7 +190,7 @@ Vector3d PanosContactPoints::getForce(const SimState_t states, const WrenchSum_t
 }
 
 // Dummy torque calculation function
-Vector3d PanosContactPoints::getTorque(SimState_t states, const WrenchSum_t wrenchSum)
+Vector3d PanosContactPoints::getTorque(SimState_t /* states */, const WrenchSum_t /* wrenchSum */)
 {
 	return wrenchGround.torque;
 }

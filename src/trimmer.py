@@ -1,14 +1,16 @@
 #!/usr/bin/python
-
+import ctypes as ct
 import os
 import time
 from math import pi
+
 import numpy as np
-import ctypes as ct
 
-print('Currently working on {}'.format(os.getcwd()))
 
-class TrimmerInput():
+print(f"Currently working on {os.getcwd()}")
+
+
+class TrimmerInput:
     dll = None
     obj = None
     trim_func = None
@@ -18,7 +20,9 @@ class TrimmerInput():
 
     def __init__(self, uav_name):
         # Load the lib_trimmer dll
-        dll_path = os.path.expanduser('~/ros_workspaces/uav_ftc/devel/lib/liblib_trimmer.so')
+        dll_path = os.path.expanduser(
+            "~/ros_workspaces/uav_ftc/devel/lib/liblib_trimmer.so"
+        )
         self.dll = ct.cdll.LoadLibrary(dll_path)
 
         # Set the exposed functions data types
@@ -54,12 +58,15 @@ class TrimmerInput():
     def print_result(self):
         self.print_optimal_result(self.obj)
 
-class TrimmerState():
+
+class TrimmerState:
     dll = None
     obj = None
     trim_func = None
-    n_args = 7 # Number of optimization arguments
-    input_type = ct.c_double * (n_args+2)  # Plus 2 values for optimization cost and success flag
+    n_args = 7  # Number of optimization arguments
+    input_type = ct.c_double * (
+        n_args + 2
+    )  # Plus 2 values for optimization cost and success flag
     output_type = ct.POINTER(ct.c_double)
     trim_state = None
 
@@ -68,7 +75,9 @@ class TrimmerState():
         # This is for the standalone cmake build
         # self.dll = ct.cdll.LoadLibrary('/home/george/ros_workspaces/uav_ftc/src/last_letter/last_letter_lib/build/liblib_trimmer.so')
         # This is for the catkin-made build
-        dll_path = os.path.expanduser('~/ros_workspaces/uav_ftc/devel/lib/liblib_trimmer.so')
+        dll_path = os.path.expanduser(
+            "~/ros_workspaces/uav_ftc/devel/lib/liblib_trimmer.so"
+        )
         self.dll = ct.cdll.LoadLibrary(dll_path)
 
         # Set the exposed functions data types
@@ -84,7 +93,12 @@ class TrimmerState():
         self.dll.print_optimal_state_result.restype = ct.c_double
 
         self.set_parameter_func = self.dll.set_parameter
-        self.dll.set_parameter.argtypes = [ct.c_void_p, ct.c_int, ct.c_char_p, ct.c_double]
+        self.dll.set_parameter.argtypes = [
+            ct.c_void_p,
+            ct.c_int,
+            ct.c_char_p,
+            ct.c_double,
+        ]
         self.dll.set_parameter.restype = ct.c_bool
 
         self.update_model_func = self.dll.update_model
@@ -119,8 +133,8 @@ class TrimmerState():
         return self.input_type(*trim_trajectory_np)
 
     def convert_trim_state(self, trim_state_ct):
-        trim_state = np.zeros(self.n_args+2)
-        for i in range(self.n_args+2):
+        trim_state = np.zeros(self.n_args + 2)
+        for i in range(self.n_args + 2):
             trim_state[i] = trim_state_ct[i]
         return trim_state
 
@@ -133,12 +147,13 @@ class TrimmerState():
     def print_result(self):
         self.print_optimal_result(self.obj)
 
-if __name__ == '__main__':
 
-    print('Testing TrimmerState class functionality')
-    uav_name = 'skywalker_2013_mod'
+if __name__ == "__main__":
+
+    print("Testing TrimmerState class functionality")
+    uav_name = "skywalker_2013_mod"
     trimmer = TrimmerState(uav_name)
-    print('Successfully loaded Trimmer object')
+    print("Successfully loaded Trimmer object")
 
     # Use this to tweak model parameters
     # trimmer.set_model_parameter(5, 'motor1/k_motor', 0) # Zero-out motor output
@@ -146,15 +161,15 @@ if __name__ == '__main__':
 
     trim_states = np.array([10, np.deg2rad(-15), np.infty])
     # Va, gamma, R
-    print('Obtaining trim input: 1000 repetitions')
+    print("Obtaining trim input: 1000 repetitions")
     t_start = time.time()
     for i in range(1000):
         trim_state = trimmer.find_trim_values(trim_states)
     t_end = time.time()
 
-    print("Trim found:\n" + "{}".format(trim_state))
+    print("Trim found:\n" + f"{trim_state}")
     trimmer.print_result()
-    print("Time required: {}s".format(t_end-t_start))
+    print(f"Time required: {t_end - t_start}s")
     print("\n")
 
     # print('Testing TrimmerInput class functionality')

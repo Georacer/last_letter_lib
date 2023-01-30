@@ -1,8 +1,9 @@
 # Prerequisites
 *.d
 
-# Build folder
+# Build folders
 build
+docs/_build
 
 # Compiled Object files
 *.slo
@@ -36,3 +37,27 @@ build
 
 # Python exectuables
 *.pyc
+dist/
+__pycache__
+
+# Pytest files
+.pytest_cache
+
+# Coverage results
+*.coverage*
+
+# Pyenv files
+.python-version
+
+# VS Code files
+.vscode/
+
+# nox files
+.nox/
+
+# Dropboxignore file
+.dropboxignore
+**/.dropboxignore
+
+# Temporary text files
+*.swp

@@ -78,7 +78,7 @@ Vector3d PointFriction::getForce(const SimState_t states, const WrenchSum_t wren
 	Eigen::MatrixXi contactList;
 	contactList.setZero(contactPtsNo, 1);
 
-	Wrench_t tempE, totalE; 
+	Wrench_t tempE, totalE;
 	Vector3d we,vpoint,Ve;
 	Eigen::MatrixXd vpointList;
 	vpointList.setZero(3, contactPtsNo);
@@ -262,7 +262,7 @@ Vector3d PointFriction::getForce(const SimState_t states, const WrenchSum_t wren
 }
 
 // Dummy torque calculation function
-Vector3d PointFriction::getTorque(const SimState_t states, const WrenchSum_t wrenchSum)
+Vector3d PointFriction::getTorque(const SimState_t /* states */, const WrenchSum_t /* wrenchSum */)
 {
 
 	return wrenchGround.torque;
