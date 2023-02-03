@@ -32,8 +32,8 @@ Magnetometer/resolution: 0.092 #nT
 Magnetometer/CP: [0.0, 0.0, 0.1] #meters
 Magnetometer/std_coeff: 200 #nT
 # Noise Characteristics
-Accelerometer/scaleBias: 0.05 #in units
-Accelerometer/scaleThermal: 0.003 #in units
+Magnetometer/scaleBias: 0.05 #in units
+Magnetometer/scaleThermal: 0.003 #in units
 
 #d) Barometer
 Barometer/rate: 50.0 #Hz

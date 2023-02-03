@@ -1,146 +1,158 @@
-cmake_minimum_required(VERSION 2.8.3)
-project(last_letter_lib)
-# Catkin compilation CMakeLists
+cmake_minimum_required(VERSION 3.5)
+project(last_letter_lib VERSION 2.0)
 
-find_package(catkin REQUIRED COMPONENTS
-	roscpp
-	rospy
-	std_msgs
+# Set compiler standards
+# Default to C99
+if(NOT CMAKE_C_STANDARD)
+  set(CMAKE_C_STANDARD 99)
+endif()
+
+# Default to C++14
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+
+# Configure compile options
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+# Find dependence
+# find_package(ament_cmake REQUIRED)
+find_package(Eigen3 REQUIRED NO_MODULE)
+
+# include(FindEigen3.cmake)
+find_package(LAPACK REQUIRED)
+
+# find_package(NLopt REQUIRED) # Will enable later with trimmer
+
+# Declare and compile the yaml-cpp project
+include(ExternalProject)
+ExternalProject_Add(ext-yaml-cpp
+  SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/yaml-cpp
+  CMAKE_ARGS "-DYAML_CPP_BUILD_TESTS=OFF"
+  "-DYAML_CPP_BUILD_TOOLS=OFF"
+  "-DBUILD_SHARED_LIBS=ON"
+  INSTALL_COMMAND "" # Do not install in system, library needed only locally
+  USES_TERMINAL_BUILD true
 )
 
-find_package(Eigen3 REQUIRED)
+# Construct include directories path
+ExternalProject_Get_Property(ext-yaml-cpp SOURCE_DIR) # Access the source directory
+set(YAML_CPP_INCLUDE_DIR ${SOURCE_DIR}/include) # Aggregate headers to variable
+message(STATUS "YAML_CPP_INCLUDE_DIR set to ${YAML_CPP_INCLUDE_DIR}")
 
-find_package(LAPACK REQUIRED)
-# Have yaml-cpp already copied and built
-find_package(yaml-cpp PATHS external/yaml-cpp/build)
+# Expose built library
+add_library(yaml-cpp SHARED IMPORTED) # Declare the shared library
+ExternalProject_Get_Property(ext-yaml-cpp BINARY_DIR) # Access the binaries location
+set_target_properties(yaml-cpp PROPERTIES
+  IMPORTED_LOCATION ${BINARY_DIR}/libyaml-cpp.so # Attach the .so file to the library
+  INTERFACE_INCLUDE_DIRECTORIES ${YAML_CPP_INCLUDE_DIR}
+)
+add_dependencies(yaml-cpp ext-yaml-cpp) # Declare a dependency on the 3rd party project, just in case
+set(YAML_CPP_LIBRARIES yaml-cpp) # Aggregate all libraries to variable
+message(STATUS "yaml-cpp library (YAML_CPP_LIBRARIES) found at ${YAML_CPP_LIBRARIES}")
 
 include_directories(
   include
-  include/propulsion
-  include/ground_reaction
   ${EIGEN3_INCLUDE_DIRS}
   ${LAPACK_INCLUDE_DIRS}
-	"/usr/local/inlcude" # Used to include nlopt
+  ${NLOPT_INCLUDE_DIRS}
+
+  # "/usr/local/include" # Used to include nlopt
+  ${YAML_CPP_INCLUDE_DIR}
 )
 
-catkin_package(
-	INCLUDE_DIRS include include/propulsion include/ground_reaction
-	LIBRARIES math_utils
-            uav_utils
-            prog_utils
-            lib_environment
-            lib_gravity
-            lib_aerodynamics
-            lib_propulsion
-            lib_ground_reaction
-            lib_uav_model
+# Declare the project library
+add_library(last_letter_lib SHARED
+  src/math_utils.cpp
+  src/uav_utils.cpp
+  src/geo_mag_declination.cpp
+  src/prog_utils.cpp
+  src/environment.cpp
+  src/gravity.cpp
+  src/aerodynamics.cpp
+  src/propulsion/propulsion.cpp
+  src/ground_reaction/ground_reaction.cpp
+  src/link.cpp
+  src/dynamics.cpp
+  src/kinematics.cpp
+  src/sensors.cpp
+  src/uav_model.cpp
+)
+target_link_libraries(last_letter_lib
+  Eigen3::Eigen
+  ${LAPACK_LIBRARIES}
+  ${YAML_CPP_LIBRARIES}
 )
 
-add_library(math_utils src/math_utils.cpp)
-target_link_libraries(math_utils ${LAPACK_LIBRARIES} Eigen3::Eigen)
-
-add_library(uav_utils src/uav_utils.cpp)
-target_link_libraries(uav_utils Eigen3::Eigen)
-
-add_library(prog_utils src/prog_utils.cpp)
-target_link_libraries(prog_utils math_utils yaml-cpp)
-
-add_library(lib_environment src/environment.cpp)
-target_link_libraries(lib_environment math_utils uav_utils Eigen3::Eigen)
-
-add_library(lib_gravity src/gravity.cpp)
-target_link_libraries(lib_gravity math_utils uav_utils Eigen3::Eigen)
-
-add_library(lib_aerodynamics src/aerodynamics.cpp)
-target_link_libraries(lib_aerodynamics prog_utils uav_utils math_utils lib_environment yaml-cpp Eigen3::Eigen)
-
-add_library(lib_propulsion src/propulsion/propulsion.cpp)
-target_link_libraries(lib_propulsion uav_utils math_utils prog_utils lib_environment yaml-cpp Eigen3::Eigen)
-
-add_library(lib_ground_reaction src/ground_reaction/ground_reaction.cpp)
-target_link_libraries(lib_ground_reaction uav_utils math_utils prog_utils yaml-cpp Eigen3::Eigen)
-
-add_library(lib_uav_model src/dynamics.cpp src/kinematics.cpp src/uav_model.cpp)
-target_link_libraries(lib_uav_model uav_utils 
-                                    math_utils
-                                    yaml-cpp
-                                    prog_utils
-                                    lib_environment
-                                    lib_gravity
-                                    lib_propulsion
-                                    lib_aerodynamics
-                                    lib_ground_reaction
-                                    Eigen3::Eigen)
-
-add_library(lib_trimmer src/trimmer.cpp)
-target_link_libraries(lib_trimmer
-                      "/usr/local/lib/libnlopt.so"
-                      lib_uav_model)
+# add_library(lib_trimmer src/trimmer.cpp)
+# target_link_libraries(lib_trimmer
+# ${NLOPT_LIBRARIES}
+# lib_uav_model)
 
 # Copy data files to home folder
-file(COPY last_letter_models DESTINATION $ENV{HOME})
+# file(COPY last_letter_models DESTINATION $ENV{HOME}) # Deprecated, using new models folder
+file(COPY models/meshes DESTINATION $ENV{HOME}/last_letter_models)
+file(COPY last_letter_models/HID.yaml DESTINATION $ENV{HOME}/last_letter_models)
 
+# Export the header files for use by consumers of the library
+# ament_export_include_directories(include)  # Unnecessary according to https://index.ros.org/doc/ros2/Tutorials/Ament-CMake-Documentation/#building-a-library
+# Export the library binaries themselves
+# ament_export_libraries(
+# last_letter_lib
+# )  # Unnecessary according to https://index.ros.org/doc/ros2/Tutorials/Ament-CMake-Documentation/#building-a-library
 
-add_dependencies(lib_uav_model ${catkin_EXPORTED_TARGETS} )
-
+# # Export the libraries
+# ament_export_targets(
+# export_last_letterlib HAS_LIBRARY_TARGET
+# )
+# # Declare dependencies of this library to its consumers
+# ament_export_dependencies(
+# Eigen3
+# LAPACK
+# )
 
 # Compile test files
-add_executable(test_yaml test/test_yaml.cpp)
-target_link_libraries(test_yaml prog_utils yaml-cpp)
+# if(BUILD_TESTING)
+# find_package(ament_cmake_gtest REQUIRED)
+# # These enable a bunch of automated style tests, including copyright existence checks
+# # find_package(ament_lint_auto REQUIRED)
+# # ament_lint_auto_find_test_dependencies()
 
-add_executable(test_prog_utils test/test_prog_utils.cpp)
-target_link_libraries(test_prog_utils prog_utils uav_utils)
+# add_subdirectory(tests/cpp)
 
-add_executable(test_environment test/test_environment.cpp)
-target_link_libraries(test_environment lib_environment prog_utils yaml-cpp)
+# # the following line skips the linter which checks for copyrights
+# # uncomment the line when a copyright and license is not present in all source files
+# #set(ament_cmake_copyright_FOUND TRUE)
+# # the following line skips cpplint (only works in a git repo)
+# # uncomment the line when this package is not in a git repo
+# #set(ament_cmake_cpplint_FOUND TRUE)
 
-add_executable(test_gravity test/test_gravity.cpp)
-target_link_libraries(test_gravity lib_gravity)
+# install(DIRECTORY tests/cpp/test_parameters DESTINATION share/${PROJECT_NAME})
 
-add_executable(test_aerodynamics test/test_aerodynamics.cpp)
-target_link_libraries(test_aerodynamics yaml-cpp lib_aerodynamics)
+# endif()
+install(
+  DIRECTORY include/ DESTINATION include
+)
 
-add_executable(test_propulsion test/test_propulsion.cpp)
-target_link_libraries(test_propulsion lib_propulsion)
+list(APPEND exported_libs
+  last_letter_lib
+)
+install(
+  TARGETS ${exported_libs}
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include
+  EXPORT last_letter_lib_targets
+)
 
-add_executable(test_ground_reaction test/test_ground_reaction.cpp)
-target_link_libraries(test_ground_reaction lib_ground_reaction)
-
-add_executable(test_dynamics src/dynamics.cpp test/test_dynamics.cpp )
-target_link_libraries(test_dynamics uav_utils
-                                    math_utils
-                                    prog_utils
-                                    lib_environment
-                                    lib_gravity
-                                    lib_propulsion
-                                    lib_aerodynamics
-                                    lib_ground_reaction
-                                    yaml-cpp
-                                    Eigen3::Eigen)
-
-add_executable(test_kinematics src/kinematics.cpp test/test_kinematics.cpp )
-target_link_libraries(test_kinematics uav_utils
-                                      math_utils
-                                      prog_utils
-                                      lib_environment
-                                      lib_gravity
-                                      lib_propulsion
-                                      lib_aerodynamics
-                                      lib_ground_reaction
-                                      yaml-cpp
-                                      Eigen3::Eigen)
-
-add_executable(test_uav_model test/test_uav_model.cpp)
-target_link_libraries(test_uav_model lib_uav_model)
-
-add_executable(test_parameters test/test_parameters.cpp)
-target_link_libraries(test_parameters lib_uav_model)
-
-add_executable(test_loop_rate test/test_loop_rate.cpp)
-target_link_libraries(test_loop_rate lib_uav_model)
-
-add_executable(test_trimmer_input test/test_trimmer_input.cpp)
-target_link_libraries(test_trimmer_input lib_trimmer)
-
-add_executable(test_trimmer_state test/test_trimmer_state.cpp)
-target_link_libraries(test_trimmer_state lib_trimmer)
+# install(
+# TARGETS last_letter_lib
+# EXPORT export_last_letter_lib
+# LIBRARY DESTINATION lib
+# ARCHIVE DESTINATION lib
+# RUNTIME DESTINATION bin
+# INCLUDES DESTINATION include
+# )

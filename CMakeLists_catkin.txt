@@ -61,7 +61,7 @@ add_library(lib_ground_reaction src/ground_reaction/ground_reaction.cpp)
 target_link_libraries(lib_ground_reaction uav_utils math_utils prog_utils yaml-cpp Eigen3::Eigen)
 
 add_library(lib_uav_model src/dynamics.cpp src/kinematics.cpp src/uav_model.cpp)
-target_link_libraries(lib_uav_model uav_utils 
+target_link_libraries(lib_uav_model uav_utils
                                     math_utils
                                     yaml-cpp
                                     prog_utils

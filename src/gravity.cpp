@@ -1,38 +1,49 @@
-#include "gravity.hpp"
+#include "last_letter_lib/gravity.hpp"
 
-//////////////////////////
-// Define Gravity class
-//////////////////////////
-
-// Class constructor
-Gravity::Gravity()
+namespace last_letter_lib
 {
-	wrenchGrav.force = Vector3d::Zero();
-	wrenchGrav.torque = Vector3d::Zero();
-}
 
-// Class destructor
-Gravity::~Gravity()
-{
-}
+	//////////////////////////
+	// Define Gravity class
+	//////////////////////////
 
-// Force calculation function
-Vector3d Gravity::getForce(Quaterniond orientation_eb, double g, double mass)
-{
-	if (isnan(orientation_eb)) {throw runtime_error("gravity.cpp: NaN member in orientation quaternion");}
+	// Class constructor
+	Gravity::Gravity()
+	{
+		wrenchGrav.force = Vector3d::Zero();
+		wrenchGrav.torque = Vector3d::Zero();
+	}
 
-	Vector3d gravVect;
-	gravVect = Vector3d(0, 0, mass*g);
+	// Class destructor
+	Gravity::~Gravity()
+	{
+	}
 
-	wrenchGrav.force = orientation_eb*gravVect;
-	if (isnan(wrenchGrav.force)) {throw runtime_error("gravity.cpp: NaN member in force vector");}
+	// Force calculation function
+	Vector3d Gravity::getForce(Quaterniond orientation_eb, double g, double mass)
+	{
+		if (math_utils::isnan(orientation_eb))
+		{
+			throw runtime_error("gravity.cpp: NaN member in orientation quaternion");
+		}
 
-	return wrenchGrav.force;
-}
+		Vector3d gravVect;
+		gravVect = Vector3d(0, 0, mass * g);
 
-// Torque calculation function
-Vector3d Gravity::getTorque(Quaterniond orientation_eb, double g, double mass)
-{
-	// Gravity does not generate torque around the CG
-	return wrenchGrav.torque;
-}
+		wrenchGrav.force = orientation_eb * gravVect;
+		if (math_utils::isnan(wrenchGrav.force))
+		{
+			throw runtime_error("gravity.cpp: NaN member in force vector");
+		}
+
+		return wrenchGrav.force;
+	}
+
+	// Torque calculation function
+	Vector3d Gravity::getTorque(Quaterniond /*orientation_eb*/, double /*g*/, double /*mass*/)
+	{
+		// Gravity does not generate torque around the CG
+		return wrenchGrav.torque;
+	}
+
+} // namespace last_letter_lib
