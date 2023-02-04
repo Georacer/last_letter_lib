@@ -7,6 +7,9 @@ import pcg_gazebo.parsers.sdf as sdf
 import yaml
 
 
+MODELS_FOLDER = os.path.expanduser("~/last_letter_models/")
+
+
 class Geometry:
     _sdf_desc = None
 
@@ -342,8 +345,11 @@ class Aircraft:
         self.airfoil_params[airfoil.name] = airfoil.parameters
 
     def create_gazebo_model(self):
+        models_dir = os.path.join(MODELS_FOLDER, "models")
+        if not os.path.exists(models_dir):
+            os.makedirs(models_dir)
         gazebo_model = pcg_gazebo.simulation.SimulationModel.from_sdf(self._sdf_desc)
-        gazebo_model.to_gazebo_model(overwrite=True)
+        gazebo_model.to_gazebo_model(output_dir=models_dir, overwrite=True)
 
     def create_model_folder(self, configs_folder):
         model_directory = os.path.join(configs_folder, self.name)
@@ -402,7 +408,7 @@ class Aircraft:
         self.dump_yaml(default_params.default_inertial_params, full_filename)
 
     def create_last_letter_model(self):
-        configs_directory = os.path.expanduser("~/last_letter_models/")
+        configs_directory = os.path.expanduser(MODELS_FOLDER)
         model_directory = self.create_model_folder(configs_directory)
         self.create_world_params(configs_directory)
         self.create_simulation_params(configs_directory)
@@ -474,7 +480,9 @@ class World:
         self._sdf_desc.add_plugin("", plugin=ros_state_plugin)
 
         gazebo_world = pcg_gazebo.simulation.World.from_sdf(self._sdf_desc)
-        output_dir = os.path.join(os.path.expanduser("~/.gazebo/worlds"))
+        output_dir = os.path.join(
+            os.path.expanduser(os.path.join(MODELS_FOLDER, "worlds"))
+        )
         gazebo_world.export_to_file(
             output_dir=output_dir, filename=self._name, overwrite=True
         )

@@ -9,7 +9,8 @@ import numpy as np
 # Set world and environment settings
 # Set model name
 
-aircraft = mc.Aircraft("skywalker_2013")
+aircraft_name = "skywalker_2013"
+aircraft = mc.Aircraft(aircraft_name)
 
 # Set airfoils and bodies
 
@@ -87,7 +88,7 @@ aircraft.pose = [0, 0, 0.2, 0, 0, 0]
 aircraft.create_gazebo_model()
 aircraft.create_last_letter_model()
 
-world = mc.World("ll_world")
+world = mc.World(aircraft_name)
 world.add_model(aircraft)
 world.attach_camera(aircraft)
 world.create_gazebo_world()
