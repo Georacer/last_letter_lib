@@ -1,5 +1,7 @@
 import os
 from math import pi
+from pathlib import Path
+from shutil import copyfile
 
 import pcg_gazebo
 import pcg_gazebo.parsers.sdf as sdf
@@ -9,6 +11,30 @@ from last_letter_lib import default_params
 
 
 MODELS_FOLDER = os.path.expanduser("~/last_letter_models/")
+
+
+def traverse_sdf_collect(root, child_type, results):
+    try:
+        for child in root.children.values():
+            if isinstance(child, child_type):  # This is a child_type.
+                results.append(child)
+            elif isinstance(child, list):  # This is a list of children.
+                for item in child:
+                    traverse_sdf_collect(item, child_type, results)
+            else:  # This is a normal child.
+                traverse_sdf_collect(child, child_type, results)
+    except AttributeError:
+        pass
+
+
+def copy_meshes(mesh_list, output_dir):
+    for mesh in mesh_list:
+        mesh_file = Path(str(mesh.uri._value))
+        new_path = output_dir / mesh_file.name
+        print(f"Copying {mesh_file} to {new_path}")
+        copyfile(mesh_file, new_path)
+
+        mesh.uri = str(new_path)
 
 
 class Geometry:
@@ -43,8 +69,12 @@ class Cylinder(Geometry):
 class Mesh(Geometry):
     def __init__(self, uri, scale=[1, 1, 1]):
         super().__init__()
+        if not Path(uri).exists:
+            raise FileNotFoundError(f"The provided mesh {uri} does not exist")
         self._sdf_desc.mesh = sdf.create_sdf_element("mesh")
-        self._sdf_desc.mesh.uri = uri
+        self._sdf_desc.mesh.uri = (
+            uri  # Refer to the mesh file relatively. It will exist next to the .sdf.
+        )
         self._sdf_desc.mesh.scale = scale
 
 
@@ -347,8 +377,16 @@ class Aircraft:
 
     def create_gazebo_model(self):
         models_dir = os.path.join(MODELS_FOLDER, "models")
+        model_dir = Path(models_dir) / self._sdf_desc.name
         if not os.path.exists(models_dir):
             os.makedirs(models_dir)
+            os.makedirs(str(model_dir))
+
+        # Copy over the meshes inside the model folder
+        meshes = list()
+        traverse_sdf_collect(self._sdf_desc, sdf.Mesh, meshes)
+        copy_meshes(meshes, model_dir)
+
         gazebo_model = pcg_gazebo.simulation.SimulationModel.from_sdf(self._sdf_desc)
         gazebo_model.to_gazebo_model(output_dir=models_dir, overwrite=True)
 
