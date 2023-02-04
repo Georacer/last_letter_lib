@@ -12,6 +12,7 @@ numba = "^0.55.2"
 MarkupSafe = "2.0.1"
 pytransform3d = "^1.14.0"
 pydantic = "^1.10.4"
+pcg-gazebo = {git = "https://github.com/boschresearch/pcg_gazebo.git", rev = "346394cdb720c9df5ca1d1df6dac7ad0b6e436fc"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"

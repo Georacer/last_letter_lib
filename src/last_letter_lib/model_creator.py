@@ -1,10 +1,11 @@
 import os
 from math import pi
 
-import default_params
 import pcg_gazebo
 import pcg_gazebo.parsers.sdf as sdf
 import yaml
+
+from last_letter_lib import default_params
 
 
 MODELS_FOLDER = os.path.expanduser("~/last_letter_models/")

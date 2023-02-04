@@ -2,8 +2,9 @@
 import os
 from math import pi
 
-import model_creator as mc
 import numpy as np
+
+from last_letter_lib import model_creator as mc
 
 
 # Set world and environment settings
