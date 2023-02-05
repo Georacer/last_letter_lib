@@ -379,6 +379,7 @@ class Aircraft:
         model_dir = Path(models_dir) / self._sdf_desc.name
         if not os.path.exists(models_dir):
             os.makedirs(models_dir)
+        if not os.path.exists(model_dir):
             os.makedirs(str(model_dir))
 
         # Copy over the meshes inside the model folder
