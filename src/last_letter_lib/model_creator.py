@@ -31,7 +31,6 @@ def copy_meshes(mesh_list, output_dir):
     for mesh in mesh_list:
         mesh_file = Path(str(mesh.uri._value))
         new_path = output_dir / mesh_file.name
-        print(f"Copying {mesh_file} to {new_path}")
         copyfile(mesh_file, new_path)
 
         mesh.uri = str(new_path)
