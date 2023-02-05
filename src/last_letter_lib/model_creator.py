@@ -375,7 +375,7 @@ class Aircraft:
         self.airfoil_params[airfoil.name] = airfoil.parameters
 
     def create_gazebo_model(self):
-        models_dir = os.path.join(MODELS_FOLDER, "models")
+        models_dir = os.path.join(MODELS_FOLDER, "exported_models")
         model_dir = Path(models_dir) / self._sdf_desc.name
         if not os.path.exists(models_dir):
             os.makedirs(models_dir)

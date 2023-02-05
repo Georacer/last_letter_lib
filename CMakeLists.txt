@@ -93,7 +93,7 @@ target_link_libraries(last_letter_lib
 
 # Copy data files to home folder
 # file(COPY last_letter_models DESTINATION $ENV{HOME}) # Deprecated, using new models folder
-file(COPY models/meshes DESTINATION $ENV{HOME}/last_letter_models)
+file(COPY models DESTINATION $ENV{HOME}/last_letter_models)
 file(COPY last_letter_models/HID.yaml DESTINATION $ENV{HOME}/last_letter_models)
 
 # Export the header files for use by consumers of the library

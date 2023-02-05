@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import pathlib
 from math import pi
 from pathlib import Path
 
@@ -26,9 +27,7 @@ aircraft_body.link.set_inertia_iyy(1.135)
 aircraft_body.link.set_inertia_izz(1.759)
 aircraft_body.link.set_inertia_ixz(0.1204)
 
-mesh_path = Path("~/last_letter_models/meshes").expanduser() / Path(
-    "skywalker_2013.stl"
-)
+mesh_path = pathlib.Path(__file__).parent.resolve() / Path("skywalker_2013.stl")
 uav_shape = mc.Mesh(
     str(mesh_path),
     [0.02621, 0.02621, 0.02621],
