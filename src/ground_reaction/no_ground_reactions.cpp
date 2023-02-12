@@ -3,7 +3,7 @@
 /////////////////////////////////
 
 // Constructor
-NoGroundReaction::NoGroundReaction(YAML::Node config, YAML::Node worldConfig) : GroundReaction(config, worldConfig)
+NoGroundReaction::NoGroundReaction(ParameterManager config, ParameterManager worldConfig) : GroundReaction(config, worldConfig)
 {
 }
 

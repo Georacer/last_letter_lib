@@ -6,9 +6,9 @@ class PointFriction : public GroundReaction
 {
 	/// Does not include rolling wheel model
 public:
-	PointFriction(YAML::Node config, YAML::Node worldConfig);
+	PointFriction(ParameterManager config, ParameterManager worldConfig);
 	~PointFriction();
-	void readParametersGround(YAML::Node config);
+	void readParametersGround(ParameterManager config);
 
 	Eigen::Matrix<double, 3, Dynamic> pointCoords, cpi_up, cpi_down;
 	Eigen::Matrix<double, 2, Dynamic> springIndex;

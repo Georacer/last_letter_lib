@@ -3,10 +3,12 @@
 
 #include <last_letter_lib/uav_utils.hpp>
 
+using namespace last_letter_lib::uav_utils;
+
 using Eigen::Quaterniond;
 using Eigen::Vector3d;
 
-TEST(testQuaternions, testNedTf)
+TEST(testRotations, testNedTf)
 {
     // Rotate a vector from NED frame to ENU frame
     // i.e. how vector_ned is seen from ENU
@@ -20,7 +22,7 @@ TEST(testQuaternions, testNedTf)
     EXPECT_TRUE(new_vector_ned.isApprox(vector_ned));
 }
 
-TEST(testQuaternions, testBodyTf)
+TEST(testRotations, testBodyTf)
 {
     // Rotate a vector from FLU frame to FRD frame
     Vector3d vector_frd{1, 2, 3};
@@ -31,12 +33,4 @@ TEST(testQuaternions, testBodyTf)
     // Rotate the FLU vector back to FRD and compare with the original
     Vector3d new_vector_frd = q_bg_ba * vector_flu;
     EXPECT_TRUE(new_vector_frd.isApprox(vector_frd));
-}
-
-int main(int argc, char **argv)
-{
-    std::cout << "starting tests\n";
-    ::testing::InitGoogleTest(&argc, argv);
-    std::cout << "calling tests\n";
-    return RUN_ALL_TESTS();
 }

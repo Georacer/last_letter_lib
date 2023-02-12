@@ -6,17 +6,19 @@
 #include "yaml-cpp/yaml.h"
 
 #include "last_letter_lib/uav_utils.hpp"
+#include "last_letter_lib/prog_utils.hpp"
 #include "last_letter_lib/environment.hpp"
 
 using Eigen::Vector3d;
 
 using namespace last_letter_lib::uav_utils;
-
+using namespace last_letter_lib::programming_utils;
 
 namespace last_letter_lib
 {
 
-    enum class sensor_t {
+    enum class sensor_t
+    {
         IMU = 0,
         AHRS,
         BAROMETER,
@@ -44,24 +46,23 @@ namespace last_letter_lib
         // Functions
         Sensor();
         virtual ~Sensor();
-        void init(YAML::Node config);
+        void init(ParameterManager config);
         void update(const SimState_t, const Environment_t); // General class for sensor updating
-        void read_base_parameters(YAML::Node);
+        void read_base_parameters(ParameterManager);
         double generate_noise(double std_dev);
-        virtual void read_parameters(YAML::Node)=0;
+        virtual void read_parameters(ParameterManager) = 0;
 
     protected:
-        SimState_t uav_state_; // Stored UAV state
+        SimState_t uav_state_;      // Stored UAV state
         Environment_t environment_; // Stored environment state
 
     private:
-        virtual void update_sensor_()=0; // Interface class for running individual sensor code
+        virtual void update_sensor_() = 0; // Interface class for running individual sensor code
     };
 
     class Imu : public Sensor
     {
     public:
-
         ////////////
         // Variables
         Vector3d accelerometer_reading;
@@ -72,7 +73,7 @@ namespace last_letter_lib
         // Functions
         Imu();
         virtual ~Imu();
-        void read_parameters(YAML::Node);
+        void read_parameters(ParameterManager);
 
     private:
         void update_sensor_(); // Interface class for running individual sensor code
@@ -89,7 +90,7 @@ namespace last_letter_lib
     // public:
     //     ////////////
     //     // Functions
-    //     Ahrs(YAML::Node config);
+    //     Ahrs(ParameterManager config);
     //     virtual ~Ahrs();
 
     // private:
@@ -110,7 +111,7 @@ namespace last_letter_lib
         // Functions
         Barometer();
         virtual ~Barometer();
-        void read_parameters(YAML::Node);
+        void read_parameters(ParameterManager);
 
     private:
         void update_sensor_(); // Interface class for running individual sensor code
@@ -131,7 +132,7 @@ namespace last_letter_lib
         // Functions
         AirdataSensor();
         virtual ~AirdataSensor();
-        void read_parameters(YAML::Node);
+        void read_parameters(ParameterManager);
 
     private:
         Barometer barometer_;
@@ -144,9 +145,9 @@ namespace last_letter_lib
         ////////////
         // Variables
         int fix_type;
-        double latitude{0}; // Latitude in degrees
+        double latitude{0};  // Latitude in degrees
         double longitude{0}; // Longitude in degrees
-        double altitude{0}; // Altitude in meters
+        double altitude{0};  // Altitude in meters
         double eph{1}, epv{1};
         Vector3d velocity_ned;
         double evh{1}, evv{1};
@@ -157,7 +158,7 @@ namespace last_letter_lib
         // Functions
         Gnss();
         virtual ~Gnss();
-        void read_parameters(YAML::Node);
+        void read_parameters(ParameterManager);
 
     private:
         // Hardcoded Avy coordinates
@@ -177,7 +178,7 @@ namespace last_letter_lib
     // public:
     //     ////////////
     //     // Functions
-    //     Lidar(YAML::Node config);
+    //     Lidar(ParameterManager config);
     //     virtual ~Lidar();
 
     // private:
@@ -189,8 +190,8 @@ namespace last_letter_lib
     public:
         ////////////
         // Variables
-        Quaterniond attitude; // NED to Body Frame quaterion
-        Vector3d velocity_angular; // Body-frame angular velocity
+        Quaterniond attitude;         // NED to Body Frame quaterion
+        Vector3d velocity_angular;    // Body-frame angular velocity
         Vector3d acceleration_linear; // Linear Acceleration in body-frame
         double latitude{0};
         double longitude{0};
@@ -203,7 +204,7 @@ namespace last_letter_lib
         // Functions
         MavlinkHilStateQuaternion();
         virtual ~MavlinkHilStateQuaternion();
-        void read_parameters(YAML::Node);
+        void read_parameters(ParameterManager);
         // Hardcoded Avy coordinates
         // const float home_lat_deg_{52.3936579};
         // const float home_lon_deg_{4.8284891};

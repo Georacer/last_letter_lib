@@ -9,6 +9,7 @@
 #include "yaml-cpp/yaml.h"
 
 #include <last_letter_lib/uav_utils.hpp>
+#include <last_letter_lib/prog_utils.hpp>
 
 using last_letter_lib::uav_utils::Geoid;
 
@@ -22,6 +23,7 @@ using last_letter_lib::uav_utils::Geoid;
 #define L0 -6.5		 //Temperature lapse rate, at sea level deg K/km
 
 using namespace std;
+using namespace last_letter_lib::programming_utils;
 using Eigen::Vector3d;
 
 namespace last_letter_lib
@@ -64,7 +66,7 @@ namespace last_letter_lib
 
 		/////////////
 		//Constructor
-		EnvironmentModel(YAML::Node envConfig, YAML::Node worldConfig);
+		EnvironmentModel(ParameterManager envConfig, ParameterManager worldConfig);
 
 		void calcEnvironment(const uav_utils::SimState_t InpStates);
 
@@ -78,9 +80,9 @@ namespace last_letter_lib
 
 		void calcGrav();
 
-		void readParametersWorld(YAML::Node worldConfig);
+		void readParametersWorld(ParameterManager worldConfig);
 
-		void readParametersEnvironment(YAML::Node envConfig);
+		void readParametersEnvironment(ParameterManager envConfig);
 	};
 } // namespace last_letter_lib
 

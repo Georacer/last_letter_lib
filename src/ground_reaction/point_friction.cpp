@@ -4,7 +4,7 @@
 //////////////////////////////////
 
 // Class constructor
-PointFriction::PointFriction(YAML::Node config, YAML::Node worldConfig) : GroundReaction(config, worldConfig)
+PointFriction::PointFriction(ParameterManager config, ParameterManager worldConfig) : GroundReaction(config, worldConfig)
 {
 	readParametersGround(config);
 
@@ -34,13 +34,13 @@ PointFriction::~PointFriction()
 {
 }
 
-void PointFriction::readParametersGround(YAML::Node config)
+void PointFriction::readParametersGround(ParameterManager config)
 {
 	GroundReaction::readParametersGround(config);
 
 	vector<double> doubleVect;
 	// Read contact points number from parameter server
-	getParameter(config, "contactPtsNo", contactPtsNo);
+	contactPtsNo = config.get<double>("contactPtsNo");
 	// Create an appropriately sized matrix to contain contact point information
 	pointCoords.setZero(3, contactPtsNo); // contact points coordinates in the body frame
 	materialIndex.setZero(contactPtsNo, 1); // contact points material type index
@@ -50,7 +50,7 @@ void PointFriction::readParametersGround(YAML::Node config)
 	for (int j = 0; j<contactPtsNo; j++) { //Distribute the data
 		string contactPointName = "contactPoint" + std::to_string(j+1);
 		doubleVect.clear();
-		getParameterList(config, contactPointName, doubleVect);
+		doubleVect = config.get<vector<double>>(contactPointName);
 
 		pointCoords(0, j) = doubleVect[0]; // Save body frame contact point coordinates
 		pointCoords(1, j) = doubleVect[1];

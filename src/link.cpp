@@ -2,23 +2,25 @@
 #include <last_letter_lib/math_utils.hpp>
 #include <last_letter_lib/prog_utils.hpp>
 
+using namespace last_letter_lib::programming_utils;
+
 namespace last_letter_lib
 {
 
-    Link::Link(YAML::Node /*modelConfig*/, YAML::Node /*worldConfig*/)
+    Link::Link(ParameterManager /*modelConfig*/, ParameterManager /*worldConfig*/)
     {
     }
 
-    void Link::buildLink(YAML::Node modelConfig, YAML::Node /*worldConfig*/)
+    void Link::buildLink(ParameterManager modelConfig, ParameterManager /*worldConfig*/)
     {
         parseParametersLink(modelConfig);
 
         // inputGimbal_ = 0.0;
     }
 
-    void Link::parseParametersLink(YAML::Node config)
+    void Link::parseParametersLink(ParameterManager config)
     {
-        getParameter(config, "name", name); // Parse link name
+        name = config.get<string>("name"); // Parse link name
         // vector<double> doubleVect;
         // getParameterList(config, "CGOffset", doubleVect);
         // CGOffset_ = Vector3d(doubleVect.data());
@@ -38,14 +40,14 @@ namespace last_letter_lib
         // inputGimbal_ = 0.0;
     }
 
-    void Link::readParametersModel(YAML::Node config)
+    void Link::readParametersModel(ParameterManager config)
     {
         passModelParametersToModel(config);
     }
 
-    void Link::readParametersWorld(YAML::Node config)
+    void Link::readParametersWorld(ParameterManager config)
     {
-        getParameter(config, "deltaT", dt_);
+        dt_ = config.get<double>("deltaT");
         passWorldParametersToModel(config);
     }
 
@@ -149,7 +151,7 @@ namespace last_letter_lib
 
     // LinkAerodynamic methods
 
-    LinkAerodynamic::LinkAerodynamic(YAML::Node modelConfig, YAML::Node worldConfig) : Link(modelConfig, worldConfig)
+    LinkAerodynamic::LinkAerodynamic(ParameterManager modelConfig, ParameterManager worldConfig) : Link(modelConfig, worldConfig)
     {
         buildLink(modelConfig, worldConfig);
         buildDynamicModel(modelConfig, worldConfig);
@@ -160,17 +162,17 @@ namespace last_letter_lib
         delete aerodynamics;
     }
 
-    void LinkAerodynamic::buildDynamicModel(YAML::Node modelConfig, YAML::Node /*worldConfig*/)
+    void LinkAerodynamic::buildDynamicModel(ParameterManager modelConfig, ParameterManager /*worldConfig*/)
     {
         aerodynamics = buildAerodynamics(modelConfig);
     }
 
-    void LinkAerodynamic::passModelParametersToModel(YAML::Node config)
+    void LinkAerodynamic::passModelParametersToModel(ParameterManager config)
     {
         aerodynamics->readParametersAerodynamics(config);
     }
 
-    void LinkAerodynamic::passWorldParametersToModel(YAML::Node /*config*/)
+    void LinkAerodynamic::passWorldParametersToModel(ParameterManager /*config*/)
     {
     }
 
@@ -195,7 +197,7 @@ namespace last_letter_lib
     }
 
     // Propulsion link methods
-    LinkPropulsion::LinkPropulsion(YAML::Node modelConfig, YAML::Node worldConfig) : Link(modelConfig, worldConfig)
+    LinkPropulsion::LinkPropulsion(ParameterManager modelConfig, ParameterManager worldConfig) : Link(modelConfig, worldConfig)
     {
         buildLink(modelConfig, worldConfig);
         buildDynamicModel(modelConfig, worldConfig);
@@ -206,17 +208,17 @@ namespace last_letter_lib
         delete propulsion;
     }
 
-    void LinkPropulsion::buildDynamicModel(YAML::Node modelConfig, YAML::Node worldConfig)
+    void LinkPropulsion::buildDynamicModel(ParameterManager modelConfig, ParameterManager worldConfig)
     {
         propulsion = propulsion::buildPropulsion(modelConfig, worldConfig);
     }
 
-    void LinkPropulsion::passModelParametersToModel(YAML::Node config)
+    void LinkPropulsion::passModelParametersToModel(ParameterManager config)
     {
         propulsion->readParametersProp(config);
     }
 
-    void LinkPropulsion::passWorldParametersToModel(YAML::Node config)
+    void LinkPropulsion::passWorldParametersToModel(ParameterManager config)
     {
         propulsion->readParametersWorld(config);
     }
@@ -250,7 +252,7 @@ namespace last_letter_lib
 
     // Ground Reactions link
 
-    LinkGroundReaction::LinkGroundReaction(YAML::Node modelConfig, YAML::Node worldConfig) : Link(modelConfig, worldConfig)
+    LinkGroundReaction::LinkGroundReaction(ParameterManager modelConfig, ParameterManager worldConfig) : Link(modelConfig, worldConfig)
     {
         buildLink(modelConfig, worldConfig);
         buildDynamicModel(modelConfig, worldConfig);
@@ -261,17 +263,17 @@ namespace last_letter_lib
         delete groundReaction_;
     }
 
-    void LinkGroundReaction::buildDynamicModel(YAML::Node modelConfig, YAML::Node worldConfig)
+    void LinkGroundReaction::buildDynamicModel(ParameterManager modelConfig, ParameterManager worldConfig)
     {
         groundReaction_ = ground_reaction::buildGroundReaction(modelConfig, worldConfig);
     }
 
-    void LinkGroundReaction::passModelParametersToModel(YAML::Node config)
+    void LinkGroundReaction::passModelParametersToModel(ParameterManager config)
     {
         groundReaction_->readParametersGround(config);
     }
 
-    void LinkGroundReaction::passWorldParametersToModel(YAML::Node config)
+    void LinkGroundReaction::passWorldParametersToModel(ParameterManager config)
     {
         groundReaction_->readParametersWorld(config);
     }

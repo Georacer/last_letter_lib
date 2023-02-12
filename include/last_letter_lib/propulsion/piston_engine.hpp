@@ -18,9 +18,9 @@ public:
 
 	////////////
 	// Functions
-	PistonEng(YAML::Node propConfig, YAML::Node worldConfig);
+	PistonEng(ParameterManager propConfig, ParameterManager worldConfig);
 	~PistonEng();
-	void readParametersProp(YAML::Node config);
+	void readParametersProp(ParameterManager config);
 
 	void updateRadPS(SimState_t states, Inertial_t inertial, Environment_t environment);
 	void getForce(SimState_t states, Inertial_t inertial, Environment_t environment);

@@ -10,8 +10,10 @@ windRef: 5.0 #in m/s
 windRefAlt: 10.0 #in m
 windDir: 90.0 #in degrees
 surfSmooth: 0.28 #rural environment
-Dryden/Lu: 533.0
-Dryden/Lw: 533.0
-Dryden/sigmau: 155.0
-Dryden/sigmaw: 155.0
-Dryden/use: 0.0 #produce turbulence 0/1
+Dryden:
+  Lu: 533.0
+  Lw: 533.0
+  sigmau: 155.0
+  sigmaw: 155.0
+  use: false #produce turbulence
+  randomizeSeed: false

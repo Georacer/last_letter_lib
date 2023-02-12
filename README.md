@@ -9,3 +9,7 @@ Software libraries for UAV simulation.
 - mkdir build && cd build
 - cmake ..
 - make
+
+## Build and run tests
+
+- cmake -S . -B build && cmake --build build && ./build/all_tests

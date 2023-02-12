@@ -9,12 +9,14 @@ default_environment_params = {
     "windRefAlt": 60.0,  # in m
     "windDir": 90.0,  # in degrees
     "surfSmooth": 0.28,  # rural environment
-    "Dryden/Lu": 533.0,
-    "Dryden/Lw": 533.0,
-    "Dryden/sigmau": 155.0,
-    "Dryden/sigmaw": 78.0,  # Less powerful than XY because it causes very strong up/downdrafts
-    "Dryden/use": 1.0,  # produce turbulence 0/1
-    "Dryden/randomizeSeed": False,  # Randomize Dryden noise with current time seed
+    "Dryden": {
+        "Lu": 533.0,
+        "Lw": 533.0,
+        "sigmau": 155.0,
+        "sigmaw": 78.0,  # Less powerful than XY because it causes very strong up/downdrafts
+        "use": False,  # produce turbulence
+        "randomizeSeed": False,  # Randomize Dryden noise with current time seed
+    },
 }
 
 default_simulation_params = {
@@ -84,13 +86,17 @@ default_thruster_params = {
     "Cells": 6,
     "I0": 0.5,
     "RadPSLimits": [0.01, 1000],
-    "propThrustPoly/polyType": 0,
-    "propThrustPoly/polyNo": 5,
-    "propThrustPoly/coeffs": [0.0737, -0.4778, 2.2161, -5.5296, 6.2749, -2.6331],
+    "propThrustPoly": {
+        "polyType": 0,
+        "polyNo": 5,
+        "coeffs": [0.0737, -0.4778, 2.2161, -5.5296, 6.2749, -2.6331],
+    },
     "propThrustMultiplier": 1.10,
-    "propPowerPoly/polyType": 0,
-    "propPowerPoly/polyNo": 1,
-    "propPowerPoly/coeffs": [0.0289, -0.0405],
+    "propPowerPoly": {
+        "polyType": 0,
+        "polyNo": 1,
+        "coeffs": [0.0289, -0.0405],
+    },
     "momentumDragCoeff": 0.0047,
 }
 

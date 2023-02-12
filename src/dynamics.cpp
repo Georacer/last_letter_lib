@@ -10,14 +10,14 @@ namespace last_letter_lib
 
 	///////////////////
 	//Class Constructor
-	Dynamics::Dynamics(YAML::Node p_worldConfig, YAML::Node p_aeroConfig, YAML::Node p_propConfig, YAML::Node /*p_groundConfig*/)
+	Dynamics::Dynamics(ParameterManager p_worldConfig, ParameterManager p_aeroConfig, ParameterManager p_propConfig, ParameterManager /*p_groundConfig*/)
 	{
 		// Create and initialize aerodynamic objects array
-		getParameter(p_aeroConfig, "nWings", nWings);
+		nWings = p_aeroConfig.get<int>("nWings");
 		aerodynamicLinks = new LinkAerodynamic *[nWings];
 		for (int i = 0; i < nWings; i++)
 		{
-			YAML::Node aeroConfig = filterConfig(p_aeroConfig, "airfoil" + std::to_string(i + 1) + "/");
+			ParameterManager aeroConfig = p_aeroConfig.filter("airfoil" + std::to_string(i + 1) + "/");
 			aerodynamicLinks[i] = new LinkAerodynamic(aeroConfig, p_worldConfig); // Create a new aerodynamics object, id's are 1-indexed
 		}
 
@@ -25,11 +25,11 @@ namespace last_letter_lib
 		// gravity = new Gravity();
 
 		// Create and initialize motor objects array
-		getParameter(p_propConfig, "nMotors", nMotors);
+		nMotors = p_propConfig.get<int>("nMotors");
 		propulsionLinks = new LinkPropulsion *[nMotors];
 		for (int i = 0; i < nMotors; i++)
 		{
-			YAML::Node propConfig = filterConfig(p_propConfig, "motor" + std::to_string(i + 1) + "/");
+			ParameterManager propConfig = p_propConfig.filter("motor" + std::to_string(i + 1) + "/");
 			propulsionLinks[i] = new LinkPropulsion(propConfig, p_worldConfig); // Create a new propulsion object, id's are 1-indexed
 		}
 
@@ -37,25 +37,25 @@ namespace last_letter_lib
 		// groundReactionLink = new LinkGroundReaction(p_groundConfig, p_worldConfig);
 	}
 
-	void Dynamics::readParametersAerodynamics(YAML::Node config)
+	void Dynamics::readParametersAerodynamics(ParameterManager config)
 	{
 		for (int i = 0; i < nWings; i++)
 		{
-			YAML::Node aeroConfig = filterConfig(config, "airfoil" + std::to_string(i + 1) + "/");
+			ParameterManager aeroConfig = config.filter("airfoil" + std::to_string(i + 1) + "/");
 			aerodynamicLinks[i]->readParametersModel(aeroConfig); // Update aerodynamic parameters
 		}
 	}
 
-	void Dynamics::readParametersProp(YAML::Node config)
+	void Dynamics::readParametersProp(ParameterManager config)
 	{
 		for (int i = 0; i < nMotors; i++)
 		{
-			YAML::Node propConfig = filterConfig(config, "motor" + std::to_string(i + 1) + "/");
+			ParameterManager propConfig = config.filter("motor" + std::to_string(i + 1) + "/");
 			propulsionLinks[i]->readParametersModel(propConfig); // Update propulsion parameters
 		}
 	}
 
-	void Dynamics::readParametersWorld(YAML::Node config)
+	void Dynamics::readParametersWorld(ParameterManager config)
 	{
 		for (int i = 0; i < nMotors; i++)
 		{
@@ -64,7 +64,7 @@ namespace last_letter_lib
 		// groundReactionLink->readParametersWorld(config);
 	}
 
-	void Dynamics::readParametersGround(YAML::Node /*config*/)
+	void Dynamics::readParametersGround(ParameterManager /*config*/)
 	{
 		// groundReactionLink->readParametersModel(config);
 	}

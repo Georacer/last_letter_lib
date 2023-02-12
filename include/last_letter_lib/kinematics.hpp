@@ -11,7 +11,7 @@ using namespace std;
 using Eigen::Quaterniond;
 using Eigen::Vector3d;
 using namespace last_letter_lib::uav_utils;
-using last_letter_lib::programming_utils::getParameter;
+using namespace last_letter_lib::programming_utils;
 
 namespace last_letter_lib
 {
@@ -32,7 +32,7 @@ namespace last_letter_lib
 	{
 	public:
 		double dt;
-		Integrator(YAML::Node worldConfig);
+		Integrator(ParameterManager worldConfig);
 		virtual ~Integrator();
 		virtual SimState_t propagation(SimState_t states, Derivatives_t derivatives) = 0;
 	};
@@ -41,17 +41,17 @@ namespace last_letter_lib
 	class ForwardEuler : public Integrator
 	{
 	public:
-		ForwardEuler(YAML::Node worldConfig);
+		ForwardEuler(ParameterManager worldConfig);
 		SimState_t propagation(SimState_t states, Derivatives_t derivatives);
 	};
 
-	Integrator *buildIntegrator(YAML::Node worldConfig);
+	Integrator *buildIntegrator(ParameterManager worldConfig);
 
 	// Main generic class
 	class Kinematics
 	{
 	public:
-		Kinematics(YAML::Node inertialConfig, YAML::Node worldConfig);
+		Kinematics(ParameterManager inertialConfig, ParameterManager worldConfig);
 		~Kinematics();
 
 		double dt;
@@ -59,8 +59,8 @@ namespace last_letter_lib
 		Inertial_t inertial;
 		void calcDerivatives(SimState_t states, Wrench_t inpWrench);	  // Do not use this method (private)
 		SimState_t propagateState(SimState_t states, Wrench_t inpWrench); // Use this method to calculate state integral
-		void readParametersWorld(YAML::Node worldConfig);
-		void readParametersInertial(YAML::Node inertialConfig);
+		void readParametersWorld(ParameterManager worldConfig);
+		void readParametersInertial(ParameterManager inertialConfig);
 		Integrator *integrator;
 	};
 

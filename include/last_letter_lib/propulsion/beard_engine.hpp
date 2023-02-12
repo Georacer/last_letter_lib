@@ -12,9 +12,9 @@ public:
 
 	///////////
 	//Functions
-	EngBeard(YAML::Node propConfig, YAML::Node worldConfig);
+	EngBeard(ParameterManager propConfig, ParameterManager worldConfig);
 	~EngBeard();
-	void readParametersProp(YAML::Node config);
+	void readParametersProp(ParameterManager config);
 
 	void updateRadPS(SimState_t states, Inertial_t inertial, Environment_t environment); //Step the angular speed
 	void getForce(SimState_t states, Inertial_t inertial, Environment_t environment);

@@ -4,7 +4,7 @@
 //////////////////////////////////
 
 // Class constructor
-PanosContactPoints::PanosContactPoints(YAML::Node config, YAML::Node worldConfig) : GroundReaction(config, worldConfig)
+PanosContactPoints::PanosContactPoints(ParameterManager config, ParameterManager worldConfig) : GroundReaction(config, worldConfig)
 {
 	readParametersGround(config);
 
@@ -34,14 +34,14 @@ PanosContactPoints::~PanosContactPoints()
 {
 }
 
-void PanosContactPoints::readParametersGround(YAML::Node config)
+void PanosContactPoints::readParametersGround(ParameterManager config)
 {
 	GroundReaction::readParametersGround(config);
 
 	// Read contact points number from parameter server
 	vector<double> doubleVect;
 
-	getParameter(config, "contactPtsNo", contactPtsNo);
+	contactPtsNo = config.get<double>("contactPtsNo");
 	pointCoords.setZero(3, contactPtsNo); // contact points coordinates in the body frame
 	materialIndex.setZero(contactPtsNo, 1); // contact points material type index
 	springIndex.setZero(2,contactPtsNo); // contact points spring characteristics
@@ -50,7 +50,7 @@ void PanosContactPoints::readParametersGround(YAML::Node config)
 	for (int j = 0; j<contactPtsNo; j++) { //Distribute the data
 		string contactPointName = "contactPoint" + std::to_string(j+1);
 		doubleVect.clear();
-		getParameterList(config, contactPointName, doubleVect);
+		doubleVect = config.get<vector<double>>(contactPointName);
 		pointCoords(0, j) = doubleVect[0]; // Save body frame contact point coordinates
 		pointCoords(1, j) = doubleVect[1];
 		pointCoords(2, j) = doubleVect[2];

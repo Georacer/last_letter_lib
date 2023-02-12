@@ -31,6 +31,13 @@ namespace last_letter_lib
             return vectorToString2(vec, delimiter);
         }
 
+        // Find if string contains a character.
+        // Test method taken from https://stackoverflow.com/questions/23433095/how-to-check-if-a-char-is-in-a-string-in-c
+        bool contains(const std::string &str, char del)
+        {
+            return str.find(del) != std::string::npos;
+        }
+
         bool startsWith(std::string mainStr, std::string startStr)
         {
             if (mainStr.find(startStr) == 0)
@@ -39,100 +46,187 @@ namespace last_letter_lib
                 return false;
         }
 
-        // Filter a YAML::Node file to keep only a sub-parameter set
-        // Example: for start string /world, keep /world/timeControls but not /environment/rho
-        YAML::Node filterConfig(YAML::Node config, std::string prefix)
+        string removePrefix(std::string mainStr, std::string startStr)
         {
-            YAML::Node filteredNode;
-            for (YAML::const_iterator it = config.begin(); it != config.end(); ++it)
+            if (startsWith(mainStr, startStr))
             {
-                string paramName = it->first.as<string>();
-                if (startsWith(paramName, prefix))
+                string newString = mainStr.erase(0, startStr.size());
+                return newString;
+            }
+            else
+                return mainStr;
+        }
+
+        ///////////////////
+        // ParameterManager
+
+        ParameterManager::ParameterManager(string name_p) : name{name_p}
+        {
+            parameters_["name"] = name_p;
+        }
+
+        ParameterManager::ParameterManager(string name_p, const YAML::Node parameters_p) : name{name_p}
+        {
+            parameters_ = parameters_p;
+        }
+
+        void ParameterManager::register_child_mngr(ParameterManager child_mngr)
+        {
+            parameters_[child_mngr.name] = child_mngr.parameters_;
+        }
+
+        YAML::Node ParameterManager::find_parameter_(const string param_name_p)
+        // Returns a null YAML::Node if it doesn't exist.
+        {
+            // Split the name into '/'
+            std::vector<std::string> names;
+            split_string(param_name_p, names, '/');
+
+            // Recursively iterate into the tree structure.
+            YAML::Node temp_node;
+            temp_node.reset(parameters_);
+            for (auto name : names)
+            {
+                if (temp_node[name])
                 {
-                    string newName = paramName.erase(0, prefix.size());
-                    filteredNode[newName] = it->second;
+                    temp_node.reset(temp_node[name]);
                 }
                 else
                 {
+                    YAML::Node temp_node;
+                    return temp_node['invalid'];
                 }
             }
-            return filteredNode;
+            return temp_node;
         }
 
-        // Randomize the requested parameters of a configuration node by std_dev
-        YAML::Node randomizeConfig(YAML::Node config, vector<string> stringVec, double std_dev)
+        bool ParameterManager::exists(const string param_name_p)
         {
-            if (std_dev < 0)
-            {
-                throw domain_error("Standard deviation cannot be negative");
-            }
-
-            std::random_device rdev;
-            std::default_random_engine generator;
-            generator.seed(rdev());
-            std::normal_distribution<double> distribution(0.0, std_dev);
-            YAML::Node newConfig(config);
-
-            if (std_dev) // Apply only if std_dev>0
-            {
-                double scalarParam;
-                for (auto const &paramString : stringVec)
-                {
-                    if (!(config[paramString].Type() == YAML::NodeType::Scalar))
-                    {
-                        throw runtime_error("Requested parameter " + paramString + " is not scalar.");
-                    }
-                    cout << "Randomizing parameter: " << paramString << endl;
-                    getParameter(config, paramString, scalarParam);
-                    newConfig[paramString] = scalarParam * (1 + distribution(generator));
-                }
-            }
-            return newConfig;
+            return (bool)find_parameter_(param_name_p);
         }
 
-        ConfigsStruct_t randomizeConfigsStruct(const ConfigsStruct_t p_configStruct, const YAML::Node randomizerConfig)
+        ParameterManager ParameterManager::filter(const string prefix)
         {
-            ConfigsStruct_t randomizedConfig;
-            double std_dev;
-            getParameter(randomizerConfig, "std_dev", std_dev);
-            if (!std_dev) // No changes required
+            // // Append a trailing / for completeness.
+            // if ((char)prefix.back() != '/')
+            // {
+            //     prefix += '/';
+            // }
+            if (exists(prefix))
             {
-                return p_configStruct;
+                // Split the name into '/'
+                std::vector<std::string> names;
+                split_string(prefix, names, '/');
+                string name{names.back()};
+                return ParameterManager(name, find_parameter_(prefix));
             }
             else
             {
-                vector<string> paramList;
-
-                getParameter(randomizerConfig, "aerodynamics", paramList);
-                randomizedConfig.aero = randomizeConfig(p_configStruct.aero, paramList, std_dev);
-
-                paramList.clear();
-                getParameter(randomizerConfig, "ground", paramList);
-                randomizedConfig.ground = randomizeConfig(p_configStruct.ground, paramList, std_dev);
-
-                paramList.clear();
-                getParameter(randomizerConfig, "propulsion", paramList);
-                randomizedConfig.prop = randomizeConfig(p_configStruct.prop, paramList, std_dev);
-
-                paramList.clear();
-                getParameter(randomizerConfig, "inertial", paramList);
-                randomizedConfig.inertial = randomizeConfig(p_configStruct.inertial, paramList, std_dev);
-
-                paramList.clear();
-                getParameter(randomizerConfig, "init", paramList);
-                randomizedConfig.init = randomizeConfig(p_configStruct.init, paramList, std_dev);
-
-                return randomizedConfig;
+                throw std::invalid_argument(string("Parameter prefix ") + prefix + string(" does not exist."));
             }
         }
 
-        ConfigsStruct_t loadModelConfig(string modelName)
+        string ParameterManager::str()
+        {
+            std::stringstream buffer;
+            buffer << parameters_;
+            return buffer.str();
+        }
+
+        // Filter a YAML::Node file to keep only a sub-parameter set
+        // Example: for start string /world, keep /world/timeControls but not /environment/rho
+        // YAML::Node filterConfig(YAML::Node config, std::string prefix)
+        // {
+        //     YAML::Node filteredNode;
+        //     for (YAML::const_iterator it = config.begin(); it != config.end(); ++it)
+        //     {
+        //         string paramName = it->first.as<string>();
+        //         if (startsWith(paramName, prefix))
+        //         {
+        //             string newName = paramName.erase(0, prefix.size());
+        //             filteredNode[newName] = it->second;
+        //         }
+        //         else
+        //         {
+        //         }
+        //     }
+        //     return filteredNode;
+        // }
+
+        // Randomize the requested parameters of a configuration node by std_dev
+        // YAML::Node randomizeConfig(YAML::Node config, vector<string> stringVec, double std_dev)
+        // {
+        //     if (std_dev < 0)
+        //     {
+        //         throw domain_error("Standard deviation cannot be negative");
+        //     }
+
+        //     std::random_device rdev;
+        //     std::default_random_engine generator;
+        //     generator.seed(rdev());
+        //     std::normal_distribution<double> distribution(0.0, std_dev);
+        //     YAML::Node newConfig(config);
+
+        //     if (std_dev) // Apply only if std_dev>0
+        //     {
+        //         double scalarParam;
+        //         for (auto const &paramString : stringVec)
+        //         {
+        //             if (!(config[paramString].Type() == YAML::NodeType::Scalar))
+        //             {
+        //                 throw runtime_error("Requested parameter " + paramString + " is not scalar.");
+        //             }
+        //             cout << "Randomizing parameter: " << paramString << endl;
+        //             getParameter(config, paramString, scalarParam);
+        //             newConfig[paramString] = scalarParam * (1 + distribution(generator));
+        //         }
+        //     }
+        //     return newConfig;
+        // }
+
+        // ConfigsStruct_t randomizeConfigsStruct(const ConfigsStruct_t p_configStruct, const YAML::Node randomizerConfig)
+        // {
+        //     ConfigsStruct_t randomizedConfig;
+        //     double std_dev;
+        //     getParameter(randomizerConfig, "std_dev", std_dev);
+        //     if (!std_dev) // No changes required
+        //     {
+        //         return p_configStruct;
+        //     }
+        //     else
+        //     {
+        //         vector<string> paramList;
+
+        //         getParameter(randomizerConfig, "aerodynamics", paramList);
+        //         randomizedConfig.aero = randomizeConfig(p_configStruct.aero, paramList, std_dev);
+
+        //         paramList.clear();
+        //         getParameter(randomizerConfig, "ground", paramList);
+        //         randomizedConfig.ground = randomizeConfig(p_configStruct.ground, paramList, std_dev);
+
+        //         paramList.clear();
+        //         getParameter(randomizerConfig, "propulsion", paramList);
+        //         randomizedConfig.prop = randomizeConfig(p_configStruct.prop, paramList, std_dev);
+
+        //         paramList.clear();
+        //         getParameter(randomizerConfig, "inertial", paramList);
+        //         randomizedConfig.inertial = randomizeConfig(p_configStruct.inertial, paramList, std_dev);
+
+        //         paramList.clear();
+        //         getParameter(randomizerConfig, "init", paramList);
+        //         randomizedConfig.init = randomizeConfig(p_configStruct.init, paramList, std_dev);
+
+        //         return randomizedConfig;
+        //     }
+        // }
+
+        ParameterManager loadModelConfig(string modelName)
         {
             string modelFolderName = "last_letter_models/";
             string aircraftDir = "";
             string modelPath = getHomeFolder() + "/" + modelFolderName;
 
-            ConfigsStruct_t configs;
+            ParameterManager configs("aircraft");
 
             string prop_filename = "propulsion.yaml";
             string aero_filename = "aerodynamics.yaml";
@@ -152,18 +246,26 @@ namespace last_letter_lib
             string fullInitFilename = modelPath + aircraftDir + modelName + "/" + init_filename;
             string fullRandomizerFilename = modelPath + aircraftDir + modelName + "/" + randomizer_filename;
 
-            configs.world = YAML::LoadFile(fullWorldFilename);
-            configs.env = YAML::LoadFile(fullEnvironmentFilename);
-            configs.prop = YAML::LoadFile(fullPropFilename);
-            configs.aero = YAML::LoadFile(fullAeroFilename);
-            configs.ground = YAML::LoadFile(fullGroundFilename);
-            configs.inertial = YAML::LoadFile(fullInertialFilename);
-            configs.init = YAML::LoadFile(fullInitFilename);
+            ParameterManager world("world", YAML::LoadFile(fullWorldFilename));
+            configs.register_child_mngr(world);
+            ParameterManager env("env", YAML::LoadFile(fullEnvironmentFilename));
+            configs.register_child_mngr(env);
+            ParameterManager prop("prop", YAML::LoadFile(fullPropFilename));
+            configs.register_child_mngr(prop);
+            ParameterManager aero("aero", YAML::LoadFile(fullAeroFilename));
+            configs.register_child_mngr(aero);
+            ParameterManager ground("ground", YAML::LoadFile(fullGroundFilename));
+            configs.register_child_mngr(ground);
+            ParameterManager inertial("inertial", YAML::LoadFile(fullInertialFilename));
+            configs.register_child_mngr(inertial);
+            ParameterManager init("init", YAML::LoadFile(fullInitFilename));
+            configs.register_child_mngr(init);
 
+            return configs;
             // Load randomization information, and apply them
-            YAML::Node randomizerConfig = YAML::LoadFile(fullRandomizerFilename);
+            // YAML::Node randomizerConfig = YAML::LoadFile(fullRandomizerFilename);
 
-            return randomizeConfigsStruct(configs, randomizerConfig);
+            // return randomizeConfigsStruct(configs, randomizerConfig);
         }
 
         // Return home folder, without trailling slash
@@ -176,20 +278,19 @@ namespace last_letter_lib
 
         /////////////////////////////////////////////////////////////////
         // Build a new polynomial, reading from a configuration YAML Node
-        math_utils::Polynomial *buildPolynomial(YAML::Node config)
+        math_utils::Polynomial *buildPolynomial(ParameterManager param_mng)
         {
             int polyType;
-            getParameter(config, "polyType", polyType);
-            // std::cout<< "building a new polynomial: ";
+            polyType = param_mng.get<int>("polyType");
             switch (polyType)
             {
             case 0:
             {
                 // std::cout << "selecting 1D polynomial" << std::endl;
                 uint polyNo;
-                getParameter(config, "polyNo", polyNo);
+                polyNo = param_mng.get<uint>("PolyNo");
                 std::vector<double> coeffVect;
-                getParameterList(config, "coeffs", coeffVect);
+                coeffVect = param_mng.get<std::vector<double>>("coeffs");
                 if (coeffVect.size() != (polyNo + 1))
                 {
                     throw runtime_error("Parameter array coeffs size did not match polyNo");
@@ -202,11 +303,11 @@ namespace last_letter_lib
             {
                 // std::cout << "selecting 2D polynomial" << std::endl;
                 std::vector<int> polyNoVect;
-                getParameterList(config, "polyNo", polyNoVect);
+                polyNoVect = param_mng.get<std::vector<int>>("polyNo");
                 std::vector<double> coeffVect;
                 uint polyOrder1 = coeffVect[0];
                 uint polyOrder2 = coeffVect[1];
-                getParameterList(config, "coeffs", coeffVect);
+                coeffVect = param_mng.get<std::vector<double>>("coeffs");
                 if (coeffVect.size() != ((2 * polyOrder2 + 2 * polyOrder1 * polyOrder2 + polyOrder1 - polyOrder1 * polyOrder1 + 2) / 2))
                 {
                     throw runtime_error("Parameter array coeffs size did not match polyNo");
@@ -219,9 +320,9 @@ namespace last_letter_lib
             {
                 // std::cout << "selecting cubic spline" << std::endl;
                 uint breaksNo;
-                getParameter(config, "breaksNo", breaksNo);
+                breaksNo = param_mng.get<uint>("breaksNo");
                 std::vector<double> breaksVect;
-                getParameterList(config, "breaks", breaksVect);
+                breaksVect = param_mng.get<std::vector<double>>("breaks");
                 if (breaksVect.size() != (breaksNo + 1))
                 {
                     throw runtime_error("Spline breaks order and provided breaks number do not match");
@@ -229,7 +330,7 @@ namespace last_letter_lib
                 double breaks[breaksVect.size()];
                 std::copy(breaksVect.begin(), breaksVect.end(), breaks);
                 std::vector<double> coeffVect;
-                getParameterList(config, "coeffs", coeffVect);
+                coeffVect = param_mng.get<std::vector<double>>("coeffs");
                 if (breaksNo * 4 != coeffVect.size())
                 {
                     throw runtime_error("breaks order and provided coeffs number do not match");

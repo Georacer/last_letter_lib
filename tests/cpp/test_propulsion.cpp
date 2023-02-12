@@ -1,77 +1,52 @@
 #include <iostream>
+#include <gtest/gtest.h>
 
 #include "yaml-cpp/yaml.h"
 #include "last_letter_lib/prog_utils.hpp"
 #include "last_letter_lib/uav_utils.hpp"
 #include "last_letter_lib/propulsion/propulsion.hpp"
+#include "last_letter_lib/environment.hpp"
+
+#include "test_utils.hpp"
 
 using namespace std;
 using namespace Eigen;
 
-int main(int /* argc */, char * argv[])
+using namespace last_letter_lib;
+using namespace last_letter_lib::programming_utils;
+using namespace last_letter_lib::math_utils;
+using namespace last_letter_lib::propulsion;
+
+TEST(TestPropulsion, TestPropulsion1)
 {
-    string paramDir = "last_letter_lib/test/parameters/";
-    string uav_name = argv[1];
-    cout << "Building propulsion for UAV: " << uav_name << endl;
-    string prop_filename = "propulsion.yaml";
-    string init_filename = "init.yaml";
-    string world_filename = "world.yaml";
-    string inertial_filename = "inertial.yaml";
-
-    string fullWorldFilename = paramDir + "world.yaml";
-    string fullEnvironmentFilename = paramDir + "environment.yaml";
-    string fullPropFilename = paramDir+uav_name+"/"+prop_filename;
-    string fullInertialFilename = paramDir+uav_name+"/"+inertial_filename;
-    string fullInitFilename = paramDir+uav_name+"/"+init_filename;
-
-    YAML::Node worldConfig = YAML::LoadFile(fullWorldFilename);
-    YAML::Node environmentConfig = YAML::LoadFile(fullEnvironmentFilename);
-    YAML::Node propConfig = YAML::LoadFile(fullPropFilename);
-    YAML::Node propConfig1 = filterConfig(propConfig, "motor1/");
-    YAML::Node inertialConfig = YAML::LoadFile(fullInertialFilename);
-    YAML::Node initConfig = YAML::LoadFile(fullInitFilename);
-
-    Propulsion * motor1 = buildPropulsion(propConfig1, worldConfig);
-
-    SimState_t states;
-    std::vector<double> doubleVect;
-    getParameterList(initConfig, "velLin", doubleVect);
-    states.velocity.linear = Eigen::Vector3d(doubleVect.data());
-    doubleVect.clear();
-    getParameterList(initConfig, "position", doubleVect);
-    states.pose.position = Eigen::Vector3d(doubleVect.data());
-    states.geoid.altitude = -states.pose.position.z();
-	// Read initial orientation quaternion
-	doubleVect.clear();
-	getParameterList(initConfig, "orientation", doubleVect);
-	states.pose.orientation = Quaterniond(doubleVect[3], doubleVect[0], doubleVect[1], doubleVect[2]);
-    Eigen::Transform<double, 3, Eigen::Affine> t;
-    t = states.pose.orientation;
-    cout << "Earth to Body frame rotation:\n" << t.matrix() << endl;
+    ParameterManager config = load_config_aircraft("skywalker_2013");
+    Propulsion *motor1 = buildPropulsion(config.filter("prop/motor1/"), config.filter("world"));
+    SimState_t states = build_aircraft_state_from_config(config);
 
     Inertial_t inertial;
-    getParameter(inertialConfig, "m", inertial.mass);
+    inertial.mass = (config.filter("inertial")).get<double>("m");
     double j_x, j_y, j_z, j_xz;
-    getParameter(inertialConfig, "j_x", j_x);
-    getParameter(inertialConfig, "j_y", j_y);
-    getParameter(inertialConfig, "j_z", j_z);
-    getParameter(inertialConfig, "j_xz", j_xz);
+    j_x = (config.filter("inertial")).get<double>("j_x");
+    j_y = (config.filter("inertial")).get<double>("j_y");
+    j_z = (config.filter("inertial")).get<double>("j_z");
+    j_xz = (config.filter("inertial")).get<double>("j_xz");
     inertial.J << j_x, 0, -j_xz,
-                    0, j_y, 0,
-                    -j_xz, 0, j_x;
+        0, j_y, 0,
+        -j_xz, 0, j_x;
 
     Input_t input;
     input.value[2] = 0.5;
 
-    EnvironmentModel environmentModel = EnvironmentModel(environmentConfig, worldConfig);
+    EnvironmentModel environmentModel = EnvironmentModel(config.filter("env"), config.filter("world"));
     environmentModel.calcEnvironment(states);
 
     motor1->setInput(input);
     motor1->stepEngine(states, inertial, environmentModel.environment); // perform one step in the propdynamics
-    cout << "Motor input set to: " << motor1->inputMotor << endl;
-    cout << "Body-frame wind:\n" << environmentModel.environment.wind << endl;
-    cout << "Propeller-frame normal wind: " << motor1->normalWind << endl;
-    cout << "Propeller omega: " << motor1->omega << endl;
-    cout << "Propulsion force:\n" << motor1->wrenchProp.force << endl;
-    cout << "Propulsion torque:\n" << motor1->wrenchProp.torque << endl;
+    EXPECT_GT(motor1->omega, 0);
+    EXPECT_GT(motor1->wrenchProp.force(0), 0);
+    EXPECT_EQ(motor1->wrenchProp.force(1), 0);
+    EXPECT_EQ(motor1->wrenchProp.force(2), 0);
+    EXPECT_LT(motor1->wrenchProp.torque(0), 0);
+    EXPECT_EQ(motor1->wrenchProp.torque(1), 0);
+    EXPECT_EQ(motor1->wrenchProp.torque(2), 0);
 }

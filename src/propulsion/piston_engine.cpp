@@ -5,7 +5,7 @@
 using namespace std;
 
 // Constructor
-PistonEng::PistonEng(YAML::Node propConfig, YAML::Node worldConfig):Propulsion(propConfig, worldConfig)
+PistonEng::PistonEng(ParameterManager propConfig, ParameterManager worldConfig):Propulsion(propConfig, worldConfig)
 {
 	readParametersProp(propConfig);
 	omega = omegaMin; // Initialize engine rotational speed
@@ -19,26 +19,26 @@ PistonEng::~PistonEng()
 	delete propPowerPoly;
 }
 
-void PistonEng::readParametersProp(YAML::Node config)
+void PistonEng::readParametersProp(ParameterManager config)
 {
 	Propulsion::readParametersProp(config);
 
+	propDiam = config.get<double>("propDiam");
+	engInertia = config.get<double>("engInertia");
 	vector<double> doubleVect;
-	getParameter(config, "propDiam", propDiam);
-	getParameter(config, "engInertia", engInertia);
-	getParameter(config, "RadPSLimits", doubleVect);
+	doubleVect = config.get<vector<double>>("RadPSLimits");
 	// // Initialize RadPS limits
 	omegaMin = doubleVect[0];
 	omegaMax = doubleVect[1];
 
 	// Create engine power polynomial
-	YAML::Node engPowerPolyConfig = filterConfig(config, "engPowerPoly");
+	ParameterManager engPowerPolyConfig = config.filter("engPowerPoly");
 	engPowerPoly =  buildPolynomial(engPowerPolyConfig);
 	// Create propeller efficiency polynomial
-	YAML::Node engCoeffPolyConfig = filterConfig(config, "engCoeffPoly");
+	ParameterManager engCoeffPolyConfig = config.filter("engCoeffPoly");
 	npPoly =  buildPolynomial(engCoeffPolyConfig);
 	// Create propeller power polynomial
-	YAML::Node propPowerPolyConfig = filterConfig(config, "propPowerPoly");
+	ParameterManager propPowerPolyConfig = config.filter("propPowerPoly");
 	propPowerPoly =  buildPolynomial(propPowerPolyConfig);
 }
 

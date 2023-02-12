@@ -1,12 +1,14 @@
 #include "yaml-cpp/yaml.h"
 
 #include "last_letter_lib/uav_utils.hpp"
+#include "last_letter_lib/prog_utils.hpp"
 #include "last_letter_lib/environment.hpp"
 #include "last_letter_lib/dynamics.hpp"
 #include "last_letter_lib/kinematics.hpp"
 #include "last_letter_lib/sensors.hpp"
 
 using namespace std;
+using namespace last_letter_lib::programming_utils;
 
 using Eigen::Quaterniond;
 using Eigen::Vector3d;
@@ -21,8 +23,8 @@ namespace last_letter_lib
 	{
 	public:
 		///////////
-		//Variables
-		programming_utils::ConfigsStruct_t configs;
+		// Variables
+		ParameterManager configs;
 		// SimState_t state;	 // main simulation states
 		LinkWrenchMap_t linkWrenches;
 		Input_t input;		 // Normalized input to the model
@@ -31,7 +33,7 @@ namespace last_letter_lib
 		int chanReset;
 
 		/////////
-		//Members
+		// Members
 		Kinematics kinematics;
 		Dynamics dynamics;
 		EnvironmentModel environmentModel;
@@ -46,12 +48,11 @@ namespace last_letter_lib
 		// Link state storage
 		LinkStateMap_t linkStates_;
 
-
 		///////////
-		//Methods
+		// Methods
 	public:
 		// Constructor
-		UavModel(programming_utils::ConfigsStruct_t configs);
+		UavModel(programming_utils::ParameterManager configs);
 
 		// Initialize UavModel object
 		void init();
@@ -59,7 +60,8 @@ namespace last_letter_lib
 		// Destructor
 		~UavModel();
 
-		void setLinkStates(LinkStateMap_t linkStates); // Set simulation state
+		void setLinkStates(LinkStateMap_t linkStates);			  // Set simulation state
+		SimState_t getState() { return linkStates_["body_frd"]; } // Return the state of the Body Frame
 		void setInput(Input_t inputMsg);
 		void setInputPwm(InputPwm_t inputMsg);
 		bool set_parameter(programming_utils::ParamType_t paramType, std::string name, double value);
@@ -75,10 +77,10 @@ namespace last_letter_lib
 		void updateConfigGround();
 		void updateConfigAll();
 
-		void readParametersWorld(YAML::Node worldConfig);
-		void readParametersInit(YAML::Node initConfig);
+		void readParametersWorld(ParameterManager worldConfig);
+		void readParametersInit(ParameterManager initConfig);
 
 		void step(LinkStateMap_t linkStates); // Perform simulation step
-		void step(); // Perform simulation step on stored link states
+		void step();						  // Perform simulation step on stored link states
 	};
 } // namespace last_letter_lib

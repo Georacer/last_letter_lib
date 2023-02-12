@@ -1,8 +1,11 @@
 // Core class definitions
+#include <stdexcept>
 
 #include "last_letter_lib/uav_model.hpp"
+#include "last_letter_lib/prog_utils.hpp"
 
 using namespace std;
+using namespace last_letter_lib::programming_utils;
 
 namespace last_letter_lib
 {
@@ -12,15 +15,19 @@ namespace last_letter_lib
 	//////////////////////////
 
 	///////////////////
-	//Class Constructor
-	UavModel::UavModel(programming_utils::ConfigsStruct_t p_configs) : kinematics(p_configs.inertial, p_configs.world),
-																	   dynamics(p_configs.world, p_configs.aero, p_configs.prop, p_configs.ground),
-																	   environmentModel(p_configs.env, p_configs.world)
+	// Class Constructor
+	UavModel::UavModel(ParameterManager p_configs) : configs(p_configs),
+													 kinematics(p_configs.filter("inertial"),
+																p_configs.filter("world")),
+													 dynamics(p_configs.filter("world"),
+															  p_configs.filter("aero"),
+															  p_configs.filter("prop"),
+															  p_configs.filter("ground")),
+													 environmentModel(p_configs.filter("env"), p_configs.filter("world"))
 	{
-		configs = p_configs;
 
-		readParametersWorld(configs.world);
-		readParametersInit(configs.init);
+		readParametersWorld(configs.filter("world"));
+		readParametersInit(configs.filter("init"));
 
 		// Add sensors to the UAV
 		sensors.push_back(std::make_shared<Imu>());
@@ -30,18 +37,18 @@ namespace last_letter_lib
 		sensors.push_back(std::make_shared<MavlinkHilStateQuaternion>());
 		for (auto sensor_ptr : sensors)
 		{
-			sensor_ptr->init(p_configs.world);
+			sensor_ptr->init(p_configs.filter("world"));
 		}
 
 		init();
 	}
 
-	//Initialize states
+	// Initialize states
 	void UavModel::init()
 	{
-		//TODO: All initialization state is not used, passed by Gazebo
-		// // Read initial NED coordinates
-		// state.pose.position = initPosition_;
+		// TODO: All initialization state is not used, passed by Gazebo
+		//  // Read initial NED coordinates
+		//  state.pose.position = initPosition_;
 
 		// // Read initial orientation quaternion
 		// state.pose.orientation = initOrientation_;
@@ -74,40 +81,40 @@ namespace last_letter_lib
 	// Pick and update all sub-models which read from each one
 	void UavModel::updateConfigWorld()
 	{
-		readParametersWorld(configs.world);
-		kinematics.readParametersWorld(configs.world);
-		dynamics.readParametersWorld(configs.world);
-		environmentModel.readParametersWorld(configs.world);
+		readParametersWorld(configs.filter("world"));
+		kinematics.readParametersWorld(configs.filter("world"));
+		dynamics.readParametersWorld(configs.filter("world"));
+		environmentModel.readParametersWorld(configs.filter("world"));
 	}
 
 	void UavModel::updateConfigEnvironment()
 	{
-		environmentModel.readParametersEnvironment(configs.env);
+		environmentModel.readParametersEnvironment(configs.filter("env"));
 	}
 
 	void UavModel::updateConfigInit()
 	{
-		readParametersInit(configs.init);
+		readParametersInit(configs.filter("init"));
 	}
 
 	void UavModel::updateConfigInertial()
 	{
-		kinematics.readParametersInertial(configs.inertial);
+		kinematics.readParametersInertial(configs.filter("inertial"));
 	}
 
 	void UavModel::updateConfigAero()
 	{
-		dynamics.readParametersAerodynamics(configs.aero);
+		dynamics.readParametersAerodynamics(configs.filter("aero"));
 	}
 
 	void UavModel::updateConfigProp()
 	{
-		dynamics.readParametersProp(configs.prop);
+		dynamics.readParametersProp(configs.filter("prop"));
 	}
 
 	void UavModel::updateConfigGround()
 	{
-		dynamics.readParametersGround(configs.ground);
+		dynamics.readParametersGround(configs.filter("ground"));
 	}
 
 	void UavModel::updateConfigAll()
@@ -121,56 +128,61 @@ namespace last_letter_lib
 		updateConfigGround();
 	}
 
-	void UavModel::readParametersWorld(YAML::Node worldConfig)
+	void UavModel::readParametersWorld(ParameterManager worldConfig)
 	{
-		getParameter(worldConfig, "deltaT", dt);
+		dt = worldConfig.get<double>("deltaT");
 	}
 
-	void UavModel::readParametersInit(YAML::Node initConfig)
+	void UavModel::readParametersInit(ParameterManager initConfig)
 	{
 		// Read initial NED coordinates
 		vector<double> doubleVect;
-		getParameterList(initConfig, "position", doubleVect);
+		doubleVect = initConfig.get<vector<double>>("position");
 		initPosition_ = Vector3d(doubleVect.data());
 
 		// Read initial orientation quaternion
 		doubleVect.clear();
-		getParameterList(initConfig, "orientation", doubleVect);
+		doubleVect = initConfig.get<vector<double>>("orientation");
 		initOrientation_ = Quaterniond(doubleVect[3], doubleVect[0], doubleVect[1], doubleVect[2]);
 
 		// Read initial velocity
 		doubleVect.clear();
-		getParameterList(initConfig, "velLin", doubleVect);
+		doubleVect = initConfig.get<vector<double>>("velLin");
 		initVelLinear_ = Vector3d(doubleVect.data());
 
 		// Read initial angular velocity
 		doubleVect.clear();
-		getParameterList(initConfig, "velAng", doubleVect);
+		doubleVect = initConfig.get<vector<double>>("velAng");
 		initVelAngular_ = Vector3d(doubleVect.data());
 
 		// Initialize WGS coordinates
 		doubleVect.clear();
-		getParameterList(initConfig, "coordinates", doubleVect);
+		doubleVect = initConfig.get<vector<double>>("coordinates");
 		initCoordinates_(0) = doubleVect[0];
 		initCoordinates_(1) = doubleVect[1];
 		initCoordinates_(2) = doubleVect[2] - initPosition_.z(); // Read ground geoid altitude and raise the WGS coordinate by the NED altitude
 
-		if (!getParameter(initConfig, "chanReset", initChanReset_, false))
+		try
 		{
-			cout << "No RESET channel selected" << endl;
+			initChanReset_ = initConfig.get<int>("chanReset");
+		}
+		catch (const std::exception &)
+		{
 			initChanReset_ = -1;
 		}
 
 		// Initialize input
-		doubleVect.clear();
-		if (getParameterList(initConfig, "ctrlInput", doubleVect))
+		try
 		{
-			std::copy(doubleVect.begin(), doubleVect.end(), initCtrlInput_.value.begin());
+			initCtrlInput_.value = initConfig.get<vector<double>>("ctrlInput");
+		}
+		catch (const std::exception &)
+		{
 		}
 	}
 
 	///////////////////////////////////////
-	//Make one step of the plane simulation
+	// Make one step of the plane simulation
 	void UavModel::step(LinkStateMap_t linkStates)
 	{
 		// Perform step actions serially
@@ -231,7 +243,6 @@ namespace last_letter_lib
 
 		// Calculate dynamics
 		linkWrenches = dynamics.calcWrench(linkStates_, kinematics.inertial, environmentModel.environment);
-
 	}
 
 	////////////////////////
@@ -274,7 +285,7 @@ namespace last_letter_lib
 	}
 
 	/////////////////////////////////////////////////
-	//convert uS PWM values to control surface inputs
+	// convert uS PWM values to control surface inputs
 	void UavModel::setInputPwm(const InputPwm_t p_input)
 	{
 		PwmInput.value = p_input.value;
@@ -297,25 +308,25 @@ namespace last_letter_lib
 		switch (paramType)
 		{
 		case PARAM_TYPE_WORLD:
-			return setParameter(configs.world, name, value);
+			return (configs.filter("world")).set(name, value);
 			break;
 		case PARAM_TYPE_ENV:
-			return setParameter(configs.env, name, value);
+			return (configs.filter("env")).set(name, value);
 			break;
 		case PARAM_TYPE_INIT:
-			return setParameter(configs.init, name, value);
+			return (configs.filter("init")).set(name, value);
 			break;
 		case PARAM_TYPE_INERTIAL:
-			return setParameter(configs.inertial, name, value);
+			return (configs.filter("inertial")).set(name, value);
 			break;
 		case PARAM_TYPE_AERO:
-			return setParameter(configs.aero, name, value);
+			return (configs.filter("aero")).set(name, value);
 			break;
 		case PARAM_TYPE_PROP:
-			return setParameter(configs.prop, name, value);
+			return (configs.filter("prop")).set(name, value);
 			break;
 		case PARAM_TYPE_GROUND:
-			return setParameter(configs.ground, name, value);
+			return (configs.filter("ground")).set(name, value);
 			break;
 		default:
 			std::cerr << "Cannot handle this parameter type" << std::endl;
@@ -332,7 +343,7 @@ namespace last_letter_lib
 	}
 
 	//////////////////
-	//Class destructor
+	// Class destructor
 	UavModel::~UavModel()
 	{
 	}

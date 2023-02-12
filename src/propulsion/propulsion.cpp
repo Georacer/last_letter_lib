@@ -15,7 +15,7 @@ namespace last_letter_lib
 		//////////////////////////////
 
 		// Constructor
-		Propulsion::Propulsion(YAML::Node propConfig, YAML::Node worldConfig)
+		Propulsion::Propulsion(ParameterManager propConfig, ParameterManager worldConfig)
 		{
 			readParametersWorld(worldConfig);
 			readParametersProp(propConfig);
@@ -30,21 +30,28 @@ namespace last_letter_lib
 		{
 		}
 
-		void Propulsion::readParametersWorld(YAML::Node config)
+		void Propulsion::readParametersWorld(ParameterManager config)
 		{
-			getParameter(config, "deltaT", dt);
+			dt = config.get<double>("deltaT");
 		}
 
-		void Propulsion::readParametersProp(YAML::Node config)
+		void Propulsion::readParametersProp(ParameterManager config)
 		{
-			if (!getParameter(config, "chanMotor", chanMotor, false))
+			try
+			{
+				chanMotor = config.get<int>("chanMotor");
+			}
+			catch (const std::invalid_argument &)
 			{
 				chanMotor = -1;
 			}
-
-			if (!getParameter(config, "rotationDir", rotationDir, false))
+			try
 			{
-				rotationDir = 1.0;
+				rotationDir = config.get<double>("rotationDir");
+			}
+			catch (const std::invalid_argument &)
+			{
+				rotationDir = 1;
 			}
 		}
 
@@ -111,10 +118,10 @@ namespace last_letter_lib
 #include "omega_control_engine.cpp"
 
 		// Build engine model
-		Propulsion *buildPropulsion(YAML::Node propConfig, YAML::Node worldConfig)
+		Propulsion *buildPropulsion(ParameterManager propConfig, ParameterManager worldConfig)
 		{
 			int motorType;
-			getParameter(propConfig, "motorType", motorType);
+			motorType = propConfig.get<double>("motorType");
 			std::cout << "building engine model: ";
 			switch (motorType)
 			{

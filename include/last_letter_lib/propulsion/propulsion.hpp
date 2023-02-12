@@ -18,9 +18,7 @@ using Eigen::Vector3d;
 using namespace last_letter_lib::uav_utils;
 using last_letter_lib::math_utils::Polynomial;
 using last_letter_lib::programming_utils::buildPolynomial;
-using last_letter_lib::programming_utils::filterConfig;
-using last_letter_lib::programming_utils::getParameter;
-using last_letter_lib::programming_utils::getParameterList;
+using last_letter_lib::programming_utils::ParameterManager;
 
 namespace last_letter_lib
 {
@@ -44,10 +42,10 @@ namespace last_letter_lib
 
 			///////////
 			//Functions
-			Propulsion(YAML::Node propConfig, YAML::Node worldConfig);
+			Propulsion(ParameterManager propConfig, ParameterManager worldConfig);
 			virtual ~Propulsion();
-			virtual void readParametersProp(YAML::Node config);
-			virtual void readParametersWorld(YAML::Node config);
+			virtual void readParametersProp(ParameterManager config);
+			virtual void readParametersWorld(ParameterManager config);
 
 			void setInput(Input_t input);																	 // store control input
 			void setInputPwm(InputPwm_t input);																 // store PWM control input
@@ -68,6 +66,6 @@ namespace last_letter_lib
 
 #include "omega_control_engine.hpp"
 
-		Propulsion *buildPropulsion(YAML::Node propConfig, YAML::Node worldConfig);
+		Propulsion *buildPropulsion(ParameterManager propConfig, ParameterManager worldConfig);
 	} // namespace propulsion
 } // namespace last_letter_lib

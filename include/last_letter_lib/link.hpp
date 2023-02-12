@@ -1,27 +1,29 @@
 #include <Eigen/Eigen>
 #include <yaml-cpp/yaml.h>
 #include <last_letter_lib/uav_utils.hpp>
+#include <last_letter_lib/prog_utils.hpp>
 #include <last_letter_lib/aerodynamics.hpp>
 #include <last_letter_lib/propulsion/propulsion.hpp>
 #include <last_letter_lib/ground_reaction/ground_reaction.hpp>
 #include <last_letter_lib/environment.hpp>
 
 using Eigen::Vector3d;
+using namespace last_letter_lib::programming_utils;
 
 namespace last_letter_lib
 {
     class Link
     {
     public:
-        Link(YAML::Node modelConfig, YAML::Node WorldConfig);
+        Link(ParameterManager modelConfig, ParameterManager WorldConfig);
         virtual ~Link(){};
-        void buildLink(YAML::Node modelConfig, YAML::Node worldConfig);                     // Capture link config and pass rest to dynamic model
-        void parseParametersLink(YAML::Node config);                                        // Capture link-specific parameters
-        void readParametersModel(YAML::Node config);                                        // Update link parameters
-        void readParametersWorld(YAML::Node config);                                        // Update link world parameters
-        virtual void passModelParametersToModel(YAML::Node config) = 0;                     // Update internal model parameters
-        virtual void passWorldParametersToModel(YAML::Node config) = 0;                     // Update internal model world parameters
-        virtual void buildDynamicModel(YAML::Node modelConfig, YAML::Node worldConfig) = 0; // Capture dynamic model parameters and build model
+        void buildLink(ParameterManager modelConfig, ParameterManager worldConfig);                     // Capture link config and pass rest to dynamic model
+        void parseParametersLink(ParameterManager config);                                        // Capture link-specific parameters
+        void readParametersModel(ParameterManager config);                                        // Update link parameters
+        void readParametersWorld(ParameterManager config);                                        // Update link world parameters
+        virtual void passModelParametersToModel(ParameterManager config) = 0;                     // Update internal model parameters
+        virtual void passWorldParametersToModel(ParameterManager config) = 0;                     // Update internal model world parameters
+        virtual void buildDynamicModel(ParameterManager modelConfig, ParameterManager worldConfig) = 0; // Capture dynamic model parameters and build model
         // Input hanlding methods
         void setInput(Input_t input);
         void setInputPwm(InputPwm_t input);
@@ -58,11 +60,11 @@ namespace last_letter_lib
     class LinkAerodynamic : public Link
     {
     public:
-        LinkAerodynamic(YAML::Node modelConfig, YAML::Node worldConfig);
+        LinkAerodynamic(ParameterManager modelConfig, ParameterManager worldConfig);
         ~LinkAerodynamic();
-        void buildDynamicModel(YAML::Node modelConfig, YAML::Node worldConfig);
-        void passModelParametersToModel(YAML::Node config); // Update internal model parameters
-        void passWorldParametersToModel(YAML::Node config); // Update internal model world parameters
+        void buildDynamicModel(ParameterManager modelConfig, ParameterManager worldConfig);
+        void passModelParametersToModel(ParameterManager config); // Update internal model parameters
+        void passWorldParametersToModel(ParameterManager config); // Update internal model world parameters
         void setModelInput(Input_t input);
         void setModelInputPwm(InputPwm_t input);
         virtual void stepModelDynamics(SimState_t, Inertial_t, Environment_t);
@@ -75,11 +77,11 @@ namespace last_letter_lib
     class LinkPropulsion : public Link
     {
     public:
-        LinkPropulsion(YAML::Node prop_config, YAML::Node world_config);
+        LinkPropulsion(ParameterManager prop_config, ParameterManager world_config);
         ~LinkPropulsion();
-        void buildDynamicModel(YAML::Node prop_config, YAML::Node world_config);
-        void passModelParametersToModel(YAML::Node config); // Update internal model parameters
-        void passWorldParametersToModel(YAML::Node config); // Update internal model world parameters
+        void buildDynamicModel(ParameterManager prop_config, ParameterManager world_config);
+        void passModelParametersToModel(ParameterManager config); // Update internal model parameters
+        void passWorldParametersToModel(ParameterManager config); // Update internal model world parameters
         void setModelInput(Input_t input);
         void setModelInputPwm(InputPwm_t input);
         virtual void stepModelDynamics(SimState_t, Inertial_t, Environment_t);
@@ -94,11 +96,11 @@ namespace last_letter_lib
     class LinkGroundReaction : public Link
     {
     public:
-        LinkGroundReaction(YAML::Node modelConfig, YAML::Node worldConfig);
+        LinkGroundReaction(ParameterManager modelConfig, ParameterManager worldConfig);
         ~LinkGroundReaction();
-        void buildDynamicModel(YAML::Node modelConfig, YAML::Node worldConfig);
-        void passModelParametersToModel(YAML::Node config); // Update internal model parameters
-        void passWorldParametersToModel(YAML::Node config); // Update internal model world parameters
+        void buildDynamicModel(ParameterManager modelConfig, ParameterManager worldConfig);
+        void passModelParametersToModel(ParameterManager config); // Update internal model parameters
+        void passWorldParametersToModel(ParameterManager config); // Update internal model world parameters
         void setModelInput(Input_t input);
         void setModelInputPwm(InputPwm_t input);
         void stepModelDynamics(SimState_t, Inertial_t, Environment_t);

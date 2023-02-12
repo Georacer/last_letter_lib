@@ -26,9 +26,9 @@ public:
 	////////////////
 	// Functions //
 	////////////////
-	ElectricEng(YAML::Node propConfig, YAML::Node worldConfig);
+	ElectricEng(ParameterManager propConfig, ParameterManager worldConfig);
 	~ElectricEng();
-	void readParametersProp(YAML::Node config);
+	void readParametersProp(ParameterManager config);
 
 	void updateRadPS(SimState_t states, Inertial_t inertial, Environment_t environment);
 	void getForce(SimState_t states, Inertial_t inertial, Environment_t environment);
@@ -61,9 +61,9 @@ public:
 	////////////////
 	// Functions //
 	////////////////
-	ElectricEng2(YAML::Node propConfig, YAML::Node worldConfig);
+	ElectricEng2(ParameterManager propConfig, ParameterManager worldConfig);
 	~ElectricEng2();
-	void readParametersProp(YAML::Node config);
+	void readParametersProp(ParameterManager config);
 
 	void updateRadPS(SimState_t states, Inertial_t inertial, Environment_t environment);
 	void getForce(SimState_t states, Inertial_t inertial, Environment_t environment);

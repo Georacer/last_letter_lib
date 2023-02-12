@@ -2,10 +2,11 @@
 
 #include "last_letter_lib/sensors.hpp"
 #include "last_letter_lib/math_utils.hpp"
-// #include "last_letter_lib/prog_utils.hpp"
+#include "last_letter_lib/prog_utils.hpp"
 #include <last_letter_lib/geo_mag_declination.hpp>
 
 // using namespace std;
+using namespace last_letter_lib::programming_utils;
 
 using Eigen::Quaterniond;
 
@@ -24,17 +25,17 @@ namespace last_letter_lib
 	{
 	}
 
-	void Sensor::init(YAML::Node config)
+	void Sensor::init(ParameterManager config)
 	{
 		read_base_parameters(config);
 		read_parameters(config);
 	}
 
-	void Sensor::read_base_parameters(YAML::Node)
+	void Sensor::read_base_parameters(ParameterManager)
 	{
 	}
 
-	// void Sensor::read_parameters(YAML::Node)
+	// void Sensor::read_parameters(ParameterManager)
 	// {
 	// }
 
@@ -73,7 +74,7 @@ namespace last_letter_lib
 	{
 	}
 
-	void Imu::read_parameters(YAML::Node)
+	void Imu::read_parameters(ParameterManager)
 	{
 	}
 
@@ -109,7 +110,7 @@ namespace last_letter_lib
 		float inclination_rad = get_mag_inclination(home_lat_deg_, home_lon_deg_) * M_PI / 180;
 		// Generate magnetic strength (10^5xnanoTesla)
 		float strength_ga_ct = get_mag_strength(home_lat_deg_, home_lon_deg_); // Get magnetic field strength in centi Tesla
-		float strength_ga = 0.01f * strength_ga_ct;                                 // Convert to Gauss
+		float strength_ga = 0.01f * strength_ga_ct;							   // Convert to Gauss
 		// Resulting field in in NED
 		float H = strength_ga * cosf(inclination_rad); // Magnetic field horizontal component
 		float mag_Z = sinf(inclination_rad) * strength_ga;
@@ -133,7 +134,7 @@ namespace last_letter_lib
 	{
 	}
 
-	void Barometer::read_parameters(YAML::Node)
+	void Barometer::read_parameters(ParameterManager)
 	{
 	}
 
@@ -141,9 +142,9 @@ namespace last_letter_lib
 	{
 		// Insert barometer information
 		// calculate abs_pressure using an ISA model for the tropsphere (valid up to 11km above MSL)
-		const float lapse_rate = 0.0065f;     // reduction in temperature with altitude (Kelvin/m)
-		const float temperature_msl = 288.0f; // temperature at MSL (Kelvin)
-		float alt_msl = uav_state_.geoid.altitude;   // TODO: initialize with correct home altitude
+		const float lapse_rate = 0.0065f;		   // reduction in temperature with altitude (Kelvin/m)
+		const float temperature_msl = 288.0f;	   // temperature at MSL (Kelvin)
+		float alt_msl = uav_state_.geoid.altitude; // TODO: initialize with correct home altitude
 		float temperature_local = temperature_msl - lapse_rate * alt_msl;
 		float pressure_ratio = powf((temperature_msl / temperature_local), 5.256f);
 		const float pressure_msl = 101325.0f; // pressure at MSL
@@ -169,7 +170,7 @@ namespace last_letter_lib
 	{
 	}
 
-	void AirdataSensor::read_parameters(YAML::Node)
+	void AirdataSensor::read_parameters(ParameterManager)
 	{
 	}
 
@@ -197,7 +198,7 @@ namespace last_letter_lib
 	{
 	}
 
-	void Gnss::read_parameters(YAML::Node)
+	void Gnss::read_parameters(ParameterManager)
 	{
 	}
 
@@ -236,7 +237,7 @@ namespace last_letter_lib
 	{
 	}
 
-	void MavlinkHilStateQuaternion::read_parameters(YAML::Node)
+	void MavlinkHilStateQuaternion::read_parameters(ParameterManager)
 	{
 	}
 
@@ -255,7 +256,7 @@ namespace last_letter_lib
 		velocity_ned = uav_state_.velocity.linear;
 		Vector3d airspeed_ned = uav_state_.velocity.linear - environment_.wind;
 		Vector3d airspeed_body = attitude * airspeed_ned;
-		airspeed_indicated = airspeed_body.x()/1.29;
+		airspeed_indicated = airspeed_body.x() / 1.29;
 		airspeed_true = airspeed_body.x();
 	}
 

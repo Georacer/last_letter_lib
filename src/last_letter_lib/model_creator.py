@@ -417,8 +417,9 @@ class Aircraft:
         params = dict()
         params["nWings"] = len(self.airfoil_params)
         for idx, airfoil_param_set in enumerate(self.airfoil_params.values()):
+            params[f"airfoil{idx+1}"] = dict()
             for key, value in airfoil_param_set.items():
-                params[f"airfoil{idx+1}/{key}"] = value
+                params[f"airfoil{idx+1}"][f"{key}"] = value
         self.dump_yaml(params, full_filename)
 
     def create_propulsion_params(self, model_folder):
@@ -426,8 +427,9 @@ class Aircraft:
         params = dict()
         params["nMotors"] = len(self.thruster_params)
         for idx, thruster_param_set in enumerate(self.thruster_params.values()):
+            params[f"motor{idx+1}"] = dict()
             for key, value in thruster_param_set.items():
-                params[f"motor{idx+1}/{key}"] = value
+                params[f"motor{idx+1}"][f"{key}"] = value
         self.dump_yaml(params, full_filename)
 
     def create_initialization_params(self, model_folder):

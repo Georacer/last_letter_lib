@@ -2,6 +2,7 @@
 #include "yaml-cpp/yaml.h"
 
 #include "last_letter_lib/uav_utils.hpp"
+#include "last_letter_lib/prog_utils.hpp"
 // #include "last_letter_lib/aerodynamics.hpp"
 #include "last_letter_lib/gravity.hpp"
 // #include "last_letter_lib/propulsion/propulsion.hpp"
@@ -24,12 +25,12 @@ namespace last_letter_lib
 	public:
 		Vector3d forceGrav, forceAero, forceProp, forceGround;
 		Vector3d torqueGrav, torqueAero, torqueProp, torqueGround;
-		Dynamics(YAML::Node p_worldConfig, YAML::Node p_aeroConfig, YAML::Node p_propConfig, YAML::Node p_groundConfig);
+		Dynamics(ParameterManager p_worldConfig, ParameterManager p_aeroConfig, ParameterManager p_propConfig, ParameterManager p_groundConfig);
 		~Dynamics();
-		void readParametersAerodynamics(YAML::Node config);
-		void readParametersProp(YAML::Node config);
-		void readParametersGround(YAML::Node config);
-		void readParametersWorld(YAML::Node config);
+		void readParametersAerodynamics(ParameterManager config);
+		void readParametersProp(ParameterManager config);
+		void readParametersGround(ParameterManager config);
+		void readParametersWorld(ParameterManager config);
 		int nWings; // number of airfoils mounted on the aircraft
 		LinkAerodynamic **aerodynamicLinks;
 		// Gravity *gravity;

@@ -114,13 +114,41 @@ file(COPY last_letter_models/HID.yaml DESTINATION $ENV{HOME}/last_letter_models)
 # )
 
 # Compile test files
-# if(BUILD_TESTING)
-# find_package(ament_cmake_gtest REQUIRED)
-# # These enable a bunch of automated style tests, including copyright existence checks
-# # find_package(ament_lint_auto REQUIRED)
-# # ament_lint_auto_find_test_dependencies()
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/refs/tags/v1.13.0.zip
+)
 
-# add_subdirectory(tests/cpp)
+FetchContent_MakeAvailable(googletest)
+
+enable_testing()
+
+list(APPEND test_sources
+  tests/cpp/test_utils.cpp
+  tests/cpp/test_prog_utils.cpp
+  tests/cpp/test_uav_utils.cpp
+  tests/cpp/test_math_utils.cpp
+  tests/cpp/test_environment.cpp
+  tests/cpp/test_aerodynamics.cpp
+  tests/cpp/test_propulsion.cpp
+  tests/cpp/test_gravity.cpp
+  tests/cpp/test_dynamics.cpp
+  tests/cpp/test_uav_model.cpp
+)
+add_executable(all_tests ${test_sources})
+target_include_directories(all_tests PUBLIC
+  tests/cpp
+)
+target_link_libraries(all_tests
+  GTest::gtest_main
+  ${YAML_CPP_LIBRARIES}
+  last_letter_lib
+)
+
+# Perhaps copy over the test data to the build folder?
+include(GoogleTest)
+gtest_discover_tests(all_tests)
 
 # # the following line skips the linter which checks for copyrights
 # # uncomment the line when a copyright and license is not present in all source files

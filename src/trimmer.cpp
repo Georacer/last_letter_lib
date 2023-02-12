@@ -56,7 +56,7 @@ namespace last_letter_lib
         TrimmerState::TrimmerState(const string uavName) : opt(nlopt::LN_BOBYQA, 7),
                                                            initState(7, 0)
         {
-            ConfigsStruct_t configs = loadModelConfig(uavName);
+            ParameterManager configs = loadModelConfig(uavName);
             uav = new UavModel(configs);
 
             // Optimization variables: See TRAJ_ARG_IDX
@@ -340,7 +340,7 @@ namespace last_letter_lib
                                                            // opt(nlopt::LN_PRAXIS, 4); // Known working
                                                            initInput(4, 0)
         {
-            ConfigsStruct_t configs = loadModelConfig(uavName);
+            ParameterManager configs = loadModelConfig(uavName);
             uav = new UavModel(configs);
 
             std::vector<double> lb(4, -1);

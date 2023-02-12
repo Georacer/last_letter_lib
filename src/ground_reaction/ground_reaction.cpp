@@ -10,7 +10,7 @@ namespace last_letter_lib
 	{
 
 		// Class constructor
-		GroundReaction::GroundReaction(YAML::Node config, YAML::Node worldConfig)
+		GroundReaction::GroundReaction(ParameterManager config, ParameterManager worldConfig)
 		{
 			readParametersWorld(worldConfig);
 			readParametersGround(config);
@@ -24,25 +24,19 @@ namespace last_letter_lib
 		{
 		}
 
-		void GroundReaction::readParametersGround(YAML::Node config)
+		void GroundReaction::readParametersGround(ParameterManager config)
 		{
-			if (!getParameter(config, "chanSteer", chanSteer))
-			{
-				chanSteer = -1;
-			}
-			if (!getParameter(config, "chanBrake", chanBrake))
-			{
-				chanBrake = -1;
-			}
-			if (!getParameter(config, "steerAngle_max", steerAngle_max))
-			{
-				steerAngle_max = 0.0;
-			}
+			try {chanSteer = config.get<int>("chanSteer");}
+			catch (const std::exception&) { chanSteer = -1;}
+			try {chanBrake = config.get<int>("chanBrake");}
+			catch (const std::exception&) { chanBrake = -1;}
+			try {steerAngle_max = config.get<int>("steerAngle_max");}
+			catch (const std::exception&) { steerAngle_max = -1;}
 		}
 
-		void GroundReaction::readParametersWorld(YAML::Node config)
+		void GroundReaction::readParametersWorld(ParameterManager config)
 		{
-			getParameter(config, "deltaT", dt);
+			dt = config.get<double>("deltaT");
 		}
 
 		// Store the steering and brake control inputs
@@ -81,10 +75,10 @@ namespace last_letter_lib
 #include "point_friction.cpp"
 
 		// Build ground reactions model
-		GroundReaction *buildGroundReaction(YAML::Node config, YAML::Node worldConfig)
+		GroundReaction *buildGroundReaction(ParameterManager config, ParameterManager worldConfig)
 		{
 			int groundReactionType;
-			getParameter(config, "groundReactionType", groundReactionType);
+			groundReactionType = config.get<double>("groundReactionType");
 			std::cout << "building ground reactions model: ";
 			switch (groundReactionType)
 			{

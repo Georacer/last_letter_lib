@@ -1,8 +1,9 @@
-
+#include <stdexcept>
 #include "last_letter_lib/aerodynamics.hpp"
 #include "last_letter_lib/prog_utils.hpp"
 
 using namespace std;
+using last_letter_lib::programming_utils::ParameterManager;
 
 using Eigen::Quaterniond;
 
@@ -14,8 +15,8 @@ namespace last_letter_lib
 	//////////////////////////
 
 	// Aerodynamics::Aerodynamics(ModelPlane * parent, int ID)
-	// Pass the ID-filtered aerodynamics config YAML::Node
-	Aerodynamics::Aerodynamics(YAML::Node config)
+	// Pass the ID-filtered aerodynamics config ParameterManager
+	Aerodynamics::Aerodynamics(ParameterManager config)
 	{
 		readParametersAerodynamics(config);
 	}
@@ -24,26 +25,20 @@ namespace last_letter_lib
 	{
 	}
 
-	void Aerodynamics::readParametersAerodynamics(YAML::Node config)
+	void Aerodynamics::readParametersAerodynamics(ParameterManager config)
 	{
 		vector<double> doubleVect;
 
-		if (!getParameter(config, "chanAileron", chanAileron, false))
-		{
-			chanAileron = -1;
-		}
-		if (!getParameter(config, "chanElevator", chanElevator, false))
-		{
-			chanElevator = -1;
-		}
-		if (!getParameter(config, "chanRudder", chanRudder, false))
-		{
-			chanRudder = -1;
-		}
+		try {chanAileron = config.get<int>("chanAileron");}
+		catch (const std::exception&) { chanAileron = -1;}
+		try {chanElevator = config.get<int>("chanElevator");}
+		catch (const std::exception&) { chanElevator = -1;}
+		try {chanRudder = config.get<int>("chanRudder");}
+		catch (const std::exception&) { chanRudder = -1;}
 
-		getParameter(config, "deltaa_max", deltaa_max);
-		getParameter(config, "deltae_max", deltae_max);
-		getParameter(config, "deltar_max", deltar_max);
+		deltaa_max = config.get<double>("deltaa_max");
+		deltae_max = config.get<double>("deltae_max");
+		deltar_max = config.get<double>("deltar_max");
 
 		inputAileron = 0.0;
 		inputElevator = 0.0;
@@ -52,7 +47,7 @@ namespace last_letter_lib
 
 	void Aerodynamics::setInput(Input_t input)
 	{
-		//Convert -1 - 1 input range to radians
+		// Convert -1 - 1 input range to radians
 		if (chanAileron > -1)
 		{
 			inputAileron = deltaa_max * input.value[chanAileron];
@@ -91,6 +86,10 @@ namespace last_letter_lib
 	// One step in the physics engine
 	void Aerodynamics::stepDynamics(const SimState_t states, const Inertial_t /*inertial*/, const Environment_t environment)
 	{
+		p = states.velocity.angular(0);
+		q = states.velocity.angular(1);
+		r = states.velocity.angular(2);
+
 		Airdata airdata;
 		// std::cout << "received states and wind: \n"
 		// 		  << states.velocity.linear << "\n"
@@ -121,7 +120,7 @@ namespace last_letter_lib
 	/////////////////////////////
 
 	// Class constructor
-	NoAerodynamics::NoAerodynamics(YAML::Node config) : Aerodynamics(config)
+	NoAerodynamics::NoAerodynamics(ParameterManager config) : Aerodynamics(config)
 	{
 	}
 
@@ -145,7 +144,7 @@ namespace last_letter_lib
 	/////////////////////////////
 
 	// Class constructor
-	StdLinearAero::StdLinearAero(YAML::Node config) : Aerodynamics(config)
+	StdLinearAero::StdLinearAero(ParameterManager config) : Aerodynamics(config)
 	{
 		readParametersAerodynamics(config);
 	}
@@ -155,45 +154,45 @@ namespace last_letter_lib
 	{
 	}
 
-	void StdLinearAero::readParametersAerodynamics(YAML::Node config)
+	void StdLinearAero::readParametersAerodynamics(ParameterManager config)
 	{
 		Aerodynamics::readParametersAerodynamics(config);
 		// Read aerodynamic coefficients from parameter server
-		getParameter(config, "c", c);
-		getParameter(config, "b", b);
-		getParameter(config, "s", s);
-		getParameter(config, "c_L_0", c_lift_0);
-		getParameter(config, "c_L_alpha", c_lift_a0);
-		getParameter(config, "c_L_qn", c_lift_q);
-		getParameter(config, "c_L_deltae", c_lift_deltae);
-		getParameter(config, "c_D_qn", c_drag_q);
-		getParameter(config, "c_D_0", c_drag_p);
-		getParameter(config, "c_D_deltae", c_drag_deltae);
-		getParameter(config, "c_Y_0", c_y_0);
-		getParameter(config, "c_Y_beta", c_y_b);
-		getParameter(config, "c_Y_pn", c_y_p);
-		getParameter(config, "c_Y_rn", c_y_r);
-		getParameter(config, "c_Y_deltaa", c_y_deltaa);
-		getParameter(config, "c_Y_deltar", c_y_deltar);
-		getParameter(config, "c_l_0", c_l_0);
-		getParameter(config, "c_l_beta", c_l_b);
-		getParameter(config, "c_l_pn", c_l_p);
-		getParameter(config, "c_l_rn", c_l_r);
-		getParameter(config, "c_l_deltaa", c_l_deltaa);
-		getParameter(config, "c_l_deltar", c_l_deltar);
-		getParameter(config, "c_m_0", c_m_0);
-		getParameter(config, "c_m_alpha", c_m_a);
-		getParameter(config, "c_m_qn", c_m_q);
-		getParameter(config, "c_m_deltae", c_m_deltae);
-		getParameter(config, "c_n_0", c_n_0);
-		getParameter(config, "c_n_beta", c_n_b);
-		getParameter(config, "c_n_pn", c_n_p);
-		getParameter(config, "c_n_rn", c_n_r);
-		getParameter(config, "c_n_deltaa", c_n_deltaa);
-		getParameter(config, "c_n_deltar", c_n_deltar);
-		getParameter(config, "oswald", oswald);
-		getParameter(config, "mcoeff", M);
-		getParameter(config, "alpha_stall", alpha0);
+		c = config.get<double>("c");
+		b = config.get<double>("b");
+		s = config.get<double>("s");
+		c_lift_0 = config.get<double>("c_L_0");
+		c_lift_a0 = config.get<double>("c_L_alpha");
+		c_lift_q = config.get<double>("c_L_qn");
+		c_lift_deltae = config.get<double>("c_L_deltae");
+		c_drag_q = config.get<double>("c_D_qn");
+		c_drag_p = config.get<double>("c_D_0");
+		c_drag_deltae = config.get<double>("c_D_deltae");
+		c_y_0 = config.get<double>("c_Y_0");
+		c_y_b = config.get<double>("c_Y_beta");
+		c_y_p = config.get<double>("c_Y_pn");
+		c_y_r = config.get<double>("c_Y_rn");
+		c_y_deltaa = config.get<double>("c_Y_deltaa");
+		c_y_deltar = config.get<double>("c_Y_deltar");
+		c_l_0 = config.get<double>("c_l_0");
+		c_l_b = config.get<double>("c_l_beta");
+		c_l_p = config.get<double>("c_l_pn");
+		c_l_r = config.get<double>("c_l_rn");
+		c_l_deltaa = config.get<double>("c_l_deltaa");
+		c_l_deltar = config.get<double>("c_l_deltar");
+		c_m_0 = config.get<double>("c_m_0");
+		c_m_a = config.get<double>("c_m_alpha");
+		c_m_q = config.get<double>("c_m_qn");
+		c_m_deltae = config.get<double>("c_m_deltae");
+		c_n_0 = config.get<double>("c_n_0");
+		c_n_b = config.get<double>("c_n_beta");
+		c_n_p = config.get<double>("c_n_pn");
+		c_n_r = config.get<double>("c_n_rn");
+		c_n_deltaa = config.get<double>("c_n_deltaa");
+		c_n_deltar = config.get<double>("c_n_deltar");
+		oswald = config.get<double>("oswald");
+		M = config.get<double>("mcoeff");
+		alpha0 = config.get<double>("alpha_stall");
 	}
 
 	// Force calculation function
@@ -202,13 +201,13 @@ namespace last_letter_lib
 		// Read air density
 		rho = environment.density;
 
-		//request lift and drag alpha-coefficients from the corresponding functions
+		// request lift and drag alpha-coefficients from the corresponding functions
 		double c_lift_a = liftCoeff(alpha_);
 		double c_drag_a = dragCoeff(alpha_);
 
 		// std::cout << "drag_coeff: " << alpha_ << ", " << c_drag_a << std::endl;
 
-		//convert coefficients to the body frame
+		// convert coefficients to the body frame
 		double c_x_a = -c_drag_a * cos(alpha_) + c_lift_a * sin(alpha_);
 		double c_x_q = -c_drag_q * cos(alpha_) + c_lift_q * sin(alpha_);
 		double c_z_a = -c_drag_a * sin(alpha_) - c_lift_a * cos(alpha_);
@@ -216,8 +215,8 @@ namespace last_letter_lib
 
 		// std::cout << "x coeffs: " << c_x_a << ", " << c_x_q << std::endl;
 
-		//calculate aerodynamic force
-		double qbar = 1.0 / 2.0 * rho * pow(airspeed_, 2) * s; //Calculate dynamic pressure
+		// calculate aerodynamic force
+		double qbar = 1.0 / 2.0 * rho * pow(airspeed_, 2) * s; // Calculate dynamic pressure
 		double ax, ay, az;
 		if (airspeed_ == 0)
 		{
@@ -245,8 +244,8 @@ namespace last_letter_lib
 		// Read air density
 		rho = environment.density;
 
-		//calculate aerodynamic torque
-		double qbar = 1.0 / 2.0 * rho * pow(airspeed_, 2) * s; //Calculate dynamic pressure
+		// calculate aerodynamic torque
+		double qbar = 1.0 / 2.0 * rho * pow(airspeed_, 2) * s; // Calculate dynamic pressure
 		double la, na, ma;
 		if (airspeed_ == 0)
 		{
@@ -267,12 +266,12 @@ namespace last_letter_lib
 	}
 
 	//////////////////////////
-	//C_lift_alpha calculation
+	// C_lift_alpha calculation
 	double StdLinearAero::liftCoeff(double alpha)
 	{
 		double sigmoid = (1 + exp(-M * (alpha - alpha0)) + exp(M * (alpha + alpha0))) / (1 + exp(-M * (alpha - alpha0))) / (1 + exp(M * (alpha + alpha0)));
-		double linear = (1.0 - sigmoid) * (c_lift_0 + c_lift_a0 * alpha);						 //Lift at small AoA
-		double flatPlate = sigmoid * (2 * copysign(1, alpha) * pow(sin(alpha), 2) * cos(alpha)); //Lift beyond stall
+		double linear = (1.0 - sigmoid) * (c_lift_0 + c_lift_a0 * alpha);						 // Lift at small AoA
+		double flatPlate = sigmoid * (2 * copysign(1, alpha) * pow(sin(alpha), 2) * cos(alpha)); // Lift beyond stall
 
 		// std::cout << c_lift_0 << " " << c_lift_a0 << std::endl;
 
@@ -281,7 +280,7 @@ namespace last_letter_lib
 	}
 
 	//////////////////////////
-	//C_drag_alpha calculation
+	// C_drag_alpha calculation
 	double StdLinearAero::dragCoeff(double alpha)
 	{
 		AR = pow(b, 2) / s;
@@ -295,7 +294,7 @@ namespace last_letter_lib
 	/////////////////////////
 
 	// Class constructor
-	HCUAVAero::HCUAVAero(YAML::Node config) : StdLinearAero(config)
+	HCUAVAero::HCUAVAero(ParameterManager config) : StdLinearAero(config)
 	{
 		readParametersAerodynamics(config);
 	}
@@ -305,27 +304,27 @@ namespace last_letter_lib
 	{
 	}
 
-	void HCUAVAero::readParametersAerodynamics(YAML::Node config)
+	void HCUAVAero::readParametersAerodynamics(ParameterManager config)
 	{
 		StdLinearAero::readParametersAerodynamics(config);
 
 		// Create CLift polynomial
-		YAML::Node liftPolyConfig = filterConfig(config, "cLiftPoly");
+		ParameterManager liftPolyConfig = config.filter("cLiftPoly");
 		liftCoeffPoly = programming_utils::buildPolynomial(liftPolyConfig);
 		// Create CDrag polynomial
-		YAML::Node dragPolyConfig = filterConfig(config, "cDragPoly");
+		ParameterManager dragPolyConfig = config.filter("cDragPoly");
 		dragCoeffPoly = programming_utils::buildPolynomial(dragPolyConfig);
 	}
 
 	//////////////////////////
-	//C_lift_alpha calculation
+	// C_lift_alpha calculation
 	double HCUAVAero::liftCoeff(double alpha)
 	{
 		return liftCoeffPoly->evaluate(alpha);
 	}
 
 	//////////////////////////
-	//C_drag_alpha_ calculation
+	// C_drag_alpha_ calculation
 	double HCUAVAero::dragCoeff(double alpha)
 	{
 		return dragCoeffPoly->evaluate(alpha);
@@ -334,7 +333,7 @@ namespace last_letter_lib
 	//////////////////////////
 	// Define SimpleDrag class
 	//////////////////////////
-	SimpleDrag::SimpleDrag(YAML::Node config) : StdLinearAero(config)
+	SimpleDrag::SimpleDrag(ParameterManager config) : StdLinearAero(config)
 	{
 		readParametersAerodynamics(config);
 	}
@@ -343,10 +342,10 @@ namespace last_letter_lib
 	{
 	}
 
-	void SimpleDrag::readParametersAerodynamics(YAML::Node config)
+	void SimpleDrag::readParametersAerodynamics(ParameterManager config)
 	{
 		StdLinearAero::readParametersAerodynamics(config);
-		getParameter(config, "c_D_alpha", c_drag_a);
+		c_drag_a = config.get<double>("c_D_alpha");
 	}
 
 	double SimpleDrag::dragCoeff(double alpha)
@@ -355,10 +354,10 @@ namespace last_letter_lib
 	}
 
 	// Build aerodynamics model
-	Aerodynamics *buildAerodynamics(YAML::Node config)
+	Aerodynamics *buildAerodynamics(ParameterManager config)
 	{
 		int aerodynamicsType;
-		getParameter(config, "aerodynamicsType", aerodynamicsType);
+		aerodynamicsType = config.get<double>("aerodynamicsType");
 		std::cout << "building aerodynamics model type " << aerodynamicsType << ":\n";
 		switch (aerodynamicsType)
 		{

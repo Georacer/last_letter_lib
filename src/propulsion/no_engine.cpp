@@ -3,7 +3,7 @@
 //////////////////
 
 // Constructor
-NoEngine::NoEngine(YAML::Node propConfig, YAML::Node worldConfig):Propulsion(propConfig, worldConfig)
+NoEngine::NoEngine(ParameterManager propConfig, ParameterManager worldConfig):Propulsion(propConfig, worldConfig)
 {
 	omega = 0.0;
 }

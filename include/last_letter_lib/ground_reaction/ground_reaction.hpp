@@ -10,9 +10,7 @@ using namespace std;
 using Eigen::Vector3d;
 using namespace last_letter_lib::uav_utils;
 using last_letter_lib::math_utils::quat2euler;
-using last_letter_lib::programming_utils::filterConfig;
-using last_letter_lib::programming_utils::getParameter;
-using last_letter_lib::programming_utils::getParameterList;
+using last_letter_lib::programming_utils::ParameterManager;
 
 namespace last_letter_lib
 {
@@ -22,10 +20,10 @@ namespace last_letter_lib
 		class GroundReaction
 		{
 		public:
-			GroundReaction(YAML::Node config, YAML::Node worldConfig);
+			GroundReaction(ParameterManager config, ParameterManager worldConfig);
 			virtual ~GroundReaction();
-			virtual void readParametersGround(YAML::Node config);
-			virtual void readParametersWorld(YAML::Node config);
+			virtual void readParametersGround(ParameterManager config);
+			virtual void readParametersWorld(ParameterManager config);
 			double dt;
 			Wrench_t wrenchGround;
 			double inputSteer, inputBrake;
@@ -43,7 +41,7 @@ namespace last_letter_lib
 
 #include "point_friction.hpp"
 
-		GroundReaction *buildGroundReaction(YAML::Node config, YAML::Node worldConfig);
+		GroundReaction *buildGroundReaction(ParameterManager config, ParameterManager worldConfig);
 
 	} // namespace ground_reaction
 } // namespace last_letter_lib

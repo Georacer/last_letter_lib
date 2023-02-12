@@ -14,8 +14,7 @@ using Eigen::Vector3d;
 
 using namespace last_letter_lib::uav_utils;
 using last_letter_lib::programming_utils::buildPolynomial;
-using last_letter_lib::programming_utils::filterConfig;
-using last_letter_lib::programming_utils::getParameter;
+using last_letter_lib::programming_utils::ParameterManager;
 
 namespace last_letter_lib
 {
@@ -39,12 +38,12 @@ namespace last_letter_lib
         ////////////
         // Functions
     public:
-        Aerodynamics(YAML::Node config);
+        Aerodynamics(ParameterManager config);
         virtual ~Aerodynamics();
         void setInput(Input_t input);
         void setInputPwm(InputPwm_t input);
         void stepDynamics(const SimState_t states, const Inertial_t inertial, const Environment_t environment); // perform one step in the aerodynamics
-        virtual void readParametersAerodynamics(YAML::Node config);
+        virtual void readParametersAerodynamics(ParameterManager config);
         virtual void getForce(Environment_t environmet) = 0;
         virtual void getTorque(Environment_t environment) = 0;
     };
@@ -55,7 +54,7 @@ namespace last_letter_lib
     class NoAerodynamics : public Aerodynamics
     {
     public:
-        NoAerodynamics(YAML::Node config);
+        NoAerodynamics(ParameterManager config);
         ~NoAerodynamics();
         void getForce(Environment_t environment);
         void getTorque(Environment_t environment);
@@ -67,7 +66,7 @@ namespace last_letter_lib
     class StdLinearAero : public Aerodynamics
     {
     public:
-        StdLinearAero(YAML::Node config);
+        StdLinearAero(ParameterManager config);
         ~StdLinearAero();
         double rho, g;
         double c_lift_q, c_lift_deltae, c_drag_q, c_drag_deltae;
@@ -78,7 +77,7 @@ namespace last_letter_lib
         double c_n_0, c_n_b, c_n_p, c_n_r, c_n_deltaa, c_n_deltar;
         double M, alpha0, c_lift_0, c_lift_a0;
         double c_drag_p, oswald, AR;
-        virtual void readParametersAerodynamics(YAML::Node config);
+        virtual void readParametersAerodynamics(ParameterManager config);
         void getForce(Environment_t environment);
         void getTorque(Environment_t environment);
         //Calculate lift coefficient from alpha
@@ -93,9 +92,9 @@ namespace last_letter_lib
     class SimpleDrag : public StdLinearAero
     {
     public:
-        SimpleDrag(YAML::Node config);
+        SimpleDrag(ParameterManager config);
         ~SimpleDrag();
-        void readParametersAerodynamics(YAML::Node config);
+        void readParametersAerodynamics(ParameterManager config);
         double c_drag_a;
         // Calculate drag coefficient from alpha
         double dragCoeff(double);
@@ -107,9 +106,9 @@ namespace last_letter_lib
     class HCUAVAero : public StdLinearAero
     {
     public:
-        HCUAVAero(YAML::Node config);
+        HCUAVAero(ParameterManager config);
         ~HCUAVAero();
-        void readParametersAerodynamics(YAML::Node config);
+        void readParametersAerodynamics(ParameterManager config);
         math_utils::Polynomial *liftCoeffPoly;
         math_utils::Polynomial *dragCoeffPoly;
 
@@ -117,5 +116,5 @@ namespace last_letter_lib
         double dragCoeff(double alpha);
     };
 
-    Aerodynamics *buildAerodynamics(YAML::Node config);
+    Aerodynamics *buildAerodynamics(ParameterManager config);
 } // namespace last_letter_lib

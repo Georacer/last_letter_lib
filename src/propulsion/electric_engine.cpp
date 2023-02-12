@@ -5,7 +5,7 @@
 using namespace std;
 
 // Constructor
-ElectricEng::ElectricEng(YAML::Node propConfig, YAML::Node worldConfig):Propulsion(propConfig, worldConfig)
+ElectricEng::ElectricEng(ParameterManager propConfig, ParameterManager worldConfig):Propulsion(propConfig, worldConfig)
 {
 	readParametersProp(propConfig);
 	// TODO: Make sure to add this to the ROS wrapper
@@ -22,27 +22,27 @@ ElectricEng::~ElectricEng()
 	delete propPowerPoly;
 }
 
-void ElectricEng::readParametersProp(YAML::Node config)
+void ElectricEng::readParametersProp(ParameterManager config)
 {
 	Propulsion::readParametersProp(config);
 
 	vector<double> doubleVect;
-	getParameter(config, "propDiam", propDiam);
-	getParameter(config, "engInertia", engInertia);
-	getParameter(config, "Kv", Kv);
-	getParameter(config, "Rm", Rm);
-	getParameter(config, "Rs", Rs);
-	getParameter(config, "Cells", Cells);
-	getParameter(config, "I0", I0);
-	getParameterList(config, "RadPSLimits", doubleVect);
+	propDiam = config.get<double>("propDiam");
+	engInertia = config.get<double>("engInertia");
+	Kv = config.get<double>("Kv");
+	Rm = config.get<double>("Rm");
+	Rs = config.get<double>("Rs");
+	Cells = config.get<double>("Cells");
+	I0 = config.get<double>("I0");
+	doubleVect = config.get<vector<double>>("RadPSLimits");
 	omegaMin = doubleVect[0];
 	omegaMax = doubleVect[1];
 
 	// Create propeller efficiency polynomial
-	YAML::Node nCoeffPolyConfig = filterConfig(config, "nCoeffPoly/");
+	ParameterManager nCoeffPolyConfig = config.filter("nCoeffPoly/");
 	npPoly =  buildPolynomial(nCoeffPolyConfig);
 	// Create propeller power polynomial
-	YAML::Node propPowerPolyConfig = filterConfig(config, "propPowerPoly/");
+	ParameterManager propPowerPolyConfig = config.filter("propPowerPoly/");
 	propPowerPoly =  buildPolynomial(propPowerPolyConfig);
 }
 
@@ -104,7 +104,7 @@ void ElectricEng::getTorque(SimState_t /* states */, Inertial_t /* inertial */, 
 
 
 // Constructor
-ElectricEng2::ElectricEng2(YAML::Node propConfig, YAML::Node worldConfig):Propulsion(propConfig, worldConfig)
+ElectricEng2::ElectricEng2(ParameterManager propConfig, ParameterManager worldConfig):Propulsion(propConfig, worldConfig)
 {
 	readParametersProp(propConfig);
 	// TODO: Make sure to add this to the ROS wrapper
@@ -121,30 +121,30 @@ ElectricEng2::~ElectricEng2()
 	delete propPowerPoly;
 }
 
-void ElectricEng2::readParametersProp(YAML::Node config)
+void ElectricEng2::readParametersProp(ParameterManager config)
 {
 	Propulsion::readParametersProp(config);
 
 	vector<double> doubleVect;
-	getParameter(config, "propDiam", propDiam);
-	getParameter(config, "engInertia", engInertia);
-	getParameter(config, "Kv", Kv);
-	getParameter(config, "Rm", Rm);
-	getParameter(config, "Rs", Rs);
-	getParameter(config, "Cells", Cells);
-	getParameter(config, "I0", I0);
-	getParameterList(config, "RadPSLimits", doubleVect);
-	getParameter(config, "momentumDragCoeff", momentumDragCoeff);
-	getParameter(config, "propThrustMultiplier", propThrustMultiplier);
+	propDiam = config.get<double>("propDiam");
+	engInertia = config.get<double>("engInertia");
+	Kv = config.get<double>("Kv");
+	Rm = config.get<double>("Rm");
+	Rs = config.get<double>("Rs");
+	Cells = config.get<double>("Cells");
+	I0 = config.get<double>("I0");
+	doubleVect = config.get<vector<double>>("RadPSLimits");
+	momentumDragCoeff = config.get<double>("momentumDragCoeff");
+	propThrustMultiplier = config.get<double>("propThrustMultiplier");
 
 	omegaMin = doubleVect[0];
 	omegaMax = doubleVect[1];
 
 	// Create propeller efficiency polynomial
-	YAML::Node thrustCoeffPolyConfig = filterConfig(config, "propThrustPoly/");
+	ParameterManager thrustCoeffPolyConfig = config.filter("propThrustPoly/");
 	propThrustPoly =  buildPolynomial(thrustCoeffPolyConfig);
 	// Create propeller power polynomial
-	YAML::Node propPowerPolyConfig = filterConfig(config, "propPowerPoly/");
+	ParameterManager propPowerPolyConfig = config.filter("propPowerPoly/");
 	propPowerPoly =  buildPolynomial(propPowerPolyConfig);
 }
 

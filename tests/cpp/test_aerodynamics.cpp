@@ -1,84 +1,63 @@
 #include <iostream>
+#include <gtest/gtest.h>
 
 #include "yaml-cpp/yaml.h"
 #include "last_letter_lib/prog_utils.hpp"
 #include "last_letter_lib/uav_utils.hpp"
 #include "last_letter_lib/aerodynamics.hpp"
 
+#include "test_utils.hpp"
+
 using namespace std;
 using namespace Eigen;
 
-int main(int /* argc */, char *argv[])
+using namespace last_letter_lib::programming_utils;
+using namespace last_letter_lib;
+
+TEST(TestAerodynamics, TestAerodynamics1)
 {
-    string paramDir = "last_letter_lib/test/parameters/";
-    string uav_name = argv[1];
-    cout << "Building dynamics for UAV: " << uav_name << endl;
-    string aero_filename = "aerodynamics.yaml";
-    string init_filename = "init.yaml";
-    string world_filename = "world.yaml";
-    string inertial_filename = "inertial.yaml";
-
-    string fullWorldFilename = paramDir + "world.yaml";
-    string fullEnvironmentFilename = paramDir + "environment.yaml";
-    string fullAeroFilename = paramDir + uav_name + "/" + aero_filename;
-    string fullInertialFilename = paramDir + uav_name + "/" + inertial_filename;
-    string fullInitFilename = paramDir + uav_name + "/" + init_filename;
-
-    YAML::Node worldConfig = YAML::LoadFile(fullWorldFilename);
-    YAML::Node environmentConfig = YAML::LoadFile(fullEnvironmentFilename);
-    YAML::Node aeroConfig = YAML::LoadFile(fullAeroFilename);
-    YAML::Node aeroConfig1 = filterConfig(aeroConfig, "airfoil1/");
-    YAML::Node inertialConfig = YAML::LoadFile(fullInertialFilename);
-    YAML::Node initConfig = YAML::LoadFile(fullInitFilename);
-
-    SimState_t states;
-    std::vector<double> doubleVect;
-    getParameterList(initConfig, "velLin", doubleVect);
-    states.velocity.linear = Eigen::Vector3d(doubleVect.data());
-    doubleVect.clear();
-    getParameterList(initConfig, "position", doubleVect);
-    states.pose.position = Eigen::Vector3d(doubleVect.data());
-    states.geoid.altitude = -states.pose.position.z();
-    // Read initial orientation quaternion
-    doubleVect.clear();
-    getParameterList(initConfig, "orientation", doubleVect);
-    states.pose.orientation = Quaterniond(doubleVect[3], doubleVect[0], doubleVect[1], doubleVect[2]);
-    Eigen::Transform<double, 3, Eigen::Affine> t;
-    t = states.pose.orientation;
-    cout << "Earth to Body frame rotation:\n"
-         << t.matrix() << endl;
+    auto config = load_config_aircraft("skywalker_2013");
+    SimState_t state = build_aircraft_state_from_config(config);
 
     Inertial_t inertial;
-    getParameter(inertialConfig, "m", inertial.mass);
+    inertial.mass = config.filter("inertial").get<double>("m");
     double j_x, j_y, j_z, j_xz;
-    getParameter(inertialConfig, "j_x", j_x);
-    getParameter(inertialConfig, "j_y", j_y);
-    getParameter(inertialConfig, "j_z", j_z);
-    getParameter(inertialConfig, "j_xz", j_xz);
+    j_x = config.filter("inertial").get<double>("j_x");
+    j_y = config.filter("inertial").get<double>("j_y");
+    j_z = config.filter("inertial").get<double>("j_z");
+    j_xz = config.filter("inertial").get<double>("j_xz");
     inertial.J << j_x, 0, -j_xz,
         0, j_y, 0,
         -j_xz, 0, j_x;
 
-    EnvironmentModel environmentModel = EnvironmentModel(environmentConfig, worldConfig);
-    environmentModel.calcEnvironment(states);
+    EnvironmentModel environmentModel = EnvironmentModel(config.filter("env"), config.filter("world"));
+    environmentModel.calcEnvironment(state);
 
     Input_t input;
     input.value[0] = 0.1;
     input.value[1] = 0.1;
     input.value[2] = 0.5;
+    input.value[3] = 0.0;
 
-    Aerodynamics *airfoil1 = buildAerodynamics(aeroConfig1);
+    Aerodynamics *airfoil1 = buildAerodynamics(config.filter("aero/airfoil1/"));
     airfoil1->setInput(input);
 
-    airfoil1->stepDynamics(states, inertial, environmentModel.environment); // perform one step in the aerodynamics
-    cout << "Body-frame wind:\n"
-         << environmentModel.environment.wind << endl;
-    cout << "Body-frame relative airdata:\n"
-         << airfoil1->airspeed_ << "\n"
-         << airfoil1->alpha_ << "\n"
-         << airfoil1->beta_ << endl;
-    cout << "Aerodynamic force:\n"
-         << airfoil1->wrenchAero.force << endl;
-    cout << "Aerodynamic torque:\n"
-         << airfoil1->wrenchAero.torque << endl;
+    airfoil1->stepDynamics(state, inertial, environmentModel.environment); // perform one step in the aerodynamics
+    EXPECT_NEAR(environmentModel.environment.wind(1), -5, 1e-3);
+    // cout << "Body-frame wind:\n"
+    //      << environmentModel.environment.wind << endl;
+    EXPECT_NEAR(airfoil1->airspeed_, 11.180, 1e-3);
+    EXPECT_NEAR(airfoil1->alpha_, 0, 1e-3);
+    EXPECT_NEAR(airfoil1->beta_, 0.464, 1e-3);
+    // cout << "Body-frame relative airdata:\n"
+    //      << airfoil1->airspeed_ << "\n"
+    //      << airfoil1->alpha_ << "\n"
+    //      << airfoil1->beta_ << endl;
+    EXPECT_TRUE(airfoil1->wrenchAero.force(1) < 0);
+    EXPECT_TRUE(airfoil1->wrenchAero.force.norm() < 1000);
+    // cout << "Aerodynamic force:\n"
+    //      << airfoil1->wrenchAero.force << endl;
+    EXPECT_TRUE(airfoil1->wrenchAero.torque.norm() < 1000);
+    // cout << "Aerodynamic torque:\n"
+    //      << airfoil1->wrenchAero.torque << endl;
 }

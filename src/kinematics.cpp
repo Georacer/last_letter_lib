@@ -9,7 +9,7 @@ namespace last_letter_lib
 
 	///////////////////
 	//Class Constructor
-	Kinematics::Kinematics(YAML::Node inertialConfig, YAML::Node worldConfig)
+	Kinematics::Kinematics(ParameterManager inertialConfig, ParameterManager worldConfig)
 	{
 		readParametersInertial(inertialConfig);
 		readParametersWorld(worldConfig);
@@ -27,22 +27,22 @@ namespace last_letter_lib
 
 	////////////////////////////////////////
 	// Read and register world parameters
-	void Kinematics::readParametersWorld(YAML::Node worldConfig)
+	void Kinematics::readParametersWorld(ParameterManager worldConfig)
 	{
-		getParameter(worldConfig, "deltaT", dt);
+		dt = worldConfig.get<double>("deltaT");
 	}
 
 	////////////////////////////////////////
 	// Read and register inertial parameters
-	void Kinematics::readParametersInertial(YAML::Node inertialConfig)
+	void Kinematics::readParametersInertial(ParameterManager inertialConfig)
 	{
 		// Calculate inertia matrix...
-		getParameter(inertialConfig, "m", inertial.mass);
+		inertial.mass = inertialConfig.get<double>("m");
 		double j_x, j_y, j_z, j_xz;
-		getParameter(inertialConfig, "j_x", j_x);
-		getParameter(inertialConfig, "j_y", j_y);
-		getParameter(inertialConfig, "j_z", j_z);
-		getParameter(inertialConfig, "j_xz", j_xz);
+		j_x = inertialConfig.get<double>("j_x");
+		j_y = inertialConfig.get<double>("j_y");
+		j_z = inertialConfig.get<double>("j_z");
+		j_xz = inertialConfig.get<double>("j_xz");
 		inertial.J << j_x, 0, -j_xz,
 			0, j_y, 0,
 			-j_xz, 0, j_z;
@@ -129,9 +129,9 @@ namespace last_letter_lib
 	// Define Integrator class
 	//////////////////////////
 
-	Integrator::Integrator(YAML::Node worldConfig)
+	Integrator::Integrator(ParameterManager worldConfig)
 	{
-		getParameter(worldConfig, "deltaT", dt);
+		dt = worldConfig.get<double>("deltaT");
 	}
 
 	Integrator::~Integrator()
@@ -143,7 +143,7 @@ namespace last_letter_lib
 	//////////////////////////
 
 	//Class Constructor
-	ForwardEuler::ForwardEuler(YAML::Node worldConfig) : Integrator(worldConfig)
+	ForwardEuler::ForwardEuler(ParameterManager worldConfig) : Integrator(worldConfig)
 	{
 	}
 
@@ -200,10 +200,10 @@ namespace last_letter_lib
 	}
 
 	//Build integrator model
-	Integrator *buildIntegrator(YAML::Node worldConfig)
+	Integrator *buildIntegrator(ParameterManager worldConfig)
 	{
 		int integratorType;
-		getParameter(worldConfig, "integratorType", integratorType);
+		integratorType = worldConfig.get<int>("integratorType");
 		std::cout << "building integrator class... ";
 		switch (integratorType)
 		{

@@ -1,3 +1,5 @@
+// Cannot implement without working, independent kinematics.
+
 #include <iostream>
 
 #include "yaml-cpp/yaml.h"
@@ -8,7 +10,7 @@
 using namespace std;
 using namespace Eigen;
 
-int main(int /* argc */, char * argv[])
+int main(int /* argc */, char *argv[])
 {
     // Read parameter files
     string paramDir = "last_letter_lib/test/parameters/";
@@ -24,11 +26,11 @@ int main(int /* argc */, char * argv[])
 
     string fullWorldFilename = paramDir + world_filename;
     string fullEnvironmentFilename = paramDir + environment_filename;
-    string fullPropFilename = paramDir+uav_name+"/"+prop_filename;
-    string fullAeroFilename = paramDir+uav_name+"/"+aero_filename;
-    string fullGroundFilename = paramDir+uav_name+"/"+ground_filename;
-    string fullInertialFilename = paramDir+uav_name+"/"+inertial_filename;
-    string fullInitFilename = paramDir+uav_name+"/"+init_filename;
+    string fullPropFilename = paramDir + uav_name + "/" + prop_filename;
+    string fullAeroFilename = paramDir + uav_name + "/" + aero_filename;
+    string fullGroundFilename = paramDir + uav_name + "/" + ground_filename;
+    string fullInertialFilename = paramDir + uav_name + "/" + inertial_filename;
+    string fullInitFilename = paramDir + uav_name + "/" + init_filename;
 
     cout << "Reading parameter files" << endl;
     ConfigsStruct_t configs;
@@ -72,21 +74,43 @@ int main(int /* argc */, char * argv[])
     cout << "Rudder input\t: " << input.value[3] << endl;
     cout << endl;
 
-    cout << "\nInitial State:\n" << endl;
-    cout << "Position\n" << state.pose.position << endl;
-    cout << "Coordinates\n" << state.geoid.latitude << "\n" << state.geoid.longitude << "\n" << state.geoid.altitude << endl;
-    cout << "Orientation\n" << state.pose.orientation.vec() << "\n" << state.pose.orientation.w() << endl;
-    cout << "Linear Velocity\n" << state.velocity.linear << endl;
-    cout << "Angular Velocity\n" << state.velocity.angular << endl;
-    cout << "Linear Acceleration\n" << state.acceleration.linear << endl;
-    cout << "Angular Acceleration\n" << state.acceleration.angular << endl;
+    cout << "\nInitial State:\n"
+         << endl;
+    cout << "Position\n"
+         << state.pose.position << endl;
+    cout << "Coordinates\n"
+         << state.geoid.latitude << "\n"
+         << state.geoid.longitude << "\n"
+         << state.geoid.altitude << endl;
+    cout << "Orientation\n"
+         << state.pose.orientation.vec() << "\n"
+         << state.pose.orientation.w() << endl;
+    cout << "Linear Velocity\n"
+         << state.velocity.linear << endl;
+    cout << "Angular Velocity\n"
+         << state.velocity.angular << endl;
+    cout << "Linear Acceleration\n"
+         << state.acceleration.linear << endl;
+    cout << "Angular Acceleration\n"
+         << state.acceleration.angular << endl;
 
-    cout << "\nPropagated State:\n" << endl;
-    cout << "Coordinates\n" << newState.geoid.latitude << "\n" << newState.geoid.longitude << "\n" << newState.geoid.altitude << endl;
-    cout << "Position\n" << newState.pose.position << endl;
-    cout << "Orientation\n" << newState.pose.orientation.vec() << "\n" << newState.pose.orientation.w() << endl;
-    cout << "Linear Velocity\n" << newState.velocity.linear << endl;
-    cout << "Angular Velocity\n" << newState.velocity.angular << endl;
-    cout << "Linear Acceleration\n" << newState.acceleration.linear << endl;
-    cout << "Angular Acceleration\n" << newState.acceleration.angular << endl;
+    cout << "\nPropagated State:\n"
+         << endl;
+    cout << "Coordinates\n"
+         << newState.geoid.latitude << "\n"
+         << newState.geoid.longitude << "\n"
+         << newState.geoid.altitude << endl;
+    cout << "Position\n"
+         << newState.pose.position << endl;
+    cout << "Orientation\n"
+         << newState.pose.orientation.vec() << "\n"
+         << newState.pose.orientation.w() << endl;
+    cout << "Linear Velocity\n"
+         << newState.velocity.linear << endl;
+    cout << "Angular Velocity\n"
+         << newState.velocity.angular << endl;
+    cout << "Linear Acceleration\n"
+         << newState.acceleration.linear << endl;
+    cout << "Angular Acceleration\n"
+         << newState.acceleration.angular << endl;
 }
