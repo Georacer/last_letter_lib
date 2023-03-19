@@ -20,6 +20,9 @@ from numba import jit
 from pytransform3d import rotations as pt3d_rot
 from scipy.optimize import root
 
+# from last_letter_lib import cpp_last_letter_lib
+from ..cpp_last_letter_lib.cpp_math_utils import Vector3
+
 
 @jit(nopython=True)
 def hat(v: np.ndarray = np.zeros(3)):
@@ -48,98 +51,112 @@ def asymproj(H: np.ndarray = np.eye(3)):
     return (H - H.T) / 2
 
 
-class Vector3:
-    x = 0
-    y = 0
-    z = 0
+def build_vector3_from_array(arr):
+    arr = np.array(arr)  # Make sure arr is a numpy object
+    # Convert a numpy array to Vector3
+    if len(arr.shape) == 1:  # arr is a 1-dimensional array
+        x = arr[0]
+        y = arr[1]
+        z = arr[2]
+    else:  # Arr is a 2-dimensional vertical vector array
+        x = arr[0, 0]
+        y = arr[1, 0]
+        z = arr[2, 0]
+    return Vector3(x, y, z)
 
-    def __init__(self, x=0, y=0, z=0):
-        self.x = x
-        self.y = y
-        self.z = z
 
-    def to_array(self, shape=(3,)):
-        """
-        Obtain a (3,1) numpy array representation.
-        """
-        return np.array([self.x, self.y, self.z]).reshape(shape)
+# class Vector3:
+#     x = 0
+#     y = 0
+#     z = 0
 
-    @classmethod
-    def from_array(cls, arr):
-        arr = np.array(arr)  # Make sure arr is a numpy object
-        # Convert a numpy array to Vector3
-        if len(arr.shape) == 1:  # arr is a 1-dimensional array
-            x = arr[0]
-            y = arr[1]
-            z = arr[2]
-        else:  # Arr is a 2-dimensional vertical vector array
-            x = arr[0, 0]
-            y = arr[1, 0]
-            z = arr[2, 0]
-        return cls(x, y, z)
+#     def __init__(self, x=0, y=0, z=0):
+#         self.x = x
+#         self.y = y
+#         self.z = z
 
-    @property
-    def norm(self):
-        return np.linalg.norm(self.to_array())
+#     def to_array(self, shape=(3,)):
+#         """
+#         Obtain a (3,1) numpy array representation.
+#         """
+#         return np.array([self.x, self.y, self.z]).reshape(shape)
 
-    def __add__(self, other):
-        if type(other) is Vector3:
-            return Vector3(
-                x=self.x + other.x,
-                y=self.y + other.y,
-                z=self.z + other.z,
-            )
-        else:
-            raise TypeError(
-                f"Unsupported addition between {self.__class__.__name__} and {other.__class__.__name__}."
-            )
+#     @classmethod
+#     def from_array(cls, arr):
+#         arr = np.array(arr)  # Make sure arr is a numpy object
+#         # Convert a numpy array to Vector3
+#         if len(arr.shape) == 1:  # arr is a 1-dimensional array
+#             x = arr[0]
+#             y = arr[1]
+#             z = arr[2]
+#         else:  # Arr is a 2-dimensional vertical vector array
+#             x = arr[0, 0]
+#             y = arr[1, 0]
+#             z = arr[2, 0]
+#         return cls(x, y, z)
 
-    def __sub__(self, other):
-        if type(other) is Vector3:
-            return Vector3(
-                x=self.x - other.x,
-                y=self.y - other.y,
-                z=self.z - other.z,
-            )
-        elif type(other) in [np.array, np.ndarray, list]:
-            if len(other) != 3:
-                raise ValueError("Right operand must be of lenght 3.")
-            return Vector3(
-                x=self.x - other[0],
-                y=self.y - other[1],
-                z=self.z - other[2],
-            )
-        else:
-            raise TypeError(
-                f"Unsupported subtraction between {self.__class__.__name__} and {other.__class__.__name__}."
-            )
+#     @property
+#     def norm(self):
+#         return np.linalg.norm(self.to_array())
 
-    def __mul__(self, other):
-        is_scalar = type(other) in [float, int, np.float64]
-        if is_scalar:
-            return Vector3(self.x * other, self.y * other, self.z * other)
-        else:
-            raise TypeError(
-                f"Unsupported multiplication between {self.__class__.__name__} and {other.__class__.__name__}."
-            )
+#     def __add__(self, other):
+#         if type(other) is Vector3:
+#             return Vector3(
+#                 x=self.x + other.x,
+#                 y=self.y + other.y,
+#                 z=self.z + other.z,
+#             )
+#         else:
+#             raise TypeError(
+#                 f"Unsupported addition between {self.__class__.__name__} and {other.__class__.__name__}."
+#             )
 
-    def __rmul__(self, other):
-        is_scalar = type(other) in [float, int, np.float64]
-        if is_scalar:
-            return self * other
-        else:
-            raise TypeError(
-                f"Unsupported right-hand multiplication between {self.__class__.__name__} and {other.__class__.__name__}."
-            )
+#     def __sub__(self, other):
+#         if type(other) is Vector3:
+#             return Vector3(
+#                 x=self.x - other.x,
+#                 y=self.y - other.y,
+#                 z=self.z - other.z,
+#             )
+#         elif type(other) in [np.array, np.ndarray, list]:
+#             if len(other) != 3:
+#                 raise ValueError("Right operand must be of lenght 3.")
+#             return Vector3(
+#                 x=self.x - other[0],
+#                 y=self.y - other[1],
+#                 z=self.z - other[2],
+#             )
+#         else:
+#             raise TypeError(
+#                 f"Unsupported subtraction between {self.__class__.__name__} and {other.__class__.__name__}."
+#             )
 
-    def __eq__(self, other):
-        return self.x == other.x and self.y == other.y and self.z == other.z
+#     def __mul__(self, other):
+#         is_scalar = type(other) in [float, int, np.float64]
+#         if is_scalar:
+#             return Vector3(self.x * other, self.y * other, self.z * other)
+#         else:
+#             raise TypeError(
+#                 f"Unsupported multiplication between {self.__class__.__name__} and {other.__class__.__name__}."
+#             )
 
-    def __iter__(self):
-        return iter(self.to_array())
+#     def __rmul__(self, other):
+#         is_scalar = type(other) in [float, int, np.float64]
+#         if is_scalar:
+#             return self * other
+#         else:
+#             raise TypeError(
+#                 f"Unsupported right-hand multiplication between {self.__class__.__name__} and {other.__class__.__name__}."
+#             )
 
-    def __repr__(self):
-        return f"Vector3(x={self.x}, y={self.y}, z={self.z})"
+#     def __eq__(self, other):
+#         return self.x == other.x and self.y == other.y and self.z == other.z
+
+#     def __iter__(self):
+#         return iter(self.to_array())
+
+#     def __repr__(self):
+#         return f"Vector3(x={self.x}, y={self.y}, z={self.z})"
 
 
 @dataclass

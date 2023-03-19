@@ -9,6 +9,9 @@ from setuptools import setup
 from setuptools.command.build_ext import build_ext
 
 
+# Inspired by https://github.com/pybind/cmake_example/blob/master/setup.py
+
+
 # Convert distutils Windows platform specifiers to CMake -A arguments
 PLAT_TO_CMAKE = {
     "win32": "Win32",
@@ -127,7 +130,7 @@ class CMakeBuild(build_ext):
 
 def build(setup_kwargs):
     print("Invoking build function.")
-    ext_modules = [CMakeExtension("last_letter_lib.my_last_letter_lib")]
+    ext_modules = [CMakeExtension("last_letter_lib.cpp_last_letter_lib")]
     setup_kwargs.update(
         {
             "ext_modules": ext_modules,

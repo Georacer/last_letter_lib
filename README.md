@@ -12,13 +12,14 @@ Software libraries for UAV simulation.
 - cmake ..
 - make
 
+## Build and run C++ tests
+
+- cmake -S . -B build && cmake --build build && ./build/all_tests
+
 ### To build the Python code
 
 <!-- Build the C++/Python bindings with Pybind11 -->
 
-- poetry build
+<!-- - poetry build -->
+
 - poetry install
-
-## Build and run tests
-
-- cmake -S . -B build && cmake --build build && ./build/all_tests
