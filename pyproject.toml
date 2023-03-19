@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "last_letter_lib"
-version = "2.0.0"
+version = "2.1.0"
 description = "Software libraries for UAV simulation."
 authors = ["George Zogopoulos-Papaliakos <tailwhipx4@gmail.com>"]
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(last_letter_lib VERSION 2.0)
+project(last_letter_lib VERSION 2.1.0)
 
 # Set compiler standards
 # Default to C99
