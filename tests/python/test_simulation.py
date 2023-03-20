@@ -19,6 +19,7 @@ from last_letter_lib import simulation as sim
 from last_letter_lib import systems
 from last_letter_lib.utils.math import EulerAngles
 from last_letter_lib.utils.math import Vector3
+from last_letter_lib.utils.math import build_vector3
 from last_letter_lib.utils.uav import Inputs
 from last_letter_lib.utils.uav import UavState
 

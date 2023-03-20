@@ -58,7 +58,7 @@ class TestVector3:
         assert isinstance(math.Vector3(1, 2, 3), math.Vector3)
 
     def test_constructor_from_array(self):
-        vec = math.Vector3.from_array(np.array([1, 2, 3]))
+        vec = math.build_vector3(np.array([1, 2, 3]))
         tests = []
         tests.append(vec.x == 1)
         tests.append(vec.y == 2)
@@ -66,16 +66,16 @@ class TestVector3:
         assert np.all(tests)
 
     def test_to_array(self):
-        vec = math.Vector3.from_array(np.array([1, 2, 3]))
+        vec = math.build_vector3(np.array([1, 2, 3]))
         assert np.allclose(vec.to_array(), np.array([1, 2, 3]))
 
     def test_to_array_2(self):
-        vec = math.Vector3.from_array(np.array([[1, 2, 3]]).T)
+        vec = math.build_vector3(np.array([[1, 2, 3]]).T)
         assert np.allclose(vec.to_array(), np.array([1, 2, 3]))
 
     def test_addtion(self):
-        vec1 = math.Vector3.from_array(np.array([1, 2, 3]))
-        vec2 = math.Vector3.from_array(np.array([4, 5, 6]))
+        vec1 = math.build_vector3(np.array([1, 2, 3]))
+        vec2 = math.build_vector3(np.array([4, 5, 6]))
         vec3 = vec1 + vec2
         tests = []
         tests.append(vec3.x == 5)
@@ -84,17 +84,17 @@ class TestVector3:
         assert np.all(tests)
 
     def test_multiplication(self):
-        vec1 = math.Vector3.from_array(np.array([1, 2, 3]))
-        vec2 = math.Vector3.from_array(np.array([2, 4, 6]))
+        vec1 = math.build_vector3(np.array([1, 2, 3]))
+        vec2 = math.build_vector3(np.array([2, 4, 6]))
         assert 2 * vec1 == vec2
 
     def test_multiplication_2(self):
-        vec1 = math.Vector3.from_array(np.array([1, 2, 3]))
-        vec2 = math.Vector3.from_array(np.array([2, 4, 6]))
+        vec1 = math.build_vector3(np.array([1, 2, 3]))
+        vec2 = math.build_vector3(np.array([2, 4, 6]))
         assert vec1 * 2 == vec2
 
     def test_iterator(self):
-        vec = math.Vector3.from_array(np.array([1, 2, 3]))
+        vec = math.build_vector3(np.array([1, 2, 3]))
         assert list(vec) == [1, 2, 3]
 
 

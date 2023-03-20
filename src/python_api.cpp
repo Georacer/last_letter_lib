@@ -2,6 +2,7 @@
 #include <pybind11/eigen.h>
 #include <pybind11/numpy.h>
 #include <pybind11/operators.h>
+#include <iostream>
 
 #include "last_letter_lib/math_utils.hpp"
 
@@ -23,6 +24,12 @@ public:
         vector_.y() = y;
         vector_.z() = z;
     }
+    double get_x() const { return vector_.x(); }
+    void set_x(double v) { vector_.x() = v; }
+    double get_y() const { return vector_.y(); }
+    void set_y(double v) { vector_.y() = v; }
+    double get_z() const { return vector_.z(); }
+    void set_z(double v) { vector_.z() = v; }
     Vector3d to_array() const
     {
         return vector_;
@@ -86,6 +93,10 @@ public:
         Vector3d other_vec = v.to_array();
         return (vector_.x() == other_vec.x()) && (vector_.y() == other_vec.y()) && (vector_.z() == other_vec.z());
     }
+    double operator[](const size_t idx) const
+    {
+        return (to_vector()).at(idx);
+    }
     std::string to_str() const
     {
         std::stringstream ss;
@@ -120,11 +131,23 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def(py::self *= double())
         .def(-py::self)
         .def(py::self == py::self)
-        .def("norm", &Vector3::norm)
+        .def_property("x", &Vector3::get_x, &Vector3::set_x)
+        .def_property("y", &Vector3::get_y, &Vector3::set_y)
+        .def_property("z", &Vector3::get_z, &Vector3::set_z)
+        .def_property_readonly("norm", &Vector3::norm)
         .def("to_array", &Vector3::to_array)
-        .def("__iter__", [](const Vector3 &v)
-             { std::vector<double> vec{v.to_vector()}; return py::make_iterator(vec.begin(), vec.end()); })
+        .def(
+            "__getitem__",
+            [](const Vector3 &v, const size_t idx)
+            { return v[idx]; })
         .def("__str__", &Vector3::to_str)
-        .def("__repr__", &Vector3::repr);
+        .def("__repr__", &Vector3::repr)
+        .def(py::pickle(
+            [](const Vector3 &v)
+            { return v.to_array(); },
+            [](Vector3d v)
+            {
+                return Vector3(v.x(), v.y(), v.z());
+            }));
     // m_math_utils.def("sub", &sub, "A function that subs two numbers.", py::arg("i") = 2, py::arg("j") = 1);
 }
