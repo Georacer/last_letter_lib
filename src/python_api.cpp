@@ -6,113 +6,14 @@
 
 #include "last_letter_lib/math_utils.hpp"
 
-namespace lll_math = last_letter_lib::math_utils;
 namespace py = pybind11;
 
 using Eigen::Quaterniond;
-using Eigen::Vector3d;
+
+using last_letter_lib::math_utils::Vector3;
 
 ///////////////////////////////////////////////////////////////////////////////
 // math_utils
-
-class Vector3
-{
-public:
-    Vector3(double x, double y, double z)
-    {
-        vector_.x() = x;
-        vector_.y() = y;
-        vector_.z() = z;
-    }
-    double get_x() const { return vector_.x(); }
-    void set_x(double v) { vector_.x() = v; }
-    double get_y() const { return vector_.y(); }
-    void set_y(double v) { vector_.y() = v; }
-    double get_z() const { return vector_.z(); }
-    void set_z(double v) { vector_.z() = v; }
-    Vector3d to_array() const
-    {
-        return vector_;
-    }
-    std::vector<double> to_vector() const
-    {
-        return std::vector<double>{vector_.x(), vector_.y(), vector_.z()};
-    }
-    double norm() const
-    {
-        return vector_.norm();
-    }
-    Vector3 operator+(const Vector3 &v) const
-    {
-        Vector3d other_vector = v.to_array();
-        return Vector3(
-            vector_.x() + other_vector.x(),
-            vector_.y() + other_vector.y(),
-            vector_.z() + other_vector.z());
-    }
-    Vector3 &operator+=(const Vector3 &v)
-    {
-        Vector3d other_vector = v.to_array();
-        vector_ += other_vector;
-        return *this;
-    }
-    Vector3 operator-() const
-    {
-        return Vector3(-vector_.x(), -vector_.y(), -vector_.z());
-    }
-    Vector3 operator-(const Vector3 &v) const
-    {
-        Vector3d other_vector = v.to_array();
-        return Vector3(
-            vector_.x() - other_vector.x(),
-            vector_.y() - other_vector.y(),
-            vector_.z() - other_vector.z());
-    }
-    Vector3 &operator-=(const Vector3 &v)
-    {
-        Vector3d other_vector = v.to_array();
-        vector_ -= other_vector;
-        return *this;
-    }
-    Vector3 operator*(double c) const
-    {
-        return Vector3(c * vector_.x(), c * vector_.y(), c * vector_.z());
-    }
-    Vector3 &operator*=(double c)
-    {
-        vector_ *= c;
-        return *this;
-    }
-    friend Vector3 operator*(double c, const Vector3 &v)
-    {
-        Vector3d res = c * v.vector_;
-        return Vector3(res.x(), res.y(), res.z());
-    }
-    bool operator==(const Vector3 &v) const
-    {
-        Vector3d other_vec = v.to_array();
-        return (vector_.x() == other_vec.x()) && (vector_.y() == other_vec.y()) && (vector_.z() == other_vec.z());
-    }
-    double operator[](const size_t idx) const
-    {
-        return (to_vector()).at(idx);
-    }
-    std::string to_str() const
-    {
-        std::stringstream ss;
-        ss << vector_;
-        return ss.str();
-    }
-    std::string repr() const
-    {
-        std::stringstream ss;
-        ss << "Vector3(" << vector_.x() << ", " << vector_.y() << ", " << vector_.z() << ")";
-        return ss.str();
-    }
-
-private:
-    Vector3d vector_{0, 0, 0};
-};
 
 PYBIND11_MODULE(cpp_last_letter_lib, m)
 {

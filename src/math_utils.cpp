@@ -1,5 +1,6 @@
-#include "last_letter_lib/math_utils.hpp"
 #include "iostream"
+
+#include "last_letter_lib/math_utils.hpp"
 
 using Eigen::Quaterniond;
 using Eigen::Vector3d;
@@ -194,9 +195,9 @@ namespace last_letter_lib
         {
             double a = angle;
             while (a < 0)
-                a += 2*M_PI;
-            while (a >= 2*M_PI)
-                a -= 2*M_PI;
+                a += 2 * M_PI;
+            while (a >= 2 * M_PI)
+                a -= 2 * M_PI;
             return a;
         }
 
@@ -278,10 +279,10 @@ namespace last_letter_lib
         template const double &constrain<double>(const double &x, const double &a, const double &b);
 
         /**
- * @brief Rescale a number x from the range (in_min, in_max) to the range (out_min, out_max)
- *
- * @tparam T
- */
+         * @brief Rescale a number x from the range (in_min, in_max) to the range (out_min, out_max)
+         *
+         * @tparam T
+         */
         template <typename T>
         T map(const T &x, const T &in_min, const T &in_max, const T &out_min, const T &out_max)
         {
@@ -293,12 +294,12 @@ namespace last_letter_lib
         template double map<double>(const double &x, const double &in_min, const double &in_max, const double &out_min, const double &out_max);
 
         /**
- * @brief Rescale a number x from the range (in_min, in_max) to the range (out_min, out_max), but always preserve zero
- * This function differs form the simple map by splitting the input/output range around zero and applying the simple
- * map to each interval independently
- *
- * @tparam T
- */
+         * @brief Rescale a number x from the range (in_min, in_max) to the range (out_min, out_max), but always preserve zero
+         * This function differs form the simple map by splitting the input/output range around zero and applying the simple
+         * map to each interval independently
+         *
+         * @tparam T
+         */
         template <typename T>
         T map_centered(const T &x, const T &in_min, const T &in_max, const T &out_min, const T &out_max)
         {
@@ -398,6 +399,75 @@ namespace last_letter_lib
         ////////////////////
         // Class Definitions
         ////////////////////
+
+        Vector3::Vector3(double x, double y, double z)
+        {
+            vector_.x() = x;
+            vector_.y() = y;
+            vector_.z() = z;
+        }
+        Vector3 Vector3::operator+(const Vector3 &v) const
+        {
+            Vector3d other_vector = v.to_array();
+            return Vector3(
+                vector_.x() + other_vector.x(),
+                vector_.y() + other_vector.y(),
+                vector_.z() + other_vector.z());
+        }
+        Vector3 &Vector3::operator+=(const Vector3 &v)
+        {
+            Vector3d other_vector = v.to_array();
+            vector_ += other_vector;
+            return *this;
+        }
+        Vector3 Vector3::operator-() const
+        {
+            return Vector3(-vector_.x(), -vector_.y(), -vector_.z());
+        }
+        Vector3 Vector3::operator-(const Vector3 &v) const
+        {
+            Vector3d other_vector = v.to_array();
+            return Vector3(
+                vector_.x() - other_vector.x(),
+                vector_.y() - other_vector.y(),
+                vector_.z() - other_vector.z());
+        }
+        Vector3 &Vector3::operator-=(const Vector3 &v)
+        {
+            Vector3d other_vector = v.to_array();
+            vector_ -= other_vector;
+            return *this;
+        }
+        Vector3 Vector3::operator*(double c) const
+        {
+            return Vector3(c * vector_.x(), c * vector_.y(), c * vector_.z());
+        }
+        Vector3 &Vector3::operator*=(double c)
+        {
+            vector_ *= c;
+            return *this;
+        }
+        bool Vector3::operator==(const Vector3 &v) const
+        {
+            Vector3d other_vec = v.to_array();
+            return (vector_.x() == other_vec.x()) && (vector_.y() == other_vec.y()) && (vector_.z() == other_vec.z());
+        }
+        double Vector3::operator[](const size_t idx) const
+        {
+            return (to_vector()).at(idx);
+        }
+        std::string Vector3::to_str() const
+        {
+            std::stringstream ss;
+            ss << vector_;
+            return ss.str();
+        }
+        std::string Vector3::repr() const
+        {
+            std::stringstream ss;
+            ss << "Vector3(" << vector_.x() << ", " << vector_.y() << ", " << vector_.z() << ")";
+            return ss.str();
+        }
 
         ////////////////////
         // Define Polynomial

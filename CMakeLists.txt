@@ -98,6 +98,7 @@ list(APPEND pybind11_sources
   src/python_api.cpp
 )
 pybind11_add_module(cpp_last_letter_lib ${pybind11_sources})
+target_link_libraries(cpp_last_letter_lib PRIVATE last_letter_lib)
 
 # Copy data files to home folder
 # file(COPY last_letter_models DESTINATION $ENV{HOME}) # Deprecated, using new models folder

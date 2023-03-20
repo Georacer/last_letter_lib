@@ -88,6 +88,46 @@ namespace last_letter_lib
 		//////////
 		// Classes
 
+		class Vector3
+		{
+		public:
+			Vector3(double x, double y, double z);
+			double get_x() const { return vector_.x(); }
+			void set_x(double v) { vector_.x() = v; }
+			double get_y() const { return vector_.y(); }
+			void set_y(double v) { vector_.y() = v; }
+			double get_z() const { return vector_.z(); }
+			void set_z(double v) { vector_.z() = v; }
+			Vector3d to_array() const { return vector_; }
+			std::vector<double> to_vector() const
+			{
+				return std::vector<double>{vector_.x(), vector_.y(), vector_.z()};
+			}
+			double norm() const
+			{
+				return vector_.norm();
+			}
+			Vector3 operator+(const Vector3 &v) const;
+			Vector3 &operator+=(const Vector3 &v);
+			Vector3 operator-() const;
+			Vector3 operator-(const Vector3 &v) const;
+			Vector3 &operator-=(const Vector3 &v);
+			Vector3 operator*(double c) const;
+			Vector3 &operator*=(double c);
+			friend Vector3 operator*(double c, const Vector3 &v)
+			{
+				Vector3d res = c * v.vector_;
+				return Vector3(res.x(), res.y(), res.z());
+			}
+			bool operator==(const Vector3 &v) const;
+			double operator[](const size_t idx) const;
+			std::string to_str() const;
+			std::string repr() const;
+
+		private:
+			Vector3d vector_{0, 0, 0};
+		};
+
 		class Polynomial
 		{
 		public:
@@ -168,13 +208,13 @@ namespace last_letter_lib
 		{
 		public:
 			///////////
-			//Variables
+			// Variables
 			double *alpha, *beta;
 			double *outputHist, *inputHist;
 			int alphaOrder, betaOrder;
 
 			///////////
-			//Functions
+			// Functions
 
 			// Constructor
 			discrTF(double *alphaIn, int alphaOrderIn, double *betaIn, int betaOrderIn);
