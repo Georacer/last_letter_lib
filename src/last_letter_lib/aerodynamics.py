@@ -28,7 +28,7 @@ from last_letter_lib.systems import Component
 from last_letter_lib.systems import ComponentParameters
 from last_letter_lib.utils.math import Vector3
 from last_letter_lib.utils.math import Wrench
-from last_letter_lib.utils.math import build_vector3
+from last_letter_lib.utils.math import build_vector3_from_array
 from last_letter_lib.utils.math import sigmoid
 from last_letter_lib.utils.uav import Airdata
 from last_letter_lib.utils.uav import Inputs
@@ -511,7 +511,7 @@ class Aerodynamic(Component):
             u.delta_r * self.params.delta_r_max,
         ]
         force_wind = self.calc_forces(af_state, environment, u)
-        force = build_vector3(self.airdata.S_wb @ force_wind.to_array())
+        force = build_vector3_from_array(self.airdata.S_wb @ force_wind.to_array())
         torque = self.calc_moments(af_state, environment, u)
         return Wrench(force, torque)
 
@@ -528,7 +528,7 @@ class Aerodynamic(Component):
         # Transform the uav state and environment into the airfoil frame
         af_state.position += self.pose.orientation * self.pose.position
         af_state.attitude *= self.pose.orientation
-        af_state.velocity_linear = build_vector3(
+        af_state.velocity_linear = build_vector3_from_array(
             self.pose.orientation.conjugate() * uav_state.velocity_linear.to_array()
             + np.cross(
                 uav_state.velocity_angular.to_array(), self.pose.position.to_array()

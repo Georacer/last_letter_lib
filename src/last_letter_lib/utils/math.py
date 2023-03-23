@@ -51,7 +51,7 @@ def asymproj(H: np.ndarray = np.eye(3)):
     return (H - H.T) / 2
 
 
-def build_vector3(arr):
+def build_vector3_from_array(arr):
     arr = np.array(arr)  # Make sure arr is a numpy object
     # Convert a numpy array to Vector3
     if len(arr.shape) == 1:  # arr is a 1-dimensional array
@@ -472,7 +472,7 @@ class UnitQuaternion:
                     answer = answer.reshape(other.shape)
                 return answer
         elif is_vector3:
-            return build_vector3(self * other.to_array())
+            return build_vector3_from_array(self * other.to_array())
         elif is_scalar:  # Multiply with scalar
             raise UserWarning(
                 "Multiplying a UnitQuaternion with a scalar does not change the quaternion."
@@ -658,7 +658,7 @@ class Pose:
                 " {other.__class__.__name__} is not supported."
             )
         rot_force = self.orientation * other.force
-        lever_arm = build_vector3(
+        lever_arm = build_vector3_from_array(
             np.cross(
                 self.position.to_array().reshape((3,)),
                 rot_force.to_array().reshape((3,)),

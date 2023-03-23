@@ -26,7 +26,7 @@ from pydantic import validator
 import last_letter_lib.utils.math as llmath
 from last_letter_lib.utils.math import UnitQuaternion
 from last_letter_lib.utils.math import Vector3
-from last_letter_lib.utils.math import build_vector3
+from last_letter_lib.utils.math import build_vector3_from_array
 
 
 class PoseParameters(BaseModel):
@@ -335,13 +335,13 @@ class RigidBody6DOF(DynamicSystem):
     def acceleration_linear(self) -> Vector3:
         """Returns the acceleration in body frame."""
 
-        return build_vector3(self.x_dot[7:10])
+        return build_vector3_from_array(self.x_dot[7:10])
 
     @property
     def acceleration_angular(self) -> Vector3:
         """Returns the angular acceleration of the body FRD frame."""
 
-        return build_vector3(self.x_dot[10:13])
+        return build_vector3_from_array(self.x_dot[10:13])
 
     def post_propagation(self):
         self._update_attributes()

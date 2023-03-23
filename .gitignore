@@ -61,3 +61,4 @@ __pycache__
 
 # Temporary text files
 *.swp
+src/last_letter_lib.egg-info

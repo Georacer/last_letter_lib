@@ -32,7 +32,7 @@ from last_letter_lib.utils.math import Pose
 from last_letter_lib.utils.math import UnitQuaternion
 from last_letter_lib.utils.math import Vector3
 from last_letter_lib.utils.math import Wrench
-from last_letter_lib.utils.math import build_vector3
+from last_letter_lib.utils.math import build_vector3_from_array
 from last_letter_lib.utils.programming import _traverse_collect_pydantic
 from last_letter_lib.utils.uav import Airdata
 from last_letter_lib.utils.uav import UavState
@@ -168,7 +168,7 @@ class Aircraft:
                     ]
                 )
 
-        return Pose(build_vector3(com), UnitQuaternion())
+        return Pose(build_vector3_from_array(com), UnitQuaternion())
 
     def calc_components_inertia(self, components: list) -> np.array:
         """
@@ -179,7 +179,7 @@ class Aircraft:
             if c.inertial:
                 # Read the component position in the body frame and correct with the CoG position.
                 # This is because we want the inertia wrt CoG, not the aircraft frame.
-                pos = build_vector3(c.pose.position) - self.com
+                pos = build_vector3_from_array(c.pose.position) - self.com
                 # Read the component orientation in the body frame
                 R_cb = EulerAngles.from_array(c.pose.orientation).R_bi()
 
@@ -351,7 +351,7 @@ class Aircraft:
             self.rigid_body.mass * self.gravity.g(self.state.position).to_array()
         )
         gravity_force_b = self.rigid_body.orientation.R_ib() @ gravity_force_i
-        total_wrench += Wrench(build_vector3(gravity_force_b), Vector3())
+        total_wrench += Wrench(build_vector3_from_array(gravity_force_b), Vector3())
 
         # Step 6DOF model
         self.rigid_body.rk4(total_wrench.to_array(), dt)
