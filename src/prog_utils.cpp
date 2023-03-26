@@ -94,7 +94,7 @@ namespace last_letter_lib
                 else
                 {
                     YAML::Node temp_node;
-                    return temp_node['invalid'];
+                    return temp_node["invalid"];
                 }
             }
             return temp_node;

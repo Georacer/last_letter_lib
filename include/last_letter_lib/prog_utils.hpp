@@ -243,8 +243,34 @@ namespace last_letter_lib
 
         ParameterManager loadModelConfig(string modelName);
 
+        class Parametrized
+        {
+        public:
+            Parametrized(string name_p) : params_(name_p)
+            {
+                set_param("name", name_p, false);
+                name = name_p;
+                initialize_parameters();
+            };
+            // Create your class-specific parameters here, along with their defaults.
+            virtual void initialize_parameters(){};
+            // Assign values from the parameter dictionary to the local variables here.
+            virtual void update_parameters() = 0;
+            // Register another Parametrized object as a child, in order to access and manage their parameters.
+            virtual void add_child(Parametrized &c) { params_.register_child_mngr(c.params_); }
+            template <typename T>
+            bool set_param(string param_name, T value, bool safe = true) { return params_.set(param_name, value, safe); }
+            template <typename T>
+            T get_param(string param_name) { return params_.get<T>(param_name); }
+
+        private:
+            ParameterManager params_;
+            string name;
+        };
+
         // Build a new polynomial, reading from a configuration ParameterManager
-        math_utils::Polynomial *buildPolynomial(ParameterManager config);
+        math_utils::Polynomial *
+        buildPolynomial(ParameterManager config);
 
         // Generic logic
         ////////////////
