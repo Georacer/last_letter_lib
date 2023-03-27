@@ -19,10 +19,8 @@ namespace last_letter_lib
         public:
             Component(string name) : Parametrized(name)
             {
-                initialize_parameters();
-                update_parameters();
             }
-            void initialize_parameters()
+            void initialize_parameters() override
             {
                 set_param("pose/position/x", 0.0, false);
                 set_param("pose/position/y", 0.0, false);
@@ -36,7 +34,7 @@ namespace last_letter_lib
                 set_param("inertial/tensor/j_yy", 0.0, false);
                 set_param("inertial/tensor/j_zz", 0.0, false);
             }
-            void update_parameters();
+            void update_parameters() override;
 
             Pose pose;
             Inertial inertial;

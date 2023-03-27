@@ -231,12 +231,15 @@ namespace last_letter_lib
             void register_child_mngr(ParameterManager);
             bool exists(const string param_name);
             ParameterManager filter(const string prefix);
+            // Return a vector of all included keys
+            vector<string> keys() { return get_keys_(parameters_); }
             string str();
             string name;
 
         private:
             // Methods
             YAML::Node find_parameter_(const string param_name);
+            vector<string> get_keys_(YAML::Node);
             // Variables
             YAML::Node parameters_{YAML::Node()};
         };
@@ -250,12 +253,28 @@ namespace last_letter_lib
             {
                 set_param("name", name_p, false);
                 name = name_p;
-                initialize_parameters();
             };
             // Create your class-specific parameters here, along with their defaults.
             virtual void initialize_parameters(){};
             // Assign values from the parameter dictionary to the local variables here.
             virtual void update_parameters() = 0;
+            // Initialize parameters, read from custom values and set attribute values.
+            void initialize(ParameterManager params_p = ParameterManager("temp_node"))
+            {
+                initialize_parameters();
+                for (string key : params_p.keys())
+                {
+                    try
+                    {
+                        set_param(key, params_p.get<double>(key));
+                    }
+                    catch (const std::exception &)
+                    {
+                        set_param(key, params_p.get<string>(key));
+                    }
+                }
+                update_parameters();
+            }
             // Register another Parametrized object as a child, in order to access and manage their parameters.
             virtual void add_child(Parametrized &c) { params_.register_child_mngr(c.params_); }
             template <typename T>

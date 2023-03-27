@@ -48,6 +48,12 @@ TEST(ProgUtilsTest, TestYaml1)
     // EXPECT_EQ(vectorString, "0, 1.1, 2.2, ");
 }
 
+TEST(ProgUtilsTest, TestYaml2)
+{
+    YAML::Node n = YAML::Node();
+    ASSERT_TRUE(n.IsNull());
+}
+
 TEST(ProgUtilsTest, GeneralTest)
 {
 
@@ -169,6 +175,15 @@ TEST_F(ParameterManagerTest, TestFilter)
 {
     ParameterManager node = parent->parameters.filter("child");
     ASSERT_EQ(node.get<int>("param_1"), 1);
+}
+
+TEST_F(ParameterManagerTest, TestKeys)
+{
+    vector<string> v = child->parameters.keys();
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(v[0], "name");
+    EXPECT_EQ(v[1], "param_1");
+    EXPECT_EQ(v[2], "param_2/param_3");
 }
 
 class ConcreteParametrizedChild : public Parametrized

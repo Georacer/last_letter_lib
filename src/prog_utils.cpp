@@ -126,6 +126,27 @@ namespace last_letter_lib
             }
         }
 
+        vector<string> ParameterManager::get_keys_(YAML::Node n)
+        {
+            vector<string> v;
+            for (YAML::const_iterator it = n.begin(); it != n.end(); ++it)
+            {
+                if (it->second.IsMap())
+                {
+                    vector<string> child_keys = get_keys_(it->second.as<YAML::Node>());
+                    for (auto k : child_keys)
+                    {
+                        v.push_back(it->first.as<string>() + '/' + k);
+                    }
+                }
+                else
+                {
+                    v.push_back(it->first.as<string>());
+                }
+            }
+            return v;
+        }
+
         string ParameterManager::str()
         {
             std::stringstream buffer;

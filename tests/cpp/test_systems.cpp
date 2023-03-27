@@ -5,15 +5,12 @@
 #include <string>
 #include <stdexcept>
 
-// #include "last_letter_lib/prog_utils.hpp"
 #include "last_letter_lib/uav_model.hpp"
 #include "last_letter_lib/systems.hpp"
 
-// #include "test_utils.hpp"
-
 using namespace std;
 
-// using namespace last_letter_lib::programming_utils;
+using namespace last_letter_lib::programming_utils;
 using namespace last_letter_lib::uav_utils;
 using namespace last_letter_lib::systems;
 using namespace last_letter_lib;
@@ -21,7 +18,7 @@ using namespace last_letter_lib;
 class ComponentTest : public ::testing::Test
 {
 protected:
-    void SetUp() override{};
+    void SetUp() override { c.initialize(); }
 
     Component c{"comp_name"};
 };
@@ -51,4 +48,13 @@ TEST_F(ComponentTest, TestComponent4)
     c.set_param("inertial/tensor/j_zz", 1.0);
     c.update_parameters();
     ASSERT_EQ(c.inertial.tensor, Eigen::MatrixXd::Identity(3, 3));
+}
+
+TEST_F(ComponentTest, TestComponent5)
+{
+    ParameterManager pm("pm");
+    pm.set("inertial/mass", 5.0, false);
+    Component c2{"c2"};
+    c2.initialize(pm);
+    ASSERT_EQ(c2.inertial.mass, 5.0);
 }
