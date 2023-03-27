@@ -7,6 +7,7 @@
 #include <Eigen/Eigen>
 #include <random>
 
+using Eigen::Matrix3d;
 using Eigen::Quaterniond;
 using Eigen::Vector3d;
 
@@ -47,6 +48,12 @@ namespace last_letter_lib
 			Pose() : position(Vector3d::Zero()), orientation(Quaterniond::Identity()) {}
 			Vector3d position;
 			Quaterniond orientation;
+		};
+
+		struct Inertial
+		{
+			double mass{0};
+			Matrix3d tensor{Matrix3d::Zero()};
 		};
 
 		struct Twist
@@ -144,20 +151,20 @@ namespace last_letter_lib
 		private:
 		public:
 			///////////
-			//Variables
+			// Variables
 			double P, I, D, satU, satL, Ts, Tau, trim;
 			double Iterm, Iprev, Eprev, Uprev, Dprev;
 			double output;
 			///////////
-			//Functions
+			// Functions
 
-			//Constructor
+			// Constructor
 			PID(double Pi, double Ii, double Di, double satUi, double satLi, double trim, double Tsi, double Ni);
 
-			//Destructor
+			// Destructor
 			~PID();
 
-			//Main step
+			// Main step
 			double step(double error);
 			double step(double error, double dt);
 			double step(double error, double dt, double derivative);
@@ -168,22 +175,22 @@ namespace last_letter_lib
 		{
 		public:
 			///////////
-			//Variables
+			// Variables
 			double P, I, D, satU, satL, Ts, Tau, trim;
 			double Pinit, Iinit, Dinit;
 			double Iterm, Iprev, Eprev, Uprev, Dprev;
 			double Ierror, bumplessI1, bumplessI2, trErr;
 			double output;
 			///////////
-			//Functions
+			// Functions
 
-			//Constructor
+			// Constructor
 			APID(double Pi, double Ii, double Di, double satUi, double satLi, double trim, double Tsi, double Ni);
 
-			//Destructor
+			// Destructor
 			~APID();
 
-			//Main step
+			// Main step
 			double step(double error, bool track, double trInput);
 			void init(void);
 		};
@@ -193,17 +200,17 @@ namespace last_letter_lib
 		/////////////////////////////
 
 		/**
- * [WGS84_RN Calculate the curvature of the Earth in the prime vertical
- * @param  lat The latitude in degrees
- * @return     RN - radius corresponding to curvature in meters
- */
+		 * [WGS84_RN Calculate the curvature of the Earth in the prime vertical
+		 * @param  lat The latitude in degrees
+		 * @return     RN - radius corresponding to curvature in meters
+		 */
 		double WGS84_RN(double lat);
 
 		/**
- * [WGS84_RM Calculate the curvature of the Earth in the meridian
- * @param  lat The latitude in degrees
- * @return     RM - radius corresponding to curvature in meters
- */
+		 * [WGS84_RM Calculate the curvature of the Earth in the meridian
+		 * @param  lat The latitude in degrees
+		 * @return     RM - radius corresponding to curvature in meters
+		 */
 		double WGS84_RM(double lat);
 
 		/////////////////////////////
@@ -211,16 +218,16 @@ namespace last_letter_lib
 		/////////////////////////////
 
 		/**
- * @brief Get latitude and longitude coordinates fromlocal position.
- * @details Taken from https://github.com/PX4/PX4-SITL_gazebo/blob/97106007eb5c934b902a5329afb55b45e94d5063/include/common.h
- * Makes the small-angle assumption and disregards altitude.
- *
- * @param pos_north Local position North
- * @param pos_east Local position East
- * @param lat_home Home (initialization) latitude, in degrees
- * @param lon_home Home (initialization) longitude, in degrees
- * @return std::pair<double, double> The new (lat, lon) coordinates, in degrees
- */
+		 * @brief Get latitude and longitude coordinates fromlocal position.
+		 * @details Taken from https://github.com/PX4/PX4-SITL_gazebo/blob/97106007eb5c934b902a5329afb55b45e94d5063/include/common.h
+		 * Makes the small-angle assumption and disregards altitude.
+		 *
+		 * @param pos_north Local position North
+		 * @param pos_east Local position East
+		 * @param lat_home Home (initialization) latitude, in degrees
+		 * @param lon_home Home (initialization) longitude, in degrees
+		 * @return std::pair<double, double> The new (lat, lon) coordinates, in degrees
+		 */
 		std::pair<double, double> reproject(const double pos_north,
 											const double pos_east,
 											const double lat_home,

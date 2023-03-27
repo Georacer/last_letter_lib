@@ -73,6 +73,7 @@ add_library(last_letter_lib SHARED
   src/uav_utils.cpp
   src/geo_mag_declination.cpp
   src/prog_utils.cpp
+  src/systems.cpp
   src/environment.cpp
   src/gravity.cpp
   src/aerodynamics.cpp
@@ -138,6 +139,7 @@ list(APPEND test_sources
   tests/cpp/test_prog_utils.cpp
   tests/cpp/test_uav_utils.cpp
   tests/cpp/test_math_utils.cpp
+  tests/cpp/test_systems.cpp
   tests/cpp/test_environment.cpp
   tests/cpp/test_aerodynamics.cpp
   tests/cpp/test_propulsion.cpp
