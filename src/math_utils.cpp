@@ -402,55 +402,55 @@ namespace last_letter_lib
 
         Vector3::Vector3(double x, double y, double z)
         {
-            vector_.x() = x;
-            vector_.y() = y;
-            vector_.z() = z;
+            vector.x() = x;
+            vector.y() = y;
+            vector.z() = z;
         }
         Vector3 Vector3::operator+(const Vector3 &v) const
         {
             Vector3d other_vector = v.to_array();
             return Vector3(
-                vector_.x() + other_vector.x(),
-                vector_.y() + other_vector.y(),
-                vector_.z() + other_vector.z());
+                vector.x() + other_vector.x(),
+                vector.y() + other_vector.y(),
+                vector.z() + other_vector.z());
         }
         Vector3 &Vector3::operator+=(const Vector3 &v)
         {
             Vector3d other_vector = v.to_array();
-            vector_ += other_vector;
+            vector += other_vector;
             return *this;
         }
         Vector3 Vector3::operator-() const
         {
-            return Vector3(-vector_.x(), -vector_.y(), -vector_.z());
+            return Vector3(-vector.x(), -vector.y(), -vector.z());
         }
         Vector3 Vector3::operator-(const Vector3 &v) const
         {
             Vector3d other_vector = v.to_array();
             return Vector3(
-                vector_.x() - other_vector.x(),
-                vector_.y() - other_vector.y(),
-                vector_.z() - other_vector.z());
+                vector.x() - other_vector.x(),
+                vector.y() - other_vector.y(),
+                vector.z() - other_vector.z());
         }
         Vector3 &Vector3::operator-=(const Vector3 &v)
         {
             Vector3d other_vector = v.to_array();
-            vector_ -= other_vector;
+            vector -= other_vector;
             return *this;
         }
         Vector3 Vector3::operator*(double c) const
         {
-            return Vector3(c * vector_.x(), c * vector_.y(), c * vector_.z());
+            return Vector3(c * vector.x(), c * vector.y(), c * vector.z());
         }
         Vector3 &Vector3::operator*=(double c)
         {
-            vector_ *= c;
+            vector *= c;
             return *this;
         }
         bool Vector3::operator==(const Vector3 &v) const
         {
             Vector3d other_vec = v.to_array();
-            return (vector_.x() == other_vec.x()) && (vector_.y() == other_vec.y()) && (vector_.z() == other_vec.z());
+            return (vector.x() == other_vec.x()) && (vector.y() == other_vec.y()) && (vector.z() == other_vec.z());
         }
         double Vector3::operator[](const size_t idx) const
         {
@@ -459,13 +459,13 @@ namespace last_letter_lib
         std::string Vector3::to_str() const
         {
             std::stringstream ss;
-            ss << vector_;
+            ss << vector;
             return ss.str();
         }
         std::string Vector3::repr() const
         {
             std::stringstream ss;
-            ss << "Vector3(" << vector_.x() << ", " << vector_.y() << ", " << vector_.z() << ")";
+            ss << "Vector3(" << vector.x() << ", " << vector.y() << ", " << vector.z() << ")";
             return ss.str();
         }
 

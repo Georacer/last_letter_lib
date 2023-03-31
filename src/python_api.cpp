@@ -5,12 +5,15 @@
 #include <iostream>
 
 #include "last_letter_lib/math_utils.hpp"
+#include "last_letter_lib/uav_utils.hpp"
 
 namespace py = pybind11;
 
 using Eigen::Quaterniond;
+using Eigen::Vector3d;
 
 using last_letter_lib::math_utils::Vector3;
+using last_letter_lib::uav_utils::Pose;
 
 ///////////////////////////////////////////////////////////////////////////////
 // math_utils
@@ -51,4 +54,11 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
                 return Vector3(v.x(), v.y(), v.z());
             }));
     // m_math_utils.def("sub", &sub, "A function that subs two numbers.", py::arg("i") = 2, py::arg("j") = 1);
+
+    auto m_uav_utils = m.def_submodule("cpp_uav_utils", "last_letter_lib uav_utils submodule");
+    py::class_<Pose>(m_uav_utils, "Pose")
+        .def(py::init())
+        .def_property("position", &Pose::get_position_as_vector3, &Pose::set_position_from_vector3)
+        .def_property("orientation", &Pose::get_orientation_as_vector, &Pose::set_orientation_from_vector)
+        .def_property_readonly("T", &Pose::T);
 }

@@ -7,9 +7,14 @@
 #include <Eigen/Eigen>
 #include <random>
 
+#include <last_letter_lib/math_utils.hpp>
+
 using Eigen::Matrix3d;
 using Eigen::Quaterniond;
 using Eigen::Vector3d;
+using Eigen::Vector4d;
+
+using last_letter_lib::math_utils::Vector3;
 
 namespace last_letter_lib
 {
@@ -48,6 +53,38 @@ namespace last_letter_lib
 			Pose() : position(Vector3d::Zero()), orientation(Quaterniond::Identity()) {}
 			Vector3d position;
 			Quaterniond orientation;
+			Pose T() const
+			{
+				Pose p = Pose();
+				p.position = this->orientation * this->position * -1;
+				p.orientation = this->orientation.conjugate();
+				return p;
+			}
+
+			// Used in Pybind11
+			void set_position_from_vector3(const Vector3 v)
+			{
+				position = v.vector;
+			}
+			Vector3 get_position_as_vector3()
+			{
+				return Vector3(position.x(), position.y(), position.z());
+			}
+			void set_orientation_from_vector(const Vector4d v)
+			{
+				orientation.w() = v(0);
+				orientation.x() = v(1);
+				orientation.y() = v(2);
+				orientation.z() = v(3);
+			}
+			Vector4d get_orientation_as_vector()
+			{
+				return Vector4d(
+					orientation.w(),
+					orientation.x(),
+					orientation.y(),
+					orientation.z());
+			}
 		};
 
 		struct Inertial

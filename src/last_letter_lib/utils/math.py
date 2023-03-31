@@ -22,6 +22,7 @@ from scipy.optimize import root
 
 # from last_letter_lib import cpp_last_letter_lib
 from ..cpp_last_letter_lib.cpp_math_utils import Vector3
+from ..cpp_last_letter_lib.cpp_uav_utils import Pose as cpp_Pose
 
 
 @jit(nopython=True)
@@ -643,10 +644,29 @@ class UnitQuaternion:
         return UnitQuaternion(w=q_w, xyz=q_ijk)
 
 
-@dataclass
 class Pose:
-    position: Vector3 = Vector3()
-    orientation: UnitQuaternion = UnitQuaternion()
+    orientation: UnitQuaternion
+    cpp_pose_: cpp_Pose
+
+    def __init__(self, position=Vector3(), orientation=UnitQuaternion()):
+        self.cpp_pose_ = cpp_Pose()
+
+    @property
+    def position(self) -> Vector3:
+        return self.cpp_pose_.position
+
+    @position.setter
+    def position(self, v: Vector3):
+        self.cpp_pose_.position = v
+
+    @property
+    def orientation(self) -> UnitQuaternion:
+        q = self.cpp_pose_.orientation
+        return UnitQuaternion(q[0], q[1:4])
+
+    @orientation.setter
+    def orientation(self, q: UnitQuaternion):
+        self.cpp_pose_.orientation = q.to_array()
 
     def __matmul__(self, other):
         """
@@ -673,9 +693,9 @@ class Pose:
         """
         Define the inverse pose.
         """
+        p_new = self.cpp_pose_.T
         return Pose(
-            position=self.orientation * self.position * -1,
-            orientation=self.orientation.conjugate(),
+            p_new.position, UnitQuaternion(p_new.orientation[0], p_new.orientation[1:4])
         )
 
 
