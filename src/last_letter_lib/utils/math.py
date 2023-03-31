@@ -650,6 +650,8 @@ class Pose:
 
     def __init__(self, position=Vector3(), orientation=UnitQuaternion()):
         self.cpp_pose_ = cpp_Pose()
+        self.cpp_pose_.position = position
+        self.cpp_pose_.orientation = orientation.to_array()
 
     @property
     def position(self) -> Vector3:
@@ -727,6 +729,14 @@ class Wrench:
                 " {other.__class__.__name__} is not supported."
             )
         return Wrench(self.force + other.force, self.torque + other.torque)
+
+    def __sub__(self, other):
+        if not isinstance(other, Wrench):
+            raise TypeError(
+                f"Addition between {self.__class__.__name__} and"
+                " {other.__class__.__name__} is not supported."
+            )
+        return Wrench(self.force - other.force, self.torque - other.torque)
 
 
 def calc_poly_zero_crossing(poly_coeffs, xtol=0.01):

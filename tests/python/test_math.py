@@ -553,7 +553,9 @@ class TestPose:
         result = math.Wrench(
             force=math.Vector3(0, 0, -1), torque=math.Vector3(0, 1, -1)
         )
-        assert result == pose_bi @ wrench_b
+        answer = result - pose_bi @ wrench_b
+        assert np.allclose(answer.force.to_array(), [0, 0, 0])
+        assert np.allclose(answer.torque.to_array(), [0, 0, 0])
 
     def test_inverse(self):
         pose_bi = math.Pose(
