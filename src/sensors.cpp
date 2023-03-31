@@ -183,7 +183,7 @@ namespace last_letter_lib
 		Vector3d airspeed_ned = uav_state_.velocity.linear - environment_.wind;
 		Vector3d airspeed_body = q_ned_link * airspeed_ned;
 		// Apply scaling factor error
-		airspeed_body /= 1.29;
+		// airspeed_body /= 1.29;
 		differential_pressure = 0.5f * barometer_.rho * powf(airspeed_body.x() + generate_noise(0.005), 2.0);
 		static_pressure = barometer_.pressure_reading;
 		temperature = barometer_.temperature_reading;
