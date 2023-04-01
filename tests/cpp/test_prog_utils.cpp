@@ -186,6 +186,34 @@ TEST_F(ParameterManagerTest, TestKeys)
     EXPECT_EQ(v[2], "param_2/param_3");
 }
 
+TEST(ParameterManagerTest2, TestLoadFile)
+{
+    auto pm = ParameterManager("pm");
+    pm.set("lastLogin", 0, false);
+    pm.set("world/simRate", 100, false);
+    pm.set("cantfindme", 13, false);
+    pm.load_file("tests/cpp/test_params.yaml");
+
+    EXPECT_EQ(pm.get<double>("lastLogin"), 5);
+    EXPECT_EQ(pm.get<double>("world/simRate"), 500);
+    EXPECT_EQ(pm.get<double>("cantfindme"), 13);
+}
+
+TEST(ParameterManagerTest2, TestLoadStream)
+{
+    auto pm = ParameterManager("pm");
+    pm.set("lastLogin", 0, false);
+    pm.set("world/simRate", 100, false);
+    pm.set("cantfindme", 13, false);
+    std::stringstream ss;
+    ss << "lastLogin: 5\nworld:\n simRate: 500\n";
+    pm.load_stream(ss);
+
+    EXPECT_EQ(pm.get<double>("lastLogin"), 5);
+    EXPECT_EQ(pm.get<double>("world/simRate"), 500);
+    EXPECT_EQ(pm.get<double>("cantfindme"), 13);
+}
+
 class ConcreteParametrizedChild : public Parametrized
 {
 public:

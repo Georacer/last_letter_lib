@@ -189,7 +189,7 @@ namespace last_letter_lib
             {
                 if (exists(param_name))
                 {
-                    YAML::Node temp_node{find_parameter_(param_name)};
+                    YAML::Node temp_node{find_parameter_(parameters_, param_name)};
                     return temp_node.as<T>();
                 }
                 else
@@ -228,6 +228,9 @@ namespace last_letter_lib
                     return false;
                 }
             }
+            // Load parameters from a .yaml file
+            void load_file(string filepath);
+            void load_stream(std::istream &yaml_str);
             void register_child_mngr(ParameterManager);
             bool exists(const string param_name);
             ParameterManager filter(const string prefix);
@@ -238,8 +241,9 @@ namespace last_letter_lib
 
         private:
             // Methods
-            YAML::Node find_parameter_(const string param_name);
-            vector<string> get_keys_(YAML::Node);
+            YAML::Node find_parameter_(const YAML::Node node, const string param_name);
+            void load_parameters_(YAML::Node);
+            vector<string> get_keys_(YAML::Node) const; // It's also a classmethod
             // Variables
             YAML::Node parameters_{YAML::Node()};
         };

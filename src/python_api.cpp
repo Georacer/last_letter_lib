@@ -61,4 +61,11 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def_property("position", &Pose::get_position_as_vector3, &Pose::set_position_from_vector3)
         .def_property("orientation", &Pose::get_orientation_as_vector, &Pose::set_orientation_from_vector)
         .def_property_readonly("T", &Pose::T);
+
+    // auto m_systems = m.def_submodule("cpp_systems", "last_letter_lib systems submodule");
+    // py::class_<Component>(m_uav_utils, "Pose")
+    //     .def(py::init())
+    //     .def_property("position", &Pose::get_position_as_vector3, &Pose::set_position_from_vector3)
+    //     .def_property("orientation", &Pose::get_orientation_as_vector, &Pose::set_orientation_from_vector)
+    //     .def_property_readonly("T", &Pose::T);
 }

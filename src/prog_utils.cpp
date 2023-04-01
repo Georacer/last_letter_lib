@@ -70,12 +70,38 @@ namespace last_letter_lib
             parameters_ = parameters_p;
         }
 
+        void ParameterManager::load_file(string filepath)
+        {
+            auto n = YAML::LoadFile(filepath);
+            load_parameters_(n);
+        }
+
+        void ParameterManager::load_stream(std::istream &yaml_str)
+        {
+            auto n = YAML::Load(yaml_str);
+            load_parameters_(n);
+        }
+
+        void ParameterManager::load_parameters_(YAML::Node n)
+        {
+            vector<string> parameter_list = get_keys_(parameters_);
+            for (auto param_name : parameter_list)
+            {
+                YAML::Node param_node = find_parameter_(n, param_name);
+                if (param_node)
+                {
+                    YAML::Node own_param_node = find_parameter_(parameters_, param_name);
+                    own_param_node = YAML::Node(param_node);
+                }
+            }
+        }
+
         void ParameterManager::register_child_mngr(ParameterManager child_mngr)
         {
             parameters_[child_mngr.name] = child_mngr.parameters_;
         }
 
-        YAML::Node ParameterManager::find_parameter_(const string param_name_p)
+        YAML::Node ParameterManager::find_parameter_(const YAML::Node node, const string param_name_p)
         // Returns a null YAML::Node if it doesn't exist.
         {
             // Split the name into '/'
@@ -84,7 +110,7 @@ namespace last_letter_lib
 
             // Recursively iterate into the tree structure.
             YAML::Node temp_node;
-            temp_node.reset(parameters_);
+            temp_node.reset(node);
             for (auto name : names)
             {
                 if (temp_node[name])
@@ -102,7 +128,7 @@ namespace last_letter_lib
 
         bool ParameterManager::exists(const string param_name_p)
         {
-            return (bool)find_parameter_(param_name_p);
+            return (bool)find_parameter_(parameters_, param_name_p);
         }
 
         ParameterManager ParameterManager::filter(const string prefix)
@@ -118,7 +144,7 @@ namespace last_letter_lib
                 std::vector<std::string> names;
                 split_string(prefix, names, '/');
                 string name{names.back()};
-                return ParameterManager(name, find_parameter_(prefix));
+                return ParameterManager(name, find_parameter_(parameters_, prefix));
             }
             else
             {
@@ -126,7 +152,7 @@ namespace last_letter_lib
             }
         }
 
-        vector<string> ParameterManager::get_keys_(YAML::Node n)
+        vector<string> ParameterManager::get_keys_(YAML::Node n) const
         {
             vector<string> v;
             for (YAML::const_iterator it = n.begin(); it != n.end(); ++it)
