@@ -205,8 +205,10 @@ TEST(ParameterManagerTest2, TestLoadStream)
     pm.set("lastLogin", 0, false);
     pm.set("world/simRate", 100, false);
     pm.set("cantfindme", 13, false);
-    std::stringstream ss;
-    ss << "lastLogin: 5\nworld:\n simRate: 500\n";
+    // std::stringstream ss;
+    std::string ss;
+    // ss << "lastLogin: 5\nworld:\n simRate: 500\n";
+    ss = "lastLogin: 5\nworld:\n simRate: 500\n";
     pm.load_stream(ss);
 
     EXPECT_EQ(pm.get<double>("lastLogin"), 5);

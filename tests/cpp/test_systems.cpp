@@ -58,3 +58,12 @@ TEST_F(ComponentTest, TestComponent5)
     c2.initialize(pm);
     ASSERT_EQ(c2.inertial.mass, 5.0);
 }
+
+TEST_F(ComponentTest, TestInitialize)
+{
+    c.initialize("pose:\n position:\n  x: 1\ninertial:\n mass: 5.0");
+    EXPECT_EQ(c.get_param<double>("pose/position/x"), 1);
+    EXPECT_EQ(c.get_param<double>("inertial/mass"), 5);
+    EXPECT_EQ(c.pose.position.x(), 1);
+    EXPECT_EQ(c.inertial.mass, 5);
+}

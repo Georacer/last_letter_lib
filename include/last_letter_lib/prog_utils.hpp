@@ -230,7 +230,8 @@ namespace last_letter_lib
             }
             // Load parameters from a .yaml file
             void load_file(string filepath);
-            void load_stream(std::istream &yaml_str);
+            // void load_stream(std::istream &yaml_str);
+            void load_stream(const std::string yaml_str);
             void register_child_mngr(ParameterManager);
             bool exists(const string param_name);
             ParameterManager filter(const string prefix);
@@ -266,6 +267,7 @@ namespace last_letter_lib
             void initialize(ParameterManager params_p = ParameterManager("temp_node"))
             {
                 initialize_parameters();
+                // TODO: Refactor this for-loop into the ParameterManager
                 for (string key : params_p.keys())
                 {
                     try
@@ -279,8 +281,15 @@ namespace last_letter_lib
                 }
                 update_parameters();
             }
+            // Initializing object from YAML stream.
+            void initialize(const std::string yaml_str)
+            {
+                initialize_parameters();
+                params_.load_stream(yaml_str);
+                update_parameters();
+            }
             // Register another Parametrized object as a child, in order to access and manage their parameters.
-            virtual void add_child(Parametrized &c) { params_.register_child_mngr(c.params_); }
+            void add_child(Parametrized &c) { params_.register_child_mngr(c.params_); }
             template <typename T>
             bool set_param(string param_name, T value, bool safe = true) { return params_.set(param_name, value, safe); }
             template <typename T>

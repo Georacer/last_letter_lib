@@ -6,6 +6,8 @@
 
 #include "last_letter_lib/math_utils.hpp"
 #include "last_letter_lib/uav_utils.hpp"
+#include "last_letter_lib/prog_utils.hpp"
+#include "last_letter_lib/systems.hpp"
 
 namespace py = pybind11;
 
@@ -13,10 +15,36 @@ using Eigen::Quaterniond;
 using Eigen::Vector3d;
 
 using last_letter_lib::math_utils::Vector3;
+using last_letter_lib::programming_utils::Parametrized;
+using last_letter_lib::systems::Component;
 using last_letter_lib::uav_utils::Pose;
 
-///////////////////////////////////////////////////////////////////////////////
-// math_utils
+class PyParametrized : public Parametrized
+{
+public:
+    // Inherit the constructor
+    using Parametrized::Parametrized;
+
+    // Create trampolines for each virtual function.
+    void initialize_parameters() override
+    {
+        PYBIND11_OVERRIDE(
+            void,                  // Return type
+            Parametrized,          // Parent class
+            initialize_parameters, // Name of function in C++ (must match Python name)
+            // Argument(s)
+        );
+    }
+    void update_parameters() override
+    {
+        PYBIND11_OVERRIDE_PURE(
+            void,              // Return type
+            Parametrized,      // Parent class
+            update_parameters, // Name of function in C++ (must match Python name)
+            // Argument(s)
+        );
+    }
+};
 
 PYBIND11_MODULE(cpp_last_letter_lib, m)
 {
@@ -61,11 +89,25 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def_property("position", &Pose::get_position_as_vector3, &Pose::set_position_from_vector3)
         .def_property("orientation", &Pose::get_orientation_as_vector, &Pose::set_orientation_from_vector)
         .def_property_readonly("T", &Pose::T);
+    py::class_<Inertial>(m_uav_utils, "Inertial")
+        .def(py::init())
+        .def_readwrite("mass", &Inertial::mass)
+        .def_readwrite("tensor", &Inertial::tensor);
 
-    // auto m_systems = m.def_submodule("cpp_systems", "last_letter_lib systems submodule");
-    // py::class_<Component>(m_uav_utils, "Pose")
-    //     .def(py::init())
-    //     .def_property("position", &Pose::get_position_as_vector3, &Pose::set_position_from_vector3)
-    //     .def_property("orientation", &Pose::get_orientation_as_vector, &Pose::set_orientation_from_vector)
-    //     .def_property_readonly("T", &Pose::T);
+    auto m_programming_utils = m.def_submodule("cpp_programming_utils", "last_letter_lib programming_utils submodule");
+    py::class_<Parametrized, PyParametrized>(m_programming_utils, "Parametrized")
+        .def(py::init<string>(), py::arg("name"))
+        // .def("initialize", static_cast<void (Parametrized::*)(std::istream &)>(&Parametrized::initialize), py::arg("parameters"))
+        .def("initialize", static_cast<void (Parametrized::*)(const std::string)>(&Parametrized::initialize), py::arg("parameters"))
+        .def("get_param_double", &Parametrized::get_param<double>, py::arg("param_name"))
+        .def("get_param_string", &Parametrized::get_param<std::string>, py::arg("param_name"))
+        .def("set_param", &Parametrized::set_param<double>, py::arg("param_name"), py::arg("param_value"), py::arg("safe") = true)
+        .def("set_param", &Parametrized::set_param<std::string>, py::arg("param_name"), py::arg("param_value"), py::arg("safe") = true);
+
+    auto m_systems = m.def_submodule("cpp_systems", "last_letter_lib systems submodule");
+    py::class_<Component, Parametrized>(m_systems, "Component", py::multiple_inheritance()) // Declaring as multiple_inheritance, because Parametrized is a virtual base of Component.
+        .def(py::init<string>(), py::arg("name"))
+        .def("update_parameters", &Component::update_parameters)
+        .def_readwrite("pose", &Component::pose)
+        .def_readwrite("inertial", &Component::inertial);
 }

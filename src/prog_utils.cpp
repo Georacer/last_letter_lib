@@ -76,7 +76,7 @@ namespace last_letter_lib
             load_parameters_(n);
         }
 
-        void ParameterManager::load_stream(std::istream &yaml_str)
+        void ParameterManager::load_stream(const std::string yaml_str)
         {
             auto n = YAML::Load(yaml_str);
             load_parameters_(n);
