@@ -23,6 +23,7 @@ from typing import Optional
 from typing import Union
 
 import numpy as np
+import yaml
 from pydantic import BaseModel
 from pydantic import Field
 from scipy.optimize import minimize_scalar
@@ -313,7 +314,7 @@ class Propeller(ABC):
         t_x = self.calc_torque(V, n, rho)
         force = Vector3(f_x, 0, 0)
         torque = Vector3(t_x, 0, 0)
-        return Wrench(force, torque)
+        return Wrench(force.to_array(), torque.to_array())
 
 
 class PropellerStandardParameters(PropellerParameters):
@@ -788,7 +789,11 @@ class ThrusterParameters(ComponentParameters):
     """What this thruster is used for."""
 
 
-class Thruster(DynamicSystem, Component, metaclass=ABCMeta):
+class ThrusterMeta(type(DynamicSystem), type(Component)):
+    pass
+
+
+class Thruster(DynamicSystem, Component, metaclass=ThrusterMeta):
     """
     The first six elements of its output vector must be the thruster-frame wrench elements.
 
@@ -797,7 +802,9 @@ class Thruster(DynamicSystem, Component, metaclass=ABCMeta):
 
     def __init__(self, x_0, u_0, desc):
         DynamicSystem.__init__(self, x_0, u_0)
-        Component.__init__(self, desc)
+        Component.__init__(self, desc.name)
+        yaml_desc = yaml.load(desc.json(), Loader=yaml.SafeLoader)
+        self.initialize(yaml.dump(yaml_desc))
 
         self.params = desc
 
@@ -907,7 +914,7 @@ class ThrusterSimple(Thruster):
         output = self.y
         force = Vector3(x=output[0], y=output[1], z=output[2])
         torque = Vector3(x=output[3], y=output[4], z=output[5])
-        return Wrench(force, torque)
+        return Wrench(force.to_array(), torque.to_array())
 
 
 class ThrusterBeardParameters(ThrusterParameters):
@@ -983,7 +990,7 @@ class ThrusterBeard(Thruster):
         output = self.y
         force = Vector3(x=output[0], y=output[1], z=output[2])
         torque = Vector3(x=output[3], y=output[4], z=output[5])
-        return Wrench(force, torque)
+        return Wrench(force.to_array(), torque.to_array())
 
 
 class Motor(DynamicSystem, ABC):
@@ -1255,7 +1262,7 @@ class ThrusterElectric(Thruster):
         V_a = u[1]
         rho = u[2]
         rps = self.motor.velocity_rps
-        torque = self.propeller.calc_wrench(V_a, rps, rho).torque.x
+        torque = self.propeller.calc_wrench(V_a, rps, rho).torque[0]
         self.motor.u = np.array([voltage, torque])
 
     @property
@@ -1274,7 +1281,7 @@ class ThrusterElectric(Thruster):
         rps = self.motor.velocity_rps
         V_a = u[1]
         rho = u[2]
-        T_m = self.propeller.calc_wrench(V_a, rps, rho).torque.x
+        T_m = self.propeller.calc_wrench(V_a, rps, rho).torque[0]
 
         # Calculate the motor submodel dynamics
         x_motor = np.array([x[0]])
@@ -1294,12 +1301,12 @@ class ThrusterElectric(Thruster):
 
         return np.array(
             [
-                wrench.force.x,
-                wrench.force.y,
-                wrench.force.z,
-                self.torque_sign * wrench.torque.x,
-                wrench.torque.y,
-                wrench.torque.z,
+                wrench.force[0],
+                wrench.force[1],
+                wrench.force[2],
+                self.torque_sign * wrench.torque[0],
+                wrench.torque[1],
+                wrench.torque[2],
                 omega,
                 current,
             ]
@@ -1390,12 +1397,12 @@ class ThrusterSpeedControlled(Thruster):
 
         return np.array(
             [
-                wrench.force.x,
-                wrench.force.y,
-                wrench.force.z,
-                self.torque_sign * wrench.torque.x,
-                wrench.torque.y,
-                wrench.torque.z,
+                wrench.force[0],
+                wrench.force[1],
+                wrench.force[2],
+                self.torque_sign * wrench.torque[0],
+                wrench.torque[1],
+                wrench.torque[2],
                 omega,
             ]
         )
@@ -1487,7 +1494,9 @@ class Battery(Component):
         Uses a propulsion.BatteryParameters class as data input.
         """
 
-        super().__init__(desc.name, desc.pose, desc.inertial)
+        yaml_desc = yaml.load(desc.json(), Loader=yaml.SafeLoader)
+        Component.__init__(desc.name)
+        self.initialize(yaml.dump(yaml_desc))
 
         # TODO: Fully flesh out a battery DynamicSystem
 

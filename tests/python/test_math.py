@@ -526,19 +526,13 @@ class TestPose:
             position=math.Vector3(1, 0, 0),
             orientation=math.UnitQuaternion(1, [0, 0, 0]),
         )
-        wrench_b = math.Wrench(
-            force=math.Vector3(0, 1, 0), torque=math.Vector3(0, 0, 0)
-        )
+        wrench_b = math.Wrench(force=[0, 1, 0], torque=[0, 0, 0])
 
-        result = math.Wrench(force=math.Vector3(0, 1, 0), torque=math.Vector3(0, 0, 1))
+        result = math.Wrench(force=[0, 1, 0], torque=[0, 0, 1])
         result_expected = pose_bi @ wrench_b
         tests = []
-        tests.append(
-            np.allclose(result.force.to_array(), result_expected.force.to_array())
-        )
-        tests.append(
-            np.allclose(result.torque.to_array(), result_expected.torque.to_array())
-        )
+        tests.append(np.allclose(result.force, result_expected.force))
+        tests.append(np.allclose(result.torque, result_expected.torque))
         assert np.all(tests)
 
     def test_transform_wrench_2(self):
@@ -546,49 +540,37 @@ class TestPose:
             position=math.Vector3(1, 0, 0),
             orientation=math.UnitQuaternion(1, [0, 1, 0]),
         )
-        wrench_b = math.Wrench(
-            force=math.Vector3(1, 0, 0), torque=math.Vector3(1, 0, 0)
-        )
+        wrench_b = math.Wrench(force=[1, 0, 0], torque=[1, 0, 0])
 
-        result = math.Wrench(
-            force=math.Vector3(0, 0, -1), torque=math.Vector3(0, 1, -1)
-        )
+        result = math.Wrench(force=[0, 0, -1], torque=[0, 1, -1])
         answer = result - pose_bi @ wrench_b
-        assert np.allclose(answer.force.to_array(), [0, 0, 0])
-        assert np.allclose(answer.torque.to_array(), [0, 0, 0])
+        assert np.allclose(answer.force, [0, 0, 0])
+        assert np.allclose(answer.torque, [0, 0, 0])
 
     def test_inverse(self):
         pose_bi = math.Pose(
             position=math.Vector3(1, 0, 0),
             orientation=math.UnitQuaternion(1, [0, 1, 0]),
         )
-        wrench_b = math.Wrench(
-            force=math.Vector3(1, 0, 0), torque=math.Vector3(1, 0, 0)
-        )
+        wrench_b = math.Wrench(force=[1, 0, 0], torque=[1, 0, 0])
         wrench_i = pose_bi @ wrench_b
         pose_ib = pose_bi.T
         wrench_b2 = pose_ib @ wrench_i
         tests = []
-        tests.append(np.allclose(wrench_b.force.to_array(), wrench_b2.force.to_array()))
-        tests.append(
-            np.allclose(wrench_b.torque.to_array(), wrench_b2.torque.to_array())
-        )
+        tests.append(np.allclose(wrench_b.force, wrench_b2.force))
+        tests.append(np.allclose(wrench_b.torque, wrench_b2.torque))
 
     def test_inverse_2(self):
         pose_bi = math.Pose(
             position=math.Vector3(1, 0, 0),
             orientation=math.UnitQuaternion(1, [0, 0, 0]),
         )
-        wrench_b = math.Wrench(
-            force=math.Vector3(1, 0, 0), torque=math.Vector3(0, 0, 0)
-        )
+        wrench_b = math.Wrench(force=[1, 0, 0], torque=[0, 0, 0])
         wrench_i = pose_bi @ wrench_b
         pose_ib = pose_bi.T
         wrench_b2 = pose_ib @ wrench_i
         tests = []
-        tests.append(np.allclose(wrench_b.force.to_array(), wrench_b2.force.to_array()))
-        tests.append(
-            np.allclose(wrench_b.torque.to_array(), wrench_b2.torque.to_array())
-        )
+        tests.append(np.allclose(wrench_b.force, wrench_b2.force))
+        tests.append(np.allclose(wrench_b.torque, wrench_b2.torque))
 
         assert np.all(tests)

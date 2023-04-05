@@ -48,6 +48,52 @@ namespace last_letter_lib
 			Vector3d velocity; // in m/s North, East, Up
 		};
 
+		struct Inertial
+		{
+			double mass{0};
+			Matrix3d tensor{Matrix3d::Zero()};
+		};
+
+		struct Twist
+		{
+			Twist() : linear(Vector3d::Zero()), angular(Vector3d::Zero()) {}
+			Vector3d linear;
+			Vector3d angular;
+		};
+
+		class Wrench_t
+		{
+		public:
+			Wrench_t() : force(Vector3d::Zero()), torque(Vector3d::Zero()) {}
+			Wrench_t(const Vector3d force_p, const Vector3d torque_p) : force(force_p), torque(torque_p) {}
+
+			Wrench_t operator+(const Wrench_t &w) const
+			{
+				auto res = Wrench_t();
+				res.force = force + w.force;
+				res.torque = torque + w.torque;
+				return res;
+			}
+			Wrench_t operator-(const Wrench_t &w) const
+			{
+				auto res = Wrench_t();
+				res.force = force - w.force;
+				res.torque = torque - w.torque;
+				return res;
+			}
+
+			Eigen::VectorXd to_array() const
+			{
+				Eigen::VectorXd v(6);
+				v << force(0), force(1), force(2),
+					torque(0), torque(1), torque(2);
+				return v;
+			}
+
+			Vector3d force;
+			Vector3d torque;
+		};
+
 		struct Pose
 		{
 			Pose() : position(Vector3d::Zero()), orientation(Quaterniond::Identity()) {}
@@ -59,6 +105,15 @@ namespace last_letter_lib
 				p.position = this->orientation * this->position * -1;
 				p.orientation = this->orientation.conjugate();
 				return p;
+			}
+
+			Wrench_t operator*(const Wrench_t w) const
+			{
+				auto rot_force = orientation * w.force;
+				auto lever_arm = position.cross(rot_force);
+				auto rot_torque = orientation * w.torque;
+
+				return Wrench_t(rot_force, rot_torque + lever_arm);
 			}
 
 			// Used in Pybind11
@@ -85,26 +140,6 @@ namespace last_letter_lib
 					orientation.y(),
 					orientation.z());
 			}
-		};
-
-		struct Inertial
-		{
-			double mass{0};
-			Matrix3d tensor{Matrix3d::Zero()};
-		};
-
-		struct Twist
-		{
-			Twist() : linear(Vector3d::Zero()), angular(Vector3d::Zero()) {}
-			Vector3d linear;
-			Vector3d angular;
-		};
-
-		struct Wrench_t
-		{
-			Wrench_t() : force(Vector3d::Zero()), torque(Vector3d::Zero()) {}
-			Vector3d force;
-			Vector3d torque;
 		};
 
 		typedef std::unordered_map<std::string, Wrench_t> LinkWrenchMap_t;

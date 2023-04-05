@@ -305,7 +305,7 @@ class TestAerodynamic:
         w_1 = airfoil.get_wrench_airfoil(
             state, build_environment_data, build_uav_inputs
         )
-        assert w_1.force.x < 0
+        assert w_1.force[0] < 0
 
         state.velocity_linear.x = 5  # Aircraft is going forward with 0 pitch.
         state.velocity_linear.z = -5  # Aircraft is ascending with 0 pitch.
@@ -315,7 +315,7 @@ class TestAerodynamic:
         w_2 = airfoil.get_wrench_airfoil(
             state, build_environment_data, build_uav_inputs
         )
-        assert w_2.force.x < 0
+        assert w_2.force[0] < 0
 
         state.velocity_linear.x = -5  # Aircraft is going backwards with 0 pitch.
         state.velocity_linear.z = 5  # Aircraft is descending with 0 pitch.
@@ -325,7 +325,7 @@ class TestAerodynamic:
         w_3 = airfoil.get_wrench_airfoil(
             state, build_environment_data, build_uav_inputs
         )
-        assert w_3.force.x > 0
+        assert w_3.force[0] > 0
 
         state.velocity_linear.x = -5  # Aircraft is going bachwards with 0 pitch.
         state.velocity_linear.z = -5  # Aircraft is ascending with 0 pitch.
@@ -335,7 +335,7 @@ class TestAerodynamic:
         w_4 = airfoil.get_wrench_airfoil(
             state, build_environment_data, build_uav_inputs
         )
-        assert w_4.force.x > 0
+        assert w_4.force[0] > 0
 
     def test_sideforce_coeff(
         self,
@@ -574,8 +574,8 @@ class TestAerodynamic:
         )
         tests = []
         tests.append(isinstance(wrench, Wrench))
-        tests.append(isinstance(wrench.force, Vector3))
-        tests.append(isinstance(wrench.torque, Vector3))
+        tests.append(isinstance(wrench.force, np.ndarray))
+        tests.append(isinstance(wrench.torque, np.ndarray))
 
         assert np.all(tests)
 
@@ -604,15 +604,17 @@ class TestAerodynamic:
         tests = []
         # Test that forces are properly rotated
         tests.append(
-            wrench.force.x
-            == pytest.approx(forces_a.x * np.cos(alpha) - forces_a.z * np.sin(alpha))
+            wrench.force[0]
+            == pytest.approx(forces_a[0] * np.cos(alpha) - forces_a[2] * np.sin(alpha))
         )
         tests.append(
-            wrench.force.z
-            == pytest.approx(forces_a.x * np.sin(alpha) + forces_a.z * np.cos(alpha))
+            wrench.force[2]
+            == pytest.approx(forces_a[0] * np.sin(alpha) + forces_a[2] * np.cos(alpha))
         )
         # Test that moments are not rotated
-        tests.append((moments_a - wrench.torque).norm == pytest.approx(0))
+        tests.append(
+            np.linalg.norm(moments_a.to_array() - wrench.torque) == pytest.approx(0)
+        )
 
         assert np.all(tests)
 

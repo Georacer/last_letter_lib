@@ -23,6 +23,7 @@ from scipy.optimize import root
 # from last_letter_lib import cpp_last_letter_lib
 from ..cpp_last_letter_lib.cpp_math_utils import Vector3
 from ..cpp_last_letter_lib.cpp_uav_utils import Pose as cpp_Pose
+from ..cpp_last_letter_lib.cpp_uav_utils import Wrench
 
 
 @jit(nopython=True)
@@ -450,15 +451,17 @@ class UnitQuaternion:
         return np.all([a == b for a, b in zip(self, other)])
 
     def __mul__(self, other):
-        is_quat = type(other) is UnitQuaternion
+        is_unitquat = type(other) is UnitQuaternion
         is_numpy = type(other) is np.array or type(other) is np.ndarray
         is_vector3 = type(other) is Vector3
         is_list = type(other) is list
         is_scalar = type(other) in [float, int, np.float64]
-        if is_quat:  # Multiply with quaternion
+        if is_unitquat:  # Multiply with quaternion
             return self._quatprod(q=other)
+        elif is_numpy and len(other) == 4:
+            return self._quatprod(q=UnitQuaternion(other[0], other[1:4]))
         elif is_numpy or is_list:  # Multiply with vector
-            if len(other) != 3:
+            if len(other) > 3:
                 raise ValueError(
                     "UnitQuaternion multiplication must be done on 3D Vector or another UnitQuaternion."
                 )
@@ -679,16 +682,8 @@ class Pose:
                 f"@ operation between {self.__class__.__name__} and"
                 " {other.__class__.__name__} is not supported."
             )
-        rot_force = self.orientation * other.force
-        lever_arm = build_vector3_from_array(
-            np.cross(
-                self.position.to_array().reshape((3,)),
-                rot_force.to_array().reshape((3,)),
-            )
-        )
-        rot_torque = self.orientation * other.torque
 
-        return Wrench(rot_force, rot_torque + lever_arm)
+        return self.cpp_pose_ @ other
 
     @property
     def T(self):
@@ -699,44 +694,6 @@ class Pose:
         return Pose(
             p_new.position, UnitQuaternion(p_new.orientation[0], p_new.orientation[1:4])
         )
-
-
-@dataclass
-class Wrench:
-    """
-    A 3D wrench.
-    """
-
-    force: Vector3 = Vector3()
-    torque: Vector3 = Vector3()
-
-    def to_array(self):
-        return np.array(
-            [
-                self.force.x,
-                self.force.y,
-                self.force.z,
-                self.torque.x,
-                self.torque.y,
-                self.torque.z,
-            ]
-        )
-
-    def __add__(self, other):
-        if not isinstance(other, Wrench):
-            raise TypeError(
-                f"Addition between {self.__class__.__name__} and"
-                " {other.__class__.__name__} is not supported."
-            )
-        return Wrench(self.force + other.force, self.torque + other.torque)
-
-    def __sub__(self, other):
-        if not isinstance(other, Wrench):
-            raise TypeError(
-                f"Addition between {self.__class__.__name__} and"
-                " {other.__class__.__name__} is not supported."
-            )
-        return Wrench(self.force - other.force, self.torque - other.torque)
 
 
 def calc_poly_zero_crossing(poly_coeffs, xtol=0.01):

@@ -17,6 +17,7 @@ from typing import Optional
 from typing import Union
 
 import numpy as np
+import yaml
 from pydantic import BaseModel
 
 import last_letter_lib.aerodynamics as aero
@@ -100,7 +101,9 @@ def build_aircraft_components(params: AircraftParameters):
         elif isinstance(c, prop.BatteryParameters):
             component_list.append(prop.Battery(c))
         elif isinstance(c, llsys.ComponentParameters):
-            component_list.append(llsys.Component(c))
+            component_list.append(llsys.Component(c.name))
+            yaml_desc = yaml.load(c.json(), Loader=yaml.SafeLoader)
+            component_list[-1].initialize(yaml.dump(yaml_desc))
         else:
             raise TypeError(f"Unsupported component type {c.__class__.__name__}.")
     return component_list
@@ -328,11 +331,13 @@ class Aircraft:
             else:
                 raise TypeError(f"Unknown thruster type {thruster.__class__}.")
 
-        total_wrench = Wrench()
+        total_wrench = Wrench(np.zeros((3, 1)), np.zeros((3, 1)))
 
         # Collect thruster wrenches and convert to aircraft frame
         prop_wrenches = [t.pose @ t.wrench for t in self.thrusters]
-        total_wrench_aircraft = sum(prop_wrenches, Wrench())
+        total_wrench_aircraft = sum(
+            prop_wrenches, Wrench(np.zeros((3, 1)), np.zeros((3, 1)))
+        )
         # Then convert from aircraft frame to body frame
         self.wrench_propulsion = self._com_pose.T @ total_wrench_aircraft
         total_wrench += self.wrench_propulsion
@@ -341,7 +346,9 @@ class Aircraft:
         aero_wrenches = [
             a.get_wrench(state, self.environment.data, inputs) for a in self.airfoils
         ]
-        total_wrench_aircraft = sum(aero_wrenches, Wrench())
+        total_wrench_aircraft = sum(
+            aero_wrenches, Wrench(np.zeros((3, 1)), np.zeros((3, 1)))
+        )
         # Then convert from aircraft frame to body frame
         self.wrench_aero = self._com_pose.T @ total_wrench_aircraft
         total_wrench += self.wrench_aero
@@ -351,7 +358,7 @@ class Aircraft:
             self.rigid_body.mass * self.gravity.g(self.state.position).to_array()
         )
         gravity_force_b = self.rigid_body.orientation.R_ib() @ gravity_force_i
-        total_wrench += Wrench(build_vector3_from_array(gravity_force_b), Vector3())
+        total_wrench += Wrench(gravity_force_b, np.zeros((3, 1)))
 
         # Step 6DOF model
         self.rigid_body.rk4(total_wrench.to_array(), dt)

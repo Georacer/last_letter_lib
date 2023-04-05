@@ -20,12 +20,14 @@ from typing import List
 from typing import Optional
 
 import numpy as np
+import yaml
 from pydantic import Field
 from scipy.optimize import minimize_scalar
 
 from last_letter_lib.environment import EnvironmentData
 from last_letter_lib.systems import Component
 from last_letter_lib.systems import ComponentParameters
+from last_letter_lib.utils.math import UnitQuaternion
 from last_letter_lib.utils.math import Vector3
 from last_letter_lib.utils.math import Wrench
 from last_letter_lib.utils.math import build_vector3_from_array
@@ -276,8 +278,9 @@ class Aerodynamic(Component):
         """
 
         self.params = desc
-
-        super().__init__(desc)
+        yaml_desc = yaml.load(desc.json(), Loader=yaml.SafeLoader)
+        Component.__init__(self, desc.name)
+        self.initialize(yaml.dump(yaml_desc))
 
     def _lift_coeff_alpha(self, alpha):
         s = sigmoid(alpha, self.params.alpha_stall, self.params.stall_width)
@@ -502,7 +505,7 @@ class Aerodynamic(Component):
         V_a = self.airdata.airspeed
         if V_a == 0:
             # If yes, then return zero wrench
-            return Wrench()
+            return Wrench(np.zeros((3, 1)), np.zeros((3, 1)))
 
         # Collect aerodynamic inputs
         u = [
@@ -511,9 +514,9 @@ class Aerodynamic(Component):
             u.delta_r * self.params.delta_r_max,
         ]
         force_wind = self.calc_forces(af_state, environment, u)
-        force = build_vector3_from_array(self.airdata.S_wb @ force_wind.to_array())
+        force = self.airdata.S_wb @ force_wind.to_array()
         torque = self.calc_moments(af_state, environment, u)
-        return Wrench(force, torque)
+        return Wrench(force, torque.to_array())
 
     def get_wrench(
         self, uav_state: UavState, environment: EnvironmentData, u: Inputs
@@ -528,14 +531,22 @@ class Aerodynamic(Component):
         # Transform the uav state and environment into the airfoil frame
         af_state.position += self.pose.orientation * self.pose.position
         af_state.attitude *= self.pose.orientation
+        linear_comp = (
+            UnitQuaternion(self.pose.orientation[0], self.pose.orientation[1:4])
+            * uav_state.velocity_linear.to_array()
+        )
         af_state.velocity_linear = build_vector3_from_array(
-            self.pose.orientation.conjugate() * uav_state.velocity_linear.to_array()
+            linear_comp
             + np.cross(
                 uav_state.velocity_angular.to_array(), self.pose.position.to_array()
             )
         )
         af_state.velocity_angular = (
-            self.pose.orientation.conjugate() * af_state.velocity_angular
+            UnitQuaternion(
+                self.pose.orientation.conjugate()[0],
+                self.pose.orientation.conjugate()[1:4],
+            )
+            * af_state.velocity_angular
         )
         wrench_airfoil = self.get_wrench_airfoil(af_state, environment, u)
         return self.pose @ wrench_airfoil

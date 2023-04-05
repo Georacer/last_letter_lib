@@ -28,6 +28,8 @@ from last_letter_lib.utils.math import UnitQuaternion
 from last_letter_lib.utils.math import Vector3
 from last_letter_lib.utils.math import build_vector3_from_array
 
+from .cpp_last_letter_lib.cpp_systems import Component
+
 
 class PoseParameters(BaseModel):
     """
@@ -148,23 +150,23 @@ class ComponentParameters(BaseModel, extra="forbid"):
     """The appearance of this component."""
 
 
-class Component:
-    """
-    A component description.
-    """
+# class Component:
+#     """
+#     A component description.
+#     """
 
-    def __init__(self, parameters: ComponentParameters):
-        self.name = parameters.name
-        self.pose = llmath.Pose(
-            Vector3(*parameters.pose.position),
-            UnitQuaternion.from_euler(parameters.pose.orientation),
-        )
-        if parameters.inertial:
-            self.inertial = llmath.Inertial(
-                parameters.inertial.mass, np.array(parameters.inertial.inertia)
-            )
-        else:
-            self.inertial = None
+#     def __init__(self, parameters: ComponentParameters):
+#         self.name = parameters.name
+#         self.pose = llmath.Pose(
+#             Vector3(*parameters.pose.position),
+#             UnitQuaternion.from_euler(parameters.pose.orientation),
+#         )
+#         if parameters.inertial:
+#             self.inertial = llmath.Inertial(
+#                 parameters.inertial.mass, np.array(parameters.inertial.inertia)
+#             )
+#         else:
+#             self.inertial = None
 
 
 class DynamicSystem(ABC):
