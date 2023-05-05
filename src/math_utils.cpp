@@ -4,6 +4,7 @@
 
 using Eigen::Quaterniond;
 using Eigen::Vector3d;
+using Eigen::Vector4d;
 
 namespace last_letter_lib
 {
@@ -467,6 +468,223 @@ namespace last_letter_lib
             std::stringstream ss;
             ss << "Vector3(" << vector.x() << ", " << vector.y() << ", " << vector.z() << ")";
             return ss.str();
+        }
+
+        UnitQuaternion::UnitQuaternion(EulerAngles euler)
+        {
+
+            UnitQuaternion q_yaw(cos(euler.yaw / 2), 0, 0, sin(euler.yaw / 2));
+            UnitQuaternion q_pitch(cos(euler.pitch / 2), 0, sin(euler.pitch / 2), 0);
+            UnitQuaternion q_roll(cos(euler.roll / 2), sin(euler.roll / 2), 0, 0);
+            auto new_q = q_yaw * q_pitch * q_roll;
+
+            w() = new_q.w();
+            x() = new_q.x();
+            y() = new_q.y();
+            z() = new_q.z();
+        }
+        UnitQuaternion::UnitQuaternion(Vector3d src, Vector3d dst, double eps)
+        {
+
+            double dt = src.dot(dst);
+            Vector3d cr = src.cross(dst);
+
+            if ((cr.norm() < eps) && (dt < 0))
+            {
+                cr.x() = abs(cr.x());
+                cr.y() = abs(cr.y());
+                cr.z() = abs(cr.z());
+                if (cr.x() < cr.y())
+                {
+                    if (cr.x() < cr.z())
+                    {
+                        cr = Vector3d(1, 0, 0);
+                    }
+                    else
+                    {
+                        cr = Vector3d(0, 0, 1);
+                    }
+                }
+                else
+                {
+                    if (cr.y() < cr.z())
+                    {
+                        cr = Vector3d(0, 1, 0);
+                    }
+                    else
+                    {
+                        cr = Vector3d(0, 1, 1);
+                    }
+                }
+                w() = 0;
+                cr = src.cross(cr);
+            }
+            else
+            {
+                w() = dt + sqrt(src.norm() * src.norm() * dst.norm() * dst.norm());
+            }
+
+            x() = cr.x();
+            y() = cr.y();
+            z() = cr.z();
+
+            normalize();
+        }
+
+        Matrix4d UnitQuaternion::to_prodmat()
+        {
+            Matrix4d m;
+            m << w(), -x(), -y(), -z(),
+                x(), w(), -z(), y(),
+                y(), z(), w(), -x(),
+                z(), -y(), x(), w();
+            return m;
+        }
+
+        Vector3d UnitQuaternion::unitX()
+        {
+            return Vector3d(
+                w() * w() + x() * x() - y() * y() - z() * z(),
+                2 * (x() * y() + w() * z()),
+                2 * (x() * z() - w() * y()));
+        }
+        Vector3d UnitQuaternion::unitY()
+        {
+            return Vector3d(
+                2 * (x() * y() - w() * z()),
+                w() * w() + y() * y() - x() * x() - z() * z(),
+                2 * (y() * z() + w() * x()));
+        }
+        Vector3d UnitQuaternion::unitZ()
+        {
+            return Vector3d(
+                2 * (x() * z() + w() * y()),
+                2 * (y() * z() - w() * x()),
+                w() * w() + z() * z() - x() * x() - y() * y());
+        }
+
+        Vector4d UnitQuaternion::q_dot(Vector3d omega)
+        {
+            Vector4d omega_ext(0, omega.x(), omega.y(), omega.z());
+            Vector4d res = 0.5 * to_prodmat() * omega_ext;
+            return res;
+        }
+
+        std::string UnitQuaternion::to_str()
+        {
+            std::ostringstream oss;
+            oss << std::setprecision(3)
+                << "UnitQuaternion("
+                << w() << ", "
+                << x() << ", "
+                << y() << ", "
+                << z()
+                << ")";
+            return oss.str();
+        }
+
+        EulerAngles::EulerAngles(double roll_p, double pitch_p, double yaw_p, bool in_degrees)
+        {
+            double multiplier{1};
+            if (in_degrees)
+            {
+                multiplier *= deg_to_rad(1);
+            }
+            roll = roll_p * multiplier;
+            pitch = pitch_p * multiplier;
+            yaw = yaw_p * multiplier;
+        }
+
+        EulerAngles::EulerAngles(UnitQuaternion q)
+        {
+            double w = q.w();
+            double x = q.x();
+            double y = q.y();
+            double z = q.z();
+            roll = atan2(2 * (w * x + y * z), (x * x + z * z - x * x - y * y));
+            pitch = asin(2 * (w * y - x * z));
+            yaw = atan2(2 * (w * z + x * y), (w * w + x * x - y * y - z * z));
+        }
+        bool EulerAngles::operator==(const EulerAngles rhs)
+        {
+            return (roll == rhs.roll) && (pitch == rhs.pitch) && (yaw == rhs.yaw);
+        }
+        bool EulerAngles::operator==(const Vector3d rhs)
+        {
+            return (roll == rhs.x()) && (pitch == rhs.y()) && (yaw == rhs.z());
+        }
+        Vector3d EulerAngles::to_vector() { return Vector3d(roll, pitch, yaw); }
+        // Quaterniond EulerAngles::to_quaternion();
+        Matrix3d EulerAngles::R_roll()
+        {
+            Matrix3d m;
+            double c_phi = cos(roll);
+            double s_phi = sin(roll);
+            m << 1, 0, 0, 0, c_phi, s_phi, 0, -s_phi, c_phi;
+            return m;
+        }
+        Matrix3d EulerAngles::R_pitch()
+        {
+            Matrix3d m;
+            double c_pitch = cos(pitch);
+            double s_pitch = sin(pitch);
+            m << c_pitch, 0, -s_pitch, 0, 1, 0, s_pitch, 0, c_pitch;
+            return m;
+        }
+        Matrix3d EulerAngles::R_yaw()
+        {
+            Matrix3d m;
+            double c_yaw = cos(yaw);
+            double s_yaw = sin(yaw);
+            m << c_yaw, s_yaw, 0, -s_yaw, c_yaw, 0, 0, 0, 1;
+            return m;
+        }
+        Matrix3d EulerAngles::R_bi()
+        {
+            return R_ib().transpose();
+        }
+        Matrix3d EulerAngles::R_ib()
+        {
+            Matrix3d m = R_yaw() * R_pitch() * R_roll();
+            return m;
+        }
+        Matrix3d EulerAngles::T_eb()
+        {
+            Matrix3d m;
+            double c_roll = cos(roll);
+            double s_roll = sin(roll);
+            double c_pitch = cos(pitch);
+            double s_pitch = sin(pitch);
+            m << 1, 0, -s_pitch, 0, c_roll, s_roll * c_pitch, 0, -s_roll, c_roll * c_pitch;
+            return m;
+        }
+        Matrix3d EulerAngles::T_be()
+        {
+            Matrix3d m;
+
+            double c_roll = cos(roll);
+            double s_roll = sin(roll);
+            double c_pitch = cos(pitch);
+            double t_pitch = tan(pitch);
+            double sec_pitch = 1 / c_pitch;
+            if (std::isnan(sec_pitch))
+            {
+                throw std::runtime_error("Euler angles in gimbal lock, can't calculate T_be.");
+            }
+            m << 1, s_roll * t_pitch, c_roll * t_pitch, 0, c_roll, -s_roll, 0, s_roll * sec_pitch, c_pitch * sec_pitch;
+            return m;
+        }
+
+        std::string EulerAngles::to_str()
+        {
+            std::ostringstream oss;
+            oss << std::setprecision(3)
+                << "EulerAngles(roll="
+                << roll << ", pitch="
+                << pitch << ", yaw="
+                << yaw
+                << ")";
+            return oss.str();
         }
 
         ////////////////////

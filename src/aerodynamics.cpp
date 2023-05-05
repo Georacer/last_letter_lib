@@ -29,12 +29,30 @@ namespace last_letter_lib
 	{
 		vector<double> doubleVect;
 
-		try {chanAileron = config.get<int>("chanAileron");}
-		catch (const std::exception&) { chanAileron = -1;}
-		try {chanElevator = config.get<int>("chanElevator");}
-		catch (const std::exception&) { chanElevator = -1;}
-		try {chanRudder = config.get<int>("chanRudder");}
-		catch (const std::exception&) { chanRudder = -1;}
+		try
+		{
+			chanAileron = config.get<int>("chanAileron");
+		}
+		catch (const std::exception &)
+		{
+			chanAileron = -1;
+		}
+		try
+		{
+			chanElevator = config.get<int>("chanElevator");
+		}
+		catch (const std::exception &)
+		{
+			chanElevator = -1;
+		}
+		try
+		{
+			chanRudder = config.get<int>("chanRudder");
+		}
+		catch (const std::exception &)
+		{
+			chanRudder = -1;
+		}
 
 		deltaa_max = config.get<double>("deltaa_max");
 		deltae_max = config.get<double>("deltae_max");
@@ -96,7 +114,7 @@ namespace last_letter_lib
 		// 		  << environment.wind << "\n"
 		// 		  << std::endl;
 
-		airdata.calcAirData(states.velocity.linear, environment.wind);
+		airdata.init_from_velocity(states.velocity.linear, environment.wind);
 		// Calculate the new, relative air data
 		airspeed_ = airdata.airspeed;
 		alpha_ = airdata.alpha;

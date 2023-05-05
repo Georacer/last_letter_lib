@@ -2,6 +2,7 @@
 #define MATH_UTILS_
 
 #include <cstdio>
+#include <iomanip>
 #include <Eigen/Eigen>
 #include <cmath>
 
@@ -9,8 +10,11 @@
 #define f_earth 1.0 / 298.257223563
 #define e_earth sqrt(2.0 * f_earth - f_earth * f_earth)
 
+using Eigen::Matrix3d;
+using Eigen::Matrix4d;
 using Eigen::Quaterniond;
 using Eigen::Vector3d;
+using Eigen::Vector4d;
 
 extern "C"
 {
@@ -127,6 +131,69 @@ namespace last_letter_lib
 			Vector3d vector{0, 0, 0};
 		};
 
+		class EulerAngles;
+
+		class UnitQuaternion : public Quaterniond
+		{
+		public:
+			UnitQuaternion(double w, double x, double y, double z) : Quaterniond(w, x, y, z) { normalize(); }
+			UnitQuaternion(EulerAngles);
+			UnitQuaternion(Matrix3d R) : Quaterniond(R) { normalize(); }
+			UnitQuaternion(Vector3d, Vector3d, double eps = 1e-5);
+			double get_w() const { return w(); }
+			void set_w(double v) { w() = v; }
+			double get_x() const { return x(); }
+			void set_x(double v) { x() = v; }
+			double get_y() const { return y(); }
+			void set_y(double v) { y() = v; }
+			double get_z() const { return z(); }
+			void set_z(double v) { z() = v; }
+			Vector4d get_coeffs() { return Vector4d(w(), x(), y(), z()); }
+			double real() { return this->x(); }
+			Vector3d imag() { return Vector3d(this->x(), this->y(), this->z()); }
+			UnitQuaternion flipped() { return UnitQuaternion(-this->w(), this->x(), this->y(), this->z()); }
+			Matrix4d to_prodmat();
+			Vector3d unitX();
+			Vector3d unitY();
+			Vector3d unitZ();
+			Matrix3d R_ib() { return toRotationMatrix(); }
+			Matrix3d R_bi() { return inverse().toRotationMatrix(); }
+			Vector4d q_dot(Vector3d omega);
+			using Quaterniond::operator*; // Unmask the multiplication operator from Quaterniond.
+			friend last_letter_lib::math_utils::Vector3 operator*(const UnitQuaternion q, const last_letter_lib::math_utils::Vector3 v)
+			{
+				Vector3d res = q * v.vector;
+				return last_letter_lib::math_utils::Vector3(res.x(), res.y(), res.z());
+			}
+			std::string to_str();
+		};
+
+		class EulerAngles
+		{
+		public:
+			EulerAngles(double roll_p = 0, double pitch_p = 0, double yaw_p = 0, bool in_degrees = false);
+			EulerAngles(UnitQuaternion);
+			EulerAngles(Matrix3d R) { EulerAngles(UnitQuaternion(R)); }
+			bool operator==(const EulerAngles);
+			bool operator==(const Vector3d);
+			Vector3d to_vector();
+			// Quaterniond to_quaternion();
+			Matrix3d R_roll();
+			Matrix3d R_pitch();
+			Matrix3d R_yaw();
+			Matrix3d R_bi();
+			Matrix3d R_ib();
+			Matrix3d T_eb();
+			Matrix3d T_be();
+			std::string to_str();
+
+			double roll;
+			double pitch;
+			double yaw;
+		};
+
+		EulerAngles build_euler_from_vector();
+
 		class Polynomial
 		{
 		public:
@@ -227,8 +294,6 @@ namespace last_letter_lib
 			// main step
 			double step(double input);
 		};
-
-		Vector3d getAirData(Vector3d speeds);
 
 		void WGS84_NM(double lat, double *NE, double *ME);
 

@@ -14,9 +14,12 @@ namespace py = pybind11;
 using Eigen::Quaterniond;
 using Eigen::Vector3d;
 
+using last_letter_lib::math_utils::EulerAngles;
+using last_letter_lib::math_utils::UnitQuaternion;
 using last_letter_lib::math_utils::Vector3;
 using last_letter_lib::programming_utils::Parametrized;
 using last_letter_lib::systems::Component;
+using last_letter_lib::uav_utils::Airdata;
 using last_letter_lib::uav_utils::Pose;
 using last_letter_lib::uav_utils::Wrench_t;
 
@@ -82,7 +85,48 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
             {
                 return Vector3(v.x(), v.y(), v.z());
             }));
-    // m_math_utils.def("sub", &sub, "A function that subs two numbers.", py::arg("i") = 2, py::arg("j") = 1);
+    py::class_<UnitQuaternion>(m_math_utils, "UnitQuaternion")
+        .def(py::init<double, double, double, double>(), py::arg("w") = 1, py::arg("x") = 0, py::arg("y") = 0, py::arg("z") = 0)
+        .def_property("w", &UnitQuaternion::get_w, &UnitQuaternion::set_w)
+        .def_property("x", &UnitQuaternion::get_x, &UnitQuaternion::set_x)
+        .def_property("y", &UnitQuaternion::get_y, &UnitQuaternion::set_y)
+        .def_property("z", &UnitQuaternion::get_z, &UnitQuaternion::set_z)
+        .def("conjugate", &UnitQuaternion::conjugate)
+        .def("inverse", &UnitQuaternion::inverse)
+        .def("to_array", &UnitQuaternion::get_coeffs)
+        .def("to_prodmat", &UnitQuaternion::to_prodmat)
+        .def("R_ib", &UnitQuaternion::R_ib)
+        .def("R_bi", &UnitQuaternion::R_bi)
+        .def("q_dot", &UnitQuaternion::q_dot)
+        .def("__repr__", &UnitQuaternion::to_str)
+        .def(py::self == py::self)
+        .def(py::self * py::self)
+        .def(py::self *= py::self)
+        .def(
+            "__mul__", [](const UnitQuaternion q, const Vector3 v)
+            { return q * v; },
+            py::is_operator())
+        .def_static("from_euler", &UnitQuaternion::UnitQuaternion<EulerAngles>)
+        .def_static("from_rotmat", &UnitQuaternion::UnitQuaternion<Matrix3d>)
+        .def_static("from_two_vectors", &UnitQuaternion::UnitQuaternion<Vector3d, Vector3d, double>);
+    py::class_<EulerAngles>(m_math_utils, "EulerAnlges")
+        .def(py::init<double, double, double, bool>(), py::arg("roll"), py::arg("pitch"), py::arg("yaw"), py::arg("in_degrees"))
+        .def_readwrite("roll", &EulerAngles::roll)
+        .def_readwrite("pitch", &EulerAngles::pitch)
+        .def_readwrite("yaw", &EulerAngles::yaw)
+        .def(py::self == py::self)
+        .def("__repr__", &EulerAngles::to_str)
+        .def_static("from_quaternion", static_cast<UnitQuaternion (EulerAngles::*)(UnitQuaternion)>(&EulerAngles::EulerAngles))
+        .def_static("from_rotmat", static_cast<UnitQuaternion (EulerAngles::*)(Matrix3d)>(&EulerAngles::EulerAngles))
+        .def("to_array", [](EulerAngles &self)
+             { return Vector3d(self.roll, self.pitch, self.yaw); })
+        .def("R_roll", &EulerAngles::R_roll)
+        .def("R_pitch", &EulerAngles::R_pitch)
+        .def("R_yaw", &EulerAngles::R_yaw)
+        .def("R_bi", &EulerAngles::R_bi)
+        .def("R_ib", &EulerAngles::R_ib)
+        .def("T_eb", &EulerAngles::T_eb)
+        .def("T_be", &EulerAngles::T_be);
 
     auto m_uav_utils = m.def_submodule("cpp_uav_utils", "last_letter_lib uav_utils submodule");
     py::class_<Pose>(m_uav_utils, "Pose")
@@ -103,6 +147,15 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def(py::init())
         .def_readwrite("mass", &Inertial::mass)
         .def_readwrite("tensor", &Inertial::tensor);
+    py::class_<Airdata>(m_uav_utils, "Airdata")
+        .def(py::init())
+        .def("init_from_velocity", &Airdata::init_from_velocity, py::arg("vel_body"), py::arg("vel_wind"))
+        .def("init_from_state_wind", &Airdata::init_from_state_wind, py::arg("state"), py::arg("wind"))
+        .def_property_readonly("S_bw", &Airdata::S_bw)
+        .def_property_readonly("S_wb", &Airdata::S_wb)
+        .def_readwrite("airspeed", &Airdata::airspeed)
+        .def_readwrite("alpha", &Airdata::alpha)
+        .def_readwrite("beta", &Airdata::beta);
 
     auto m_programming_utils = m.def_submodule("cpp_programming_utils", "last_letter_lib programming_utils submodule");
     py::class_<Parametrized, PyParametrized>(m_programming_utils, "Parametrized")

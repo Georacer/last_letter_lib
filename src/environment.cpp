@@ -115,8 +115,7 @@ namespace last_letter_lib
 		// Vehicle quaternion refers to the Body-to-Earth rotation
 		Quaterniond q_eb = states.pose.orientation.conjugate();
 		relAirVelocity = q_eb * (states.velocity.linear - wind); // Velocity vector in body frame
-		Vector3d airdata = uav_utils::getAirData(relAirVelocity);
-		Va = airdata.x();
+		Va = relAirVelocity.norm();
 
 		if (allowTurbulence)
 		{

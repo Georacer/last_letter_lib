@@ -2,6 +2,7 @@
 #define UAV_UTILS_
 
 #include <cstdio>
+#include <iomanip>
 #include <cmath>
 #include <unordered_map>
 #include <Eigen/Eigen>
@@ -33,20 +34,6 @@ namespace last_letter_lib
 		// Quaternion from Gazebo Body frame to Aerospace Body frame
 		const Quaterniond q_bg_ba{Eigen::AngleAxis<double>(M_PI, Vector3d::UnitX())};
 		const Quaterniond q_ba_bg = q_bg_ba.conjugate();
-
-		struct Geoid
-		{
-			Geoid() : latitude(0), longitude(0), altitude(0), velocity(Vector3d::Zero()) {}
-			constexpr static double WGS84_Ra = 6378137.0; // Earth ellipsoid semi-major axis (alpha);
-			constexpr static double EARTH_flattening = 0.003352811;
-			constexpr static double WGS84_e2 = 0.006694380022901;
-			constexpr static double EARTH_Omega = 7.292115e-5;
-			constexpr static double EARTH_grav = 9.7803267714;
-			double latitude;
-			double longitude;
-			double altitude;
-			Vector3d velocity; // in m/s North, East, Up
-		};
 
 		struct Inertial
 		{
@@ -160,6 +147,20 @@ namespace last_letter_lib
 			Vector3d angular;
 		};
 
+		struct Geoid
+		{
+			Geoid() : latitude(0), longitude(0), altitude(0), velocity(Vector3d::Zero()) {}
+			constexpr static double WGS84_Ra = 6378137.0; // Earth ellipsoid semi-major axis (alpha);
+			constexpr static double EARTH_flattening = 0.003352811;
+			constexpr static double WGS84_e2 = 0.006694380022901;
+			constexpr static double EARTH_Omega = 7.292115e-5;
+			constexpr static double EARTH_grav = 9.7803267714;
+			double latitude;
+			double longitude;
+			double altitude;
+			Vector3d velocity; // in m/s North, East, Up
+		};
+
 		struct SimState_t
 		{
 			SimState_t() : rotorspeed(4, 0.01) {}
@@ -194,18 +195,39 @@ namespace last_letter_lib
 		class Airdata
 		{
 		public:
-			Airdata();
-			~Airdata();
-			Vector3d relWind; // relative wind vector elements
-			// double u_r, v_r, w_r; // relative wind vector elements
-			double airspeed; // relative airspeed
-			double alpha;	 // angle of attach
-			double beta;	 // angle of sideslip
-			void calcAirData(Vector3d velBody, Vector3d velWind);
-		};
+			Airdata(){};
+			~Airdata(){};
+			/*
+			Calculate the relative air data from inertial and wind speeds
 
-		Vector3d getAirData(Vector3d speeds);
-		Vector3d getVelocityFromAirdata(Vector3d airdata);
+			INPUTS:
+				v_b: Inertial velocity, body-frame
+				v_w: Wind (air-mass) velocity, body-frame
+
+			OUTPUTS:
+				airspeed: The norm of the relative wind
+				alpha: The angle of attack
+				beta: The angle of sideslip
+			*/
+			void init_from_velocity(Vector3d velBody, Vector3d velWind = Vector3d::Zero());
+			// Calculate airdata given the UAV state and the environment data.
+			void init_from_state_wind(SimState_t, Vector3d);
+			/*
+			Create rotation matrix S, which transforms from body frame to wind frame
+			Taken from Aircraft Control and Simulation, Stevens Lewis, p.63
+			*/
+			Eigen::Matrix3d S_bw();
+			// Create rotation matrix S^T, which transforms from wind frame to body frame
+			Eigen::Matrix3d S_wb();
+			// Convert airdata into body-frame velocities
+			Vector3d to_velocity();
+			Vector3d to_vector3d() { return Vector3d(airspeed, alpha, beta); }
+			std::string str();
+
+			double airspeed{0}; // relative airspeed
+			double alpha{0};	// angle of attach
+			double beta{0};		// angle of sideslip
+		};
 
 		////////////////////////////
 		// Kinematic Transformations
