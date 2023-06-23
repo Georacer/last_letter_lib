@@ -2,11 +2,18 @@ import os
 import re
 import subprocess
 import sys
+from distutils.command.build_ext import build_ext
+from distutils.core import Extension
+from distutils.errors import CCompilerError
+from distutils.errors import DistutilsExecError
+from distutils.errors import DistutilsPlatformError
 from pathlib import Path
 
-from setuptools import Extension
-from setuptools import setup
-from setuptools.command.build_ext import build_ext
+
+# remove setuptools from project
+# from setuptools import Extension
+# from setuptools import setup
+# from setuptools.command.build_ext import build_ext
 
 
 # Inspired by https://github.com/pybind/cmake_example/blob/master/setup.py
@@ -129,7 +136,6 @@ class CMakeBuild(build_ext):
 
 
 def build(setup_kwargs):
-    print("Invoking build function.")
     ext_modules = [CMakeExtension("last_letter_lib.cpp_last_letter_lib")]
     setup_kwargs.update(
         {

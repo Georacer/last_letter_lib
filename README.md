@@ -20,6 +20,5 @@ Software libraries for UAV simulation.
 
 <!-- Build the C++/Python bindings with Pybind11 -->
 
-<!-- - poetry build -->
-
+- poetry build <!-- To build the C++ bindings -->
 - poetry install

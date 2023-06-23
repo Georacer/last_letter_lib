@@ -15,7 +15,7 @@ pydantic = "^1.10.4"
 pcg-gazebo = {git = "https://github.com/boschresearch/pcg_gazebo.git", rev = "346394cdb720c9df5ca1d1df6dac7ad0b6e436fc"}
 pybind11 = "^2.10.4"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^7.1.2"
 pytest-cov = "^3.0.0"
 pre-commit = "^2.19.0"
@@ -29,6 +29,7 @@ flake8-bugbear = "^22.4.25"
 flake8-docstrings = "^1.6.0"
 flake8-rst-docstrings = "^0.2.6"
 pep8-naming = "^0.13.0"
+setuptools = "^68.0.0"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
@@ -55,7 +56,8 @@ lines_after_imports = 2
 
 [tool.poetry.build]
 script = "build.py"
+generate-setup-file = true
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.0.0", "setuptools>=^68.0.0"]
 build-backend = "poetry.core.masonry.api"

@@ -121,7 +121,7 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         // .def_static("from_rotmat", &UnitQuaternion::UnitQuaternion<Matrix3d>)
         .def_static("from_rotmat", unit_quaternion_from_rotmat);
     // .def_static("from_two_vectors", &UnitQuaternion::UnitQuaternion<Vector3d, Vector3d, double>);
-    py::class_<EulerAngles>(m_math_utils, "EulerAnlges")
+    py::class_<EulerAngles>(m_math_utils, "EulerAngles")
         .def(py::init<double, double, double, bool>(), py::arg("roll"), py::arg("pitch"), py::arg("yaw"), py::arg("in_degrees"))
         .def_readwrite("roll", &EulerAngles::roll)
         .def_readwrite("pitch", &EulerAngles::pitch)
