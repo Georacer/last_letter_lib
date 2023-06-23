@@ -605,11 +605,11 @@ namespace last_letter_lib
             pitch = asin(2 * (w * y - x * z));
             yaw = atan2(2 * (w * z + x * y), (w * w + x * x - y * y - z * z));
         }
-        bool EulerAngles::operator==(const EulerAngles rhs)
+        bool EulerAngles::operator==(const EulerAngles rhs) const
         {
             return (roll == rhs.roll) && (pitch == rhs.pitch) && (yaw == rhs.yaw);
         }
-        bool EulerAngles::operator==(const Vector3d rhs)
+        bool EulerAngles::operator==(const Vector3d rhs) const
         {
             return (roll == rhs.x()) && (pitch == rhs.y()) && (yaw == rhs.z());
         }

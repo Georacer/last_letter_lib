@@ -174,8 +174,8 @@ namespace last_letter_lib
 			EulerAngles(double roll_p = 0, double pitch_p = 0, double yaw_p = 0, bool in_degrees = false);
 			EulerAngles(UnitQuaternion);
 			EulerAngles(Matrix3d R) { EulerAngles(UnitQuaternion(R)); }
-			bool operator==(const EulerAngles);
-			bool operator==(const Vector3d);
+			bool operator==(const EulerAngles) const;
+			bool operator==(const Vector3d) const;
 			Vector3d to_vector();
 			// Quaterniond to_quaternion();
 			Matrix3d R_roll();

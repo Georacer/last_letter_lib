@@ -11,6 +11,7 @@
 
 namespace py = pybind11;
 
+using Eigen::Matrix3d;
 using Eigen::Quaterniond;
 using Eigen::Vector3d;
 
@@ -49,6 +50,11 @@ public:
         );
     }
 };
+
+UnitQuaternion unit_quaternion_from_euler_angles(EulerAngles euler) { return UnitQuaternion(euler); }
+UnitQuaternion unit_quaternion_from_rotmat(Matrix3d R) { return UnitQuaternion(R); }
+EulerAngles euler_angles_from_unit_quaternion(UnitQuaternion q) { return EulerAngles(q); }
+EulerAngles euler_angles_from_rotmat(Matrix3d R) { return EulerAngles(R); }
 
 PYBIND11_MODULE(cpp_last_letter_lib, m)
 {
@@ -99,16 +105,22 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def("R_bi", &UnitQuaternion::R_bi)
         .def("q_dot", &UnitQuaternion::q_dot)
         .def("__repr__", &UnitQuaternion::to_str)
-        .def(py::self == py::self)
+        .def(
+            "__eq__", [](const UnitQuaternion &a, UnitQuaternion &b)
+            { return a.isApprox(b); },
+            py::is_operator())
+        // .def(py::self == py::self)
         .def(py::self * py::self)
         .def(py::self *= py::self)
         .def(
             "__mul__", [](const UnitQuaternion q, const Vector3 v)
             { return q * v; },
             py::is_operator())
-        .def_static("from_euler", &UnitQuaternion::UnitQuaternion<EulerAngles>)
-        .def_static("from_rotmat", &UnitQuaternion::UnitQuaternion<Matrix3d>)
-        .def_static("from_two_vectors", &UnitQuaternion::UnitQuaternion<Vector3d, Vector3d, double>);
+        // .def_static("from_euler", static_cast<void (UnitQuaternion::*)(EulerAngles)>(&UnitQuaternion::UnitQuaternion))
+        .def_static("from_euler", unit_quaternion_from_euler_angles)
+        // .def_static("from_rotmat", &UnitQuaternion::UnitQuaternion<Matrix3d>)
+        .def_static("from_rotmat", unit_quaternion_from_rotmat);
+    // .def_static("from_two_vectors", &UnitQuaternion::UnitQuaternion<Vector3d, Vector3d, double>);
     py::class_<EulerAngles>(m_math_utils, "EulerAnlges")
         .def(py::init<double, double, double, bool>(), py::arg("roll"), py::arg("pitch"), py::arg("yaw"), py::arg("in_degrees"))
         .def_readwrite("roll", &EulerAngles::roll)
@@ -116,8 +128,10 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def_readwrite("yaw", &EulerAngles::yaw)
         .def(py::self == py::self)
         .def("__repr__", &EulerAngles::to_str)
-        .def_static("from_quaternion", static_cast<UnitQuaternion (EulerAngles::*)(UnitQuaternion)>(&EulerAngles::EulerAngles))
-        .def_static("from_rotmat", static_cast<UnitQuaternion (EulerAngles::*)(Matrix3d)>(&EulerAngles::EulerAngles))
+        // .def_static("from_quaternion", static_cast<UnitQuaternion (EulerAngles::*)(UnitQuaternion)>(&EulerAngles::EulerAngles))
+        // .def_static("from_rotmat", static_cast<UnitQuaternion (EulerAngles::*)(Matrix3d)>(&EulerAngles::EulerAngles))
+        .def_static("from_quaternion", euler_angles_from_unit_quaternion)
+        .def_static("from_rotmat", euler_angles_from_rotmat)
         .def("to_array", [](EulerAngles &self)
              { return Vector3d(self.roll, self.pitch, self.yaw); })
         .def("R_roll", &EulerAngles::R_roll)
