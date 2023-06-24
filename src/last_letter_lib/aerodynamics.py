@@ -75,7 +75,9 @@ def calc_max_l_d(Cl_coeffs, Cd_coeffs, xtol=0.0001):
 
     try:
         optim_res = minimize_scalar(cost_function, method=method, options=options)
-    except RuntimeWarning:  # Ensure there is no number overflow warning, signifying failure
+    except (
+        RuntimeWarning
+    ):  # Ensure there is no number overflow warning, signifying failure
         raise RuntimeError("Errors occurred during optimization.")
     if abs(optim_res.fun) > glide_ratio_bounds:
         optim_res.success = False
@@ -530,6 +532,8 @@ class Aerodynamic(Component):
         af_state = copy.deepcopy(uav_state)
         # Transform the uav state and environment into the airfoil frame
         af_state.position += self.pose.orientation * self.pose.position
+        print(self.pose.orientation)
+        print(type(self.pose.orientation))
         af_state.attitude *= self.pose.orientation
         linear_comp = (
             UnitQuaternion(self.pose.orientation[0], self.pose.orientation[1:4])

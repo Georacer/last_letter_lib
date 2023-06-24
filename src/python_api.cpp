@@ -59,7 +59,6 @@ EulerAngles euler_angles_from_rotmat(Matrix3d R) { return EulerAngles(R); }
 PYBIND11_MODULE(cpp_last_letter_lib, m)
 {
     m.doc() = "The last_letter_lib python bindings.";
-    // m.def("add", &add, "A function that adds two numbers.", py::arg("i") = 1, py::arg("j") = 2);
 
     auto m_math_utils = m.def_submodule("cpp_math_utils", "last_letter_lib math_utils submodule");
     py::class_<Vector3>(m_math_utils, "Vector3")
@@ -97,10 +96,12 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def_property("x", &UnitQuaternion::get_x, &UnitQuaternion::set_x)
         .def_property("y", &UnitQuaternion::get_y, &UnitQuaternion::set_y)
         .def_property("z", &UnitQuaternion::get_z, &UnitQuaternion::set_z)
+        .def("normalize", &UnitQuaternion::normalize)
         .def("conjugate", &UnitQuaternion::conjugate)
         .def("inverse", &UnitQuaternion::inverse)
         .def("to_array", &UnitQuaternion::get_coeffs)
         .def("to_prodmat", &UnitQuaternion::to_prodmat)
+        .def("to_euler", &UnitQuaternion::to_euler)
         .def("R_ib", &UnitQuaternion::R_ib)
         .def("R_bi", &UnitQuaternion::R_bi)
         .def("q_dot", &UnitQuaternion::q_dot)
@@ -113,25 +114,35 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def(py::self * py::self)
         .def(py::self *= py::self)
         .def(
+            "__mul__", [](const UnitQuaternion q, const Vector3d v)
+            { return q * v; },
+            py::is_operator())
+        .def(
             "__mul__", [](const UnitQuaternion q, const Vector3 v)
             { return q * v; },
             py::is_operator())
         // .def_static("from_euler", static_cast<void (UnitQuaternion::*)(EulerAngles)>(&UnitQuaternion::UnitQuaternion))
         .def_static("from_euler", unit_quaternion_from_euler_angles)
         // .def_static("from_rotmat", &UnitQuaternion::UnitQuaternion<Matrix3d>)
-        .def_static("from_rotmat", unit_quaternion_from_rotmat);
-    // .def_static("from_two_vectors", &UnitQuaternion::UnitQuaternion<Vector3d, Vector3d, double>);
+        .def_static("from_rotmat", unit_quaternion_from_rotmat)
+        // .def_static("from_two_vectors", &UnitQuaternion::UnitQuaternion<Vector3d, Vector3d, double>);
+        .def(py::pickle(
+            [](const UnitQuaternion &q)
+            { return q.get_coeffs(); },
+            [](Vector4d v)
+            {
+                return UnitQuaternion(v(0), v(1), v(2), v(3));
+            }));
     py::class_<EulerAngles>(m_math_utils, "EulerAngles")
-        .def(py::init<double, double, double, bool>(), py::arg("roll"), py::arg("pitch"), py::arg("yaw"), py::arg("in_degrees"))
+        .def(py::init<double, double, double, bool>(), py::arg("roll") = 0, py::arg("pitch") = 0, py::arg("yaw") = 0, py::arg("in_degrees") = false)
         .def_readwrite("roll", &EulerAngles::roll)
         .def_readwrite("pitch", &EulerAngles::pitch)
         .def_readwrite("yaw", &EulerAngles::yaw)
         .def(py::self == py::self)
         .def("__repr__", &EulerAngles::to_str)
-        // .def_static("from_quaternion", static_cast<UnitQuaternion (EulerAngles::*)(UnitQuaternion)>(&EulerAngles::EulerAngles))
-        // .def_static("from_rotmat", static_cast<UnitQuaternion (EulerAngles::*)(Matrix3d)>(&EulerAngles::EulerAngles))
         .def_static("from_quaternion", euler_angles_from_unit_quaternion)
         .def_static("from_rotmat", euler_angles_from_rotmat)
+        .def("to_quaternion", &EulerAngles::to_quaternion)
         .def("to_array", [](EulerAngles &self)
              { return Vector3d(self.roll, self.pitch, self.yaw); })
         .def("R_roll", &EulerAngles::R_roll)
@@ -163,10 +174,11 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def_readwrite("tensor", &Inertial::tensor);
     py::class_<Airdata>(m_uav_utils, "Airdata")
         .def(py::init())
-        .def("init_from_velocity", &Airdata::init_from_velocity, py::arg("vel_body"), py::arg("vel_wind"))
+        .def("init_from_velocity", &Airdata::init_from_velocity, py::arg("vel_body"), py::arg("vel_wind") = Vector3d())
         .def("init_from_state_wind", &Airdata::init_from_state_wind, py::arg("state"), py::arg("wind"))
         .def_property_readonly("S_bw", &Airdata::S_bw)
         .def_property_readonly("S_wb", &Airdata::S_wb)
+        .def("to_u", &Airdata::to_velocity)
         .def_readwrite("airspeed", &Airdata::airspeed)
         .def_readwrite("alpha", &Airdata::alpha)
         .def_readwrite("beta", &Airdata::beta);

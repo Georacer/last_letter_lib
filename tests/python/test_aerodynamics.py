@@ -184,7 +184,8 @@ class TestAerodynamic:
         build_environment_data,
     ):
         airfoil = build_airfoil_simple
-        airdata = Airdata.init_from_state_wind(
+        airdata = Airdata()
+        airdata.init_from_state_wind(
             build_uav_state, build_environment_data.wind.to_array()
         )
         airfoil._store_airdata(airdata)
@@ -201,8 +202,9 @@ class TestAerodynamic:
         build_environment_data,
     ):
         airfoil = build_airfoil_simple
-        airdata = Airdata.init_from_state_wind(
-            build_uav_state, build_environment_data.wind
+        airdata = Airdata()
+        airdata.init_from_state_wind(
+            build_uav_state, build_environment_data.wind.to_array()
         )
         airfoil._store_airdata(airdata)
         c_d = airfoil.drag_coeff(
@@ -218,8 +220,9 @@ class TestAerodynamic:
         build_environment_data,
     ):
         airfoil = build_airfoil_simple
-        airdata = Airdata.init_from_state_wind(
-            build_uav_state, build_environment_data.wind
+        airdata = Airdata()
+        airdata.init_from_state_wind(
+            build_uav_state, build_environment_data.wind.to_array()
         )
         airfoil._store_airdata(airdata)
         c_l_1 = airfoil.lift_coeff(
@@ -257,8 +260,9 @@ class TestAerodynamic:
         state = build_uav_state
         state.velocity_linear.x = 5  # Aircraft is going forward with 0 pitch.
         state.velocity_linear.z = 5  # Aircraft is descending with 0 pitch.
-        airdata = Airdata.init_from_state_wind(
-            build_uav_state, build_environment_data.wind
+        airdata = Airdata()
+        airdata.init_from_state_wind(
+            build_uav_state, build_environment_data.wind.to_array()
         )
         airfoil._store_airdata(airdata)
         c_d_1 = airfoil.drag_coeff(state, build_environment_data, build_aero_inputs)
@@ -306,8 +310,9 @@ class TestAerodynamic:
         state = build_uav_state
         state.velocity_linear.x = 5  # Aircraft is going forward with 0 pitch.
         state.velocity_linear.z = 5  # Aircraft is descending with 0 pitch.
-        airdata = Airdata.init_from_state_wind(
-            build_uav_state, build_environment_data.wind
+        airdata = Airdata()
+        airdata.init_from_state_wind(
+            build_uav_state, build_environment_data.wind.to_array()
         )
         airfoil._store_airdata(airdata)
         w_1 = airfoil.get_wrench_airfoil(
@@ -357,11 +362,11 @@ class TestAerodynamic:
     ):
         tests = []
         airfoil = build_airfoil_simple
-        airfoil._store_airdata(
-            Airdata.init_from_state_wind(
-                build_uav_state, build_environment_data.wind.to_array()
-            )
+        airdata = Airdata()
+        airdata.init_from_state_wind(
+            build_uav_state, build_environment_data.wind.to_array()
         )
+        airfoil._store_airdata(airdata)
         c_y_1 = airfoil.sideforce_coeff(
             build_uav_state, build_environment_data, build_aero_inputs
         )

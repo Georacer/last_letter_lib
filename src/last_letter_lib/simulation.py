@@ -184,7 +184,7 @@ class Aircraft:
                 # This is because we want the inertia wrt CoG, not the aircraft frame.
                 pos = build_vector3_from_array(c.pose.position) - self.com
                 # Read the component orientation in the body frame
-                R_cb = EulerAngles.from_array(c.pose.orientation).R_bi()
+                R_cb = EulerAngles(*c.pose.orientation).R_bi()
 
                 # Calculate inertia due to translation
                 inertia_t = np.zeros((3, 3))

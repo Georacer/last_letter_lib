@@ -531,6 +531,12 @@ namespace last_letter_lib
             normalize();
         }
 
+        UnitQuaternion UnitQuaternion::conjugate()
+        {
+            auto q = Quaterniond::conjugate();
+            return UnitQuaternion(q.w(), q.x(), q.y(), q.z());
+        }
+
         Matrix4d UnitQuaternion::to_prodmat()
         {
             Matrix4d m;
@@ -539,6 +545,11 @@ namespace last_letter_lib
                 y(), z(), w(), -x(),
                 z(), -y(), x(), w();
             return m;
+        }
+
+        EulerAngles UnitQuaternion::to_euler()
+        {
+            return EulerAngles(*this);
         }
 
         Vector3d UnitQuaternion::unitX()
@@ -614,7 +625,10 @@ namespace last_letter_lib
             return (roll == rhs.x()) && (pitch == rhs.y()) && (yaw == rhs.z());
         }
         Vector3d EulerAngles::to_vector() { return Vector3d(roll, pitch, yaw); }
-        // Quaterniond EulerAngles::to_quaternion();
+        UnitQuaternion EulerAngles::to_quaternion()
+        {
+            return UnitQuaternion(*this);
+        }
         Matrix3d EulerAngles::R_roll()
         {
             Matrix3d m;

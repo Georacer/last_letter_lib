@@ -53,7 +53,7 @@ class TestRigidBody6DOF:
         sys.state = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13])
         tests = []
         tests.append(sys.position == Vector3(1, 2, 3))
-        tests.append(sys.orientation == UnitQuaternion(4, [5, 6, 7]))
+        tests.append(sys.orientation == UnitQuaternion(4, 5, 6, 7))
         tests.append(sys.velocity_linear == Vector3(8, 9, 10))
         tests.append(sys.velocity_angular == Vector3(11, 12, 13))
         assert np.all(tests)

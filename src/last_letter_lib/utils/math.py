@@ -669,7 +669,7 @@ class Pose:
     @property
     def orientation(self) -> UnitQuaternion:
         q = self.cpp_pose_.orientation
-        return UnitQuaternion(q[0], q[1:4])
+        return UnitQuaternion(q[0], q[1], q[2], q[3])
 
     @orientation.setter
     def orientation(self, q: UnitQuaternion):
@@ -694,7 +694,13 @@ class Pose:
         """
         p_new = self.cpp_pose_.T
         return Pose(
-            p_new.position, UnitQuaternion(p_new.orientation[0], p_new.orientation[1:4])
+            p_new.position,
+            UnitQuaternion(
+                p_new.orientation[0],
+                p_new.orientation[1],
+                p_new.orientation[2],
+                p_new.orientation[3],
+            ),
         )
 
 

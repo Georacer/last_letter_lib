@@ -174,7 +174,7 @@ class UavState:
         """
         new_state = cls(
             Vector3(arr[0], arr[1], arr[2]),
-            UnitQuaternion(arr[3], arr[4:7]),
+            UnitQuaternion(arr[3], arr[4], arr[5], arr[6]),
             Vector3(arr[7], arr[8], arr[9]),
             Vector3(arr[10], arr[11], arr[12]),
         )
@@ -303,10 +303,13 @@ def calc_airdata_at_link(uav_airdata: Airdata, vel_ang_b: Vector3, pose_link: Po
         pose_link: The pose of the link
     """
     body_wind = uav_airdata.to_u()
-    link_wind = pose_link.orientation.conjugate() * body_wind.to_array() + np.cross(
+    link_wind = pose_link.orientation.conjugate() * body_wind + np.cross(
         vel_ang_b.to_array(), pose_link.position.to_array()
     )
-    return Airdata.from_u(link_wind)
+    # Clean up inconsistent .to_array() calls here.
+    res = Airdata()
+    res.init_from_velocity(link_wind)
+    return res
 
 
 def calc_psi_dot_from_trajectory(trajectory: np.array):
