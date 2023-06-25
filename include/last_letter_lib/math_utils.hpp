@@ -9,6 +9,7 @@
 #define R_earth 6378137.0
 #define f_earth 1.0 / 298.257223563
 #define e_earth sqrt(2.0 * f_earth - f_earth * f_earth)
+#define DOUBLE_EPS 1e-9
 
 using Eigen::Matrix3d;
 using Eigen::Matrix4d;
@@ -150,7 +151,7 @@ namespace last_letter_lib
 			double get_z() const { return z(); }
 			void set_z(double v) { z() = v; }
 			Vector4d get_coeffs() const { return Vector4d(w(), x(), y(), z()); }
-			double real() { return this->x(); }
+			double real() { return this->w(); }
 			Vector3d imag() { return Vector3d(this->x(), this->y(), this->z()); }
 			UnitQuaternion flipped() { return UnitQuaternion(-this->w(), this->x(), this->y(), this->z()); }
 			UnitQuaternion conjugate() const;
@@ -164,6 +165,8 @@ namespace last_letter_lib
 			Matrix3d R_ib() { return inverse().toRotationMatrix(); }
 			Matrix3d R_bi() { return toRotationMatrix(); }
 			Vector4d q_dot(Vector3d omega);
+			bool is_unit() { return fabs(norm() - 1) < DOUBLE_EPS; }
+			UnitQuaternion operator*(const UnitQuaternion &) const;
 			using Quaterniond::operator*; // Unmask the multiplication operator from Quaterniond.
 			friend last_letter_lib::math_utils::Vector3 operator*(const UnitQuaternion q, const last_letter_lib::math_utils::Vector3 v)
 			{

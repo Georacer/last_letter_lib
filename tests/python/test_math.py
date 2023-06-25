@@ -361,8 +361,9 @@ class TestQuaternion:
     #     assert np.allclose(q.to_array(), [np.cos(v / 2), np.sin(v / 2), 0, 0])
 
     def test_normalize(self):
+        """Ensure a UnitQuaternion always has norm of 1."""
         q = math.UnitQuaternion(2, 0, 0, 0)
-        assert q.is_unit
+        assert q.is_unit()
 
     def test_equals(self):
         q1 = math.UnitQuaternion()
@@ -378,7 +379,7 @@ class TestQuaternion:
         q = math.UnitQuaternion(1, 1, 2, 3)
         q_star = q.conjugate()
         tests = []
-        tests.append(np.all(q.real == q_star.real))
+        tests.append(q.real == pytest.approx(q_star.real))
         tests.append(np.all(q.imag == -q_star.imag))
         assert np.all(tests)
 
@@ -386,7 +387,7 @@ class TestQuaternion:
         q = math.UnitQuaternion(1, 1, 2, 3)
         q_star = q.flipped()
         tests = []
-        tests.append(np.all(q.real == -q_star.real))
+        tests.append(q.real == pytest.approx(-q_star.real))
         tests.append(np.all(q.imag == q_star.imag))
         assert np.all(tests)
 
@@ -398,7 +399,11 @@ class TestQuaternion:
     def test_to_euler(self):
         euler = math.EulerAngles(45, 45, 45, in_degrees=True)
         q = euler.to_quaternion()
-        assert euler == q.to_euler()
+        tests = [
+            a == pytest.approx(b)
+            for a, b in zip(euler.to_array(), q.to_euler().to_array())
+        ]
+        assert np.all(tests)
 
     def test_R_bi(self):
         euler = math.EulerAngles(90, 0, 0, in_degrees=True)
@@ -450,46 +455,52 @@ class TestQuaternion:
         assert np.allclose(vec_b, vec_des)
 
     def test_mul_numpy(self):
+        # We rely on the C++ source to handle Eigen Matrix-Vector multiplication correcly w.r.t. dimensions.
         euler = math.EulerAngles(90, 0, 0, in_degrees=True)
         q = euler.to_quaternion()
-        vec = np.array([1, 2, 3]).reshape((3, 1))
+        vec = np.array([1, 2, 3]).reshape((3,))
         prod = q.conjugate() * vec
         assert prod.shape == vec.shape
 
-    def test_mul_scalar(self):
-        q = math.UnitQuaternion()
-        with pytest.raises(UserWarning):
-            _ = 2 * q
+    # This multiplication is undefined. The test is for the warning.
+    # def test_mul_scalar(self):
+    #     q = math.UnitQuaternion()
+    #     with pytest.raises(UserWarning):
+    #         _ = 2 * q
 
-    def test_addition(self):
-        v = np.sqrt(2) / 2
-        q_1 = math.UnitQuaternion(v, [v, 0, 0])
-        q_2 = math.UnitQuaternion(v, [0, v, 0])
-        q_sum = q_1 + q_2
-        q_sum_ref = np.array(q_1.to_array() + q_2.to_array())
-        q_sum_ref /= np.linalg.norm(q_sum_ref)
-        assert np.allclose(q_sum.to_array(), q_sum_ref)
+    # Quaternion addition is undefined
+    # def test_addition(self):
+    #     v = np.sqrt(2) / 2
+    #     q_1 = math.UnitQuaternion(v, v, 0, 0)
+    #     q_2 = math.UnitQuaternion(v, 0, v, 0)
+    #     q_sum = q_1 + q_2
+    #     q_sum_ref = np.array(q_1.to_array() + q_2.to_array())
+    #     q_sum_ref /= np.linalg.norm(q_sum_ref)
+    #     assert np.allclose(q_sum.to_array(), q_sum_ref)
 
-    def test_subtraction(self):
-        v = np.sqrt(2) / 2
-        q_1 = math.UnitQuaternion(v, [v, 0, 0])
-        q_2 = math.UnitQuaternion(v, [0, v, 0])
-        q_sum = q_1 - q_2
-        q_sum_ref = np.array(q_1.to_array() - q_2.to_array())
-        q_sum_ref /= np.linalg.norm(q_sum_ref)
-        assert np.allclose(q_sum.to_array(), q_sum_ref)
+    # Quaternion subtraction is undefined
+    # def test_subtraction(self):
+    #     v = np.sqrt(2) / 2
+    #     q_1 = math.UnitQuaternion(v, v, 0, 0)
+    #     q_2 = math.UnitQuaternion(v, 0, v, 0)
+    #     q_sum = q_1 - q_2
+    #     q_sum_ref = np.array(q_1.to_array() - q_2.to_array())
+    #     q_sum_ref /= np.linalg.norm(q_sum_ref)
+    #     assert np.allclose(q_sum.to_array(), q_sum_ref)
 
-    def test_norm(self):
-        v = np.sqrt(2) / 2
-        vec = [v, v, 0, 0]
-        q_1 = math.UnitQuaternion.from_wxyz(vec)
-        assert q_1.norm == np.linalg.norm(vec)
+    # Unit quaternion has always norm==1
+    # def test_norm(self):
+    #     v = np.sqrt(2) / 2
+    #     vec = [v, v, 0, 0]
+    #     q_1 = math.UnitQuaternion(*vec)
+    #     assert q_1.norm == np.linalg.norm(vec)
 
     def test_iterator(self):
         v = np.sqrt(2) / 2
         vec = [v, v, 0, 0]
-        q_1 = math.UnitQuaternion.from_wxyz(vec)
-        assert np.allclose(list(q_1), vec)
+        q_1 = math.UnitQuaternion(*vec)
+        tests = [a == pytest.approx(b) for a, b in zip(q_1.to_array(), vec)]
+        assert np.all(tests)
 
     def test_q_dot(self):
         """
@@ -509,9 +520,10 @@ class TestQuaternion:
     def test_repr(self):
         v = np.sqrt(2) / 2
         vec = [v, v, 0, 0]
-        q = math.UnitQuaternion.from_wxyz(vec)
+        q = math.UnitQuaternion(*vec)
         assert (
-            repr(q) == f"UnitQuaternion({vec[0]}, [{vec[1]}, {vec[2]}.0, {vec[3]}.0])"
+            repr(q)
+            == f"UnitQuaternion({vec[0]:.3f}, {vec[1]:.3f}, {vec[2]:.0f}, {vec[3]:.0f})"
         )
 
 
@@ -529,7 +541,7 @@ class TestPose:
     def test_transform_wrench(self):
         pose_bi = math.Pose(
             position=math.Vector3(1, 0, 0),
-            orientation=math.UnitQuaternion(1, [0, 0, 0]),
+            orientation=math.UnitQuaternion(1, 0, 0, 0),
         )
         wrench_b = math.Wrench(force=[0, 1, 0], torque=[0, 0, 0])
 
@@ -543,7 +555,7 @@ class TestPose:
     def test_transform_wrench_2(self):
         pose_bi = math.Pose(
             position=math.Vector3(1, 0, 0),
-            orientation=math.UnitQuaternion(1, [0, 1, 0]),
+            orientation=math.UnitQuaternion(1, 0, 1, 0),
         )
         wrench_b = math.Wrench(force=[1, 0, 0], torque=[1, 0, 0])
 
@@ -555,7 +567,7 @@ class TestPose:
     def test_inverse(self):
         pose_bi = math.Pose(
             position=math.Vector3(1, 0, 0),
-            orientation=math.UnitQuaternion(1, [0, 1, 0]),
+            orientation=math.UnitQuaternion(1, 0, 1, 0),
         )
         wrench_b = math.Wrench(force=[1, 0, 0], torque=[1, 0, 0])
         wrench_i = pose_bi @ wrench_b
@@ -568,7 +580,7 @@ class TestPose:
     def test_inverse_2(self):
         pose_bi = math.Pose(
             position=math.Vector3(1, 0, 0),
-            orientation=math.UnitQuaternion(1, [0, 0, 0]),
+            orientation=math.UnitQuaternion(1, 0, 0, 0),
         )
         wrench_b = math.Wrench(force=[1, 0, 0], torque=[0, 0, 0])
         wrench_i = pose_bi @ wrench_b

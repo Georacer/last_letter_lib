@@ -99,9 +99,12 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def_property("x", &UnitQuaternion::get_x, &UnitQuaternion::set_x)
         .def_property("y", &UnitQuaternion::get_y, &UnitQuaternion::set_y)
         .def_property("z", &UnitQuaternion::get_z, &UnitQuaternion::set_z)
+        .def_property_readonly("real", &UnitQuaternion::real)
+        .def_property_readonly("imag", &UnitQuaternion::imag)
         .def("normalize", &UnitQuaternion::normalize)
         .def("conjugate", &UnitQuaternion::conjugate)
         .def("inverse", &UnitQuaternion::inverse)
+        .def("flipped", &UnitQuaternion::flipped)
         .def("to_array", &UnitQuaternion::get_coeffs)
         .def("to_prodmat", &UnitQuaternion::to_prodmat)
         .def("to_euler", &UnitQuaternion::to_euler)
@@ -113,7 +116,6 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
             "__eq__", [](const UnitQuaternion &a, UnitQuaternion &b)
             { return a.isApprox(b); },
             py::is_operator())
-        // .def(py::self == py::self)
         .def(py::self * py::self)
         .def(py::self *= py::self)
         .def(
@@ -129,6 +131,7 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         // .def_static("from_rotmat", &UnitQuaternion::UnitQuaternion<Matrix3d>)
         .def_static("from_rotmat", unit_quaternion_from_rotmat)
         // .def_static("from_two_vectors", &UnitQuaternion::UnitQuaternion<Vector3d, Vector3d, double>);
+        .def("is_unit", &UnitQuaternion::is_unit)
         .def(py::pickle(
             [](const UnitQuaternion &q)
             { return q.get_coeffs(); },
