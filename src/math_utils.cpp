@@ -531,7 +531,7 @@ namespace last_letter_lib
             normalize();
         }
 
-        UnitQuaternion UnitQuaternion::conjugate()
+        UnitQuaternion UnitQuaternion::conjugate() const
         {
             auto q = Quaterniond::conjugate();
             return UnitQuaternion(q.w(), q.x(), q.y(), q.z());
@@ -596,10 +596,10 @@ namespace last_letter_lib
 
         EulerAngles::EulerAngles(double roll_p, double pitch_p, double yaw_p, bool in_degrees)
         {
-            double multiplier{1};
+            double multiplier{1.0};
             if (in_degrees)
             {
-                multiplier *= deg_to_rad(1);
+                multiplier *= deg_to_rad(1.0);
             }
             roll = roll_p * multiplier;
             pitch = pitch_p * multiplier;
@@ -612,9 +612,41 @@ namespace last_letter_lib
             double x = q.x();
             double y = q.y();
             double z = q.z();
-            roll = atan2(2 * (w * x + y * z), (x * x + z * z - x * x - y * y));
+            roll = atan2(2 * (w * x + y * z), (w * w + z * z - x * x - y * y));
+            if (roll > M_PI)
+            {
+                roll -= 2 * M_PI;
+            }
+            else if (roll <= -M_PI)
+            {
+                roll += 2 * M_PI;
+            }
             pitch = asin(2 * (w * y - x * z));
+            if (pitch > M_PI)
+            {
+                pitch -= 2 * M_PI;
+            }
+            else if (pitch <= -M_PI)
+            {
+                pitch += 2 * M_PI;
+            }
             yaw = atan2(2 * (w * z + x * y), (w * w + x * x - y * y - z * z));
+            if (yaw > M_PI)
+            {
+                yaw -= 2 * M_PI;
+            }
+            else if (yaw <= -M_PI)
+            {
+                yaw += 2 * M_PI;
+            }
+        }
+        EulerAngles::EulerAngles(Matrix3d R)
+        {
+            auto q = UnitQuaternion(R);
+            auto e = EulerAngles(q);
+            roll = e.roll;
+            pitch = e.pitch;
+            yaw = e.yaw;
         }
         bool EulerAngles::operator==(const EulerAngles rhs) const
         {
@@ -659,7 +691,7 @@ namespace last_letter_lib
         }
         Matrix3d EulerAngles::R_ib()
         {
-            Matrix3d m = R_yaw() * R_pitch() * R_roll();
+            Matrix3d m = R_roll() * R_pitch() * R_yaw();
             return m;
         }
         Matrix3d EulerAngles::T_eb()

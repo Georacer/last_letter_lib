@@ -11,6 +11,56 @@ namespace last_letter_lib
 	namespace uav_utils
 	{
 
+		SimState_t::SimState_t(Vector3d position,
+							   UnitQuaternion orientation,
+							   Vector3d velocity_linear,
+							   Vector3d velocity_angular,
+							   std::vector<double> thrusters_velocity)
+		{
+			pose.position = position;
+			pose.orientation = orientation;
+			velocity.linear = velocity_linear;
+			velocity.angular = velocity_angular;
+			rotorspeed = thrusters_velocity;
+		}
+		SimState_t::SimState_t(const VectorXd v)
+		{
+			pose.position = Vector3d(v(0), v(1), v(2));
+			pose.orientation = UnitQuaternion(v(3), v(4), v(5), v(6));
+			velocity.linear = Vector3d(v(7), v(8), v(9));
+			velocity.angular = Vector3d(v(10), v(11), v(12));
+			if (v.size() > 13)
+			{
+				int num_rotors = v.size() - 13;
+				rotorspeed = std::vector<double>(num_rotors);
+				for (int idx; idx < num_rotors; idx++)
+				{
+					rotorspeed[idx] = v(13 + idx);
+				}
+			}
+			else
+			{
+				rotorspeed = std::vector<double>();
+			}
+		}
+		VectorXd SimState_t::to_array()
+		{
+			VectorXd res(13 + rotorspeed.size());
+			res << pose.position,
+				Vector4d(pose.orientation.w(), pose.orientation.x(), pose.orientation.y(), pose.orientation.z()),
+				velocity.linear,
+				velocity.angular,
+				VectorXd::Map(&rotorspeed[0],
+							  rotorspeed.size());
+			return res;
+		}
+		SimState_t SimState_t::strip_thrusters()
+		{
+			auto res = SimState_t(*this);
+			res.rotorspeed = std::vector<double>(0);
+			return res;
+		}
+
 		//////////////////////////
 		// Define Airdata class
 		//////////////////////////

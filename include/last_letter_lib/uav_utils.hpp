@@ -11,10 +11,11 @@
 #include <last_letter_lib/math_utils.hpp>
 
 using Eigen::Matrix3d;
-using Eigen::Quaterniond;
 using Eigen::Vector3d;
 using Eigen::Vector4d;
+using Eigen::VectorXd;
 
+using last_letter_lib::math_utils::UnitQuaternion;
 using last_letter_lib::math_utils::Vector3;
 
 namespace last_letter_lib
@@ -27,13 +28,13 @@ namespace last_letter_lib
 		//////////////////
 
 		// Quaternion from ENU inertial frame to NED inertial frame
-		const Quaterniond q_enu_ned = Eigen::AngleAxis<double>(M_PI / 2, Vector3d::UnitZ()) *
-									  Eigen::AngleAxis<double>(M_PI, Vector3d::UnitX());
+		const UnitQuaternion q_enu_ned = UnitQuaternion(Eigen::AngleAxis<double>(M_PI / 2, Vector3d::UnitZ()) *
+														Eigen::AngleAxis<double>(M_PI, Vector3d::UnitX()));
 
-		const Quaterniond q_ned_enu = q_enu_ned.conjugate();
+		const UnitQuaternion q_ned_enu = q_enu_ned.conjugate();
 		// Quaternion from Gazebo Body frame to Aerospace Body frame
-		const Quaterniond q_bg_ba{Eigen::AngleAxis<double>(M_PI, Vector3d::UnitX())};
-		const Quaterniond q_ba_bg = q_bg_ba.conjugate();
+		const UnitQuaternion q_bg_ba{Quaterniond{Eigen::AngleAxis<double>(M_PI, Vector3d::UnitX())}};
+		const UnitQuaternion q_ba_bg = q_bg_ba.conjugate();
 
 		struct Inertial
 		{
@@ -83,9 +84,9 @@ namespace last_letter_lib
 
 		struct Pose
 		{
-			Pose() : position(Vector3d::Zero()), orientation(Quaterniond::Identity()) {}
+			Pose() : position(Vector3d::Zero()), orientation(UnitQuaternion()) {}
 			Vector3d position;
-			Quaterniond orientation;
+			UnitQuaternion orientation;
 			Pose T() const
 			{
 				Pose p = Pose();
@@ -161,9 +162,28 @@ namespace last_letter_lib
 			Vector3d velocity; // in m/s North, East, Up
 		};
 
-		struct SimState_t
+		class SimState_t
 		{
+		public:
 			SimState_t() : rotorspeed(4, 0.01) {}
+			SimState_t(Vector3d position,
+					   UnitQuaternion orientation,
+					   Vector3d velocity_linear,
+					   Vector3d velocity_angular,
+					   std::vector<double> thrusters_velocity);
+			// Decode a SimState_t from a vector as
+			// 0-2: position
+			// 3-6: orientation quaternion
+			// 7-9: linear velocity
+			// 10-12: angular velocity
+			// 12-: thruster velocity
+			// This constructor is problematic because it doesn't contain all of the class elements,
+			// but is implemented for pickling the Python bound object.
+			SimState_t(const VectorXd);
+			SimState_t(const SimState_t &) = default;
+			// Inverse of the constructor from VectorXd.
+			VectorXd to_array();
+			SimState_t strip_thrusters();
 			Geoid geoid;
 			Pose pose;						// NED
 			Twist velocity;					// NED

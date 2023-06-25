@@ -34,12 +34,12 @@ namespace last_letter_lib
 		// Functions
 
 		template <typename T>
-		T rad_to_deg(T angle)
+		double rad_to_deg(T angle)
 		{
 			return angle * 180 / M_PI;
 		}
 		template <typename T>
-		T deg_to_rad(T angle)
+		double deg_to_rad(T angle)
 		{
 			return angle * M_PI / 180;
 		}
@@ -136,7 +136,8 @@ namespace last_letter_lib
 		class UnitQuaternion : public Quaterniond
 		{
 		public:
-			UnitQuaternion(double w, double x, double y, double z) : Quaterniond(w, x, y, z) { normalize(); }
+			UnitQuaternion(double w = 1, double x = 0, double y = 0, double z = 0) : Quaterniond(w, x, y, z) { normalize(); }
+			UnitQuaternion(Quaterniond q) : Quaterniond(q) {}
 			UnitQuaternion(EulerAngles);
 			UnitQuaternion(Matrix3d R) : Quaterniond(R) { normalize(); }
 			UnitQuaternion(Vector3d, Vector3d, double eps = 1e-5);
@@ -148,16 +149,20 @@ namespace last_letter_lib
 			void set_y(double v) { y() = v; }
 			double get_z() const { return z(); }
 			void set_z(double v) { z() = v; }
-			Vector4d get_coeffs() { return Vector4d(w(), x(), y(), z()); }
+			Vector4d get_coeffs() const { return Vector4d(w(), x(), y(), z()); }
 			double real() { return this->x(); }
 			Vector3d imag() { return Vector3d(this->x(), this->y(), this->z()); }
 			UnitQuaternion flipped() { return UnitQuaternion(-this->w(), this->x(), this->y(), this->z()); }
+			UnitQuaternion conjugate() const;
 			Matrix4d to_prodmat();
+			EulerAngles to_euler();
 			Vector3d unitX();
 			Vector3d unitY();
 			Vector3d unitZ();
-			Matrix3d R_ib() { return toRotationMatrix(); }
-			Matrix3d R_bi() { return inverse().toRotationMatrix(); }
+			// Matrix3d R_ib() { return toRotationMatrix(); }
+			// Matrix3d R_bi() { return inverse().toRotationMatrix(); }
+			Matrix3d R_ib() { return inverse().toRotationMatrix(); }
+			Matrix3d R_bi() { return toRotationMatrix(); }
 			Vector4d q_dot(Vector3d omega);
 			using Quaterniond::operator*; // Unmask the multiplication operator from Quaterniond.
 			friend last_letter_lib::math_utils::Vector3 operator*(const UnitQuaternion q, const last_letter_lib::math_utils::Vector3 v)
@@ -173,11 +178,11 @@ namespace last_letter_lib
 		public:
 			EulerAngles(double roll_p = 0, double pitch_p = 0, double yaw_p = 0, bool in_degrees = false);
 			EulerAngles(UnitQuaternion);
-			EulerAngles(Matrix3d R) { EulerAngles(UnitQuaternion(R)); }
+			EulerAngles(Matrix3d R);
 			bool operator==(const EulerAngles) const;
 			bool operator==(const Vector3d) const;
 			Vector3d to_vector();
-			// Quaterniond to_quaternion();
+			UnitQuaternion to_quaternion();
 			Matrix3d R_roll();
 			Matrix3d R_pitch();
 			Matrix3d R_yaw();

@@ -26,6 +26,7 @@ find_package(LAPACK REQUIRED)
 
 # find_package(NLopt REQUIRED) # Will enable later with trimmer
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+message(STATUS "Current Python site-packages dir: ${Python3_SITELIB}")
 find_package(pybind11 PATHS ${Python3_SITELIB}/pybind11/share/cmake/pybind11 CONFIG REQUIRED)
 
 # add_subdirectory(external/pybind11)

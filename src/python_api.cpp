@@ -22,7 +22,10 @@ using last_letter_lib::programming_utils::Parametrized;
 using last_letter_lib::systems::Component;
 using last_letter_lib::uav_utils::Airdata;
 using last_letter_lib::uav_utils::Pose;
+using last_letter_lib::uav_utils::SimState_t;
 using last_letter_lib::uav_utils::Wrench_t;
+
+#define PYBIND11_DETAILED_ERROR_MESSAGES
 
 class PyParametrized : public Parametrized
 {
@@ -156,7 +159,6 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
     auto m_uav_utils = m.def_submodule("cpp_uav_utils", "last_letter_lib uav_utils submodule");
     py::class_<Pose>(m_uav_utils, "Pose")
         .def(py::init())
-        // .def("__matmul__", py::self * Wrench_t())
         .def("__matmul__", &Pose::operator*)
         .def_property("position", &Pose::get_position_as_vector3, &Pose::set_position_from_vector3)
         .def_property("orientation", &Pose::get_orientation_as_vector, &Pose::set_orientation_from_vector)
@@ -182,6 +184,16 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def_readwrite("airspeed", &Airdata::airspeed)
         .def_readwrite("alpha", &Airdata::alpha)
         .def_readwrite("beta", &Airdata::beta);
+    // py::class_<SimState_t>(m_uav_utils, "UavState")
+    //     .def(py::init())
+    //     .def(py::init<Vector3d, UnitQuaternion, Vector3d, Vector3d, std::vector<double>>(),
+    //          py::arg("position") = Vector3d(),
+    //          py::arg("orientation") = UnitQuaternion(),
+    //          py::arg("velocity_linear") = Vector3d(),
+    //          py::arg("velocity_angular") = Vector3d(),
+    //          py::arg("thrusters_velocity") = std::vector<double>(4, 0.01))
+    //     .def("get_euler", [](SimState_t &s)
+    //          { return s.pose.orientation.to_euler(); });
 
     auto m_programming_utils = m.def_submodule("cpp_programming_utils", "last_letter_lib programming_utils submodule");
     py::class_<Parametrized, PyParametrized>(m_programming_utils, "Parametrized")
