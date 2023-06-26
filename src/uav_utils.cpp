@@ -23,6 +23,18 @@ namespace last_letter_lib
 			velocity.angular = velocity_angular;
 			rotorspeed = thrusters_velocity;
 		}
+		SimState_t::SimState_t(Vector3 position,
+							   UnitQuaternion orientation,
+							   Vector3 velocity_linear,
+							   Vector3 velocity_angular,
+							   std::vector<double> thrusters_velocity)
+			: SimState_t(position.vector,
+						 orientation,
+						 velocity_linear.vector,
+						 velocity_angular.vector,
+						 thrusters_velocity)
+		{
+		}
 		SimState_t::SimState_t(const VectorXd v)
 		{
 			pose.position = Vector3d(v(0), v(1), v(2));

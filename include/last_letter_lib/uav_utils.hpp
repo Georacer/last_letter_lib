@@ -170,7 +170,12 @@ namespace last_letter_lib
 					   UnitQuaternion orientation,
 					   Vector3d velocity_linear,
 					   Vector3d velocity_angular,
-					   std::vector<double> thrusters_velocity);
+					   std::vector<double> thrusters_velocity = std::vector<double>(0));
+			SimState_t(Vector3 position,
+					   UnitQuaternion orientation,
+					   Vector3 velocity_linear,
+					   Vector3 velocity_angular,
+					   std::vector<double> thrusters_velocity = std::vector<double>(0));
 			// Decode a SimState_t from a vector as
 			// 0-2: position
 			// 3-6: orientation quaternion
@@ -184,6 +189,14 @@ namespace last_letter_lib
 			// Inverse of the constructor from VectorXd.
 			VectorXd to_array();
 			SimState_t strip_thrusters();
+			Vector3d get_position() { return pose.position; }
+			void set_position(const Vector3d &v) { pose.position = v; }
+			UnitQuaternion get_orientation() { return pose.orientation; }
+			void set_orientation(const UnitQuaternion &q) { pose.orientation = q; }
+			Vector3d get_velocity_linear() { return velocity.linear; }
+			void set_velocity_linear(const Vector3d &v) { velocity.linear = v; }
+			Vector3d get_velocity_angular() { return velocity.angular; }
+			void set_velocity_angular(const Vector3d &v) { velocity.angular = v; }
 			Geoid geoid;
 			Pose pose;						// NED
 			Twist velocity;					// NED
@@ -215,7 +228,8 @@ namespace last_letter_lib
 		class Airdata
 		{
 		public:
-			Airdata(){};
+			Airdata(double airspeed_p = 0, double alpha_p = 0, double beta_p = 0)
+				: airspeed(airspeed_p), alpha(alpha_p), beta(beta_p){};
 			~Airdata(){};
 			/*
 			Calculate the relative air data from inertial and wind speeds

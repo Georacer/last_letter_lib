@@ -298,7 +298,7 @@ class Aerodynamic(Component):
         """
         alpha = self.airdata.alpha
         beta = self.airdata.beta
-        qn = af_state.velocity_angular.y * self.params.c / (2 * self.airdata.airspeed)
+        qn = af_state.velocity_angular[1] * self.params.c / (2 * self.airdata.airspeed)
         c_lift = (
             self._lift_coeff_alpha(alpha)
             + np.polyval(self.params.c_L_beta, abs(beta))
@@ -329,7 +329,7 @@ class Aerodynamic(Component):
         if beta < -np.pi / 2:
             beta = -np.pi - beta
 
-        qn = af_state.velocity_angular.y * self.params.c / (2 * self.airdata.airspeed)
+        qn = af_state.velocity_angular[1] * self.params.c / (2 * self.airdata.airspeed)
         deltae = u[1]
         drag_coeff = (
             self._drag_coeff_alpha(alpha)

@@ -1,4 +1,7 @@
+#define PYBIND11_DETAILED_ERROR_MESSAGES
+
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 #include <pybind11/eigen.h>
 #include <pybind11/numpy.h>
 #include <pybind11/operators.h>
@@ -24,8 +27,6 @@ using last_letter_lib::uav_utils::Airdata;
 using last_letter_lib::uav_utils::Pose;
 using last_letter_lib::uav_utils::SimState_t;
 using last_letter_lib::uav_utils::Wrench_t;
-
-#define PYBIND11_DETAILED_ERROR_MESSAGES
 
 class PyParametrized : public Parametrized
 {
@@ -58,6 +59,8 @@ UnitQuaternion unit_quaternion_from_euler_angles(EulerAngles euler) { return Uni
 UnitQuaternion unit_quaternion_from_rotmat(Matrix3d R) { return UnitQuaternion(R); }
 EulerAngles euler_angles_from_unit_quaternion(UnitQuaternion q) { return EulerAngles(q); }
 EulerAngles euler_angles_from_rotmat(Matrix3d R) { return EulerAngles(R); }
+SimState_t simstate_from_array(const VectorXd &v) { return SimState_t(v); }
+SimState_t simstate_from_simstate(const SimState_t &s) { return SimState_t(s); }
 
 PYBIND11_MODULE(cpp_last_letter_lib, m)
 {
@@ -178,7 +181,7 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def_readwrite("mass", &Inertial::mass)
         .def_readwrite("tensor", &Inertial::tensor);
     py::class_<Airdata>(m_uav_utils, "Airdata")
-        .def(py::init())
+        .def(py::init<double, double, double>(), py::arg("airspeed") = 0, py::arg("alpha") = 0, py::arg("beta") = 0)
         .def("init_from_velocity", &Airdata::init_from_velocity, py::arg("vel_body"), py::arg("vel_wind") = Vector3d())
         .def("init_from_state_wind", &Airdata::init_from_state_wind, py::arg("state"), py::arg("wind"))
         .def_property_readonly("S_bw", &Airdata::S_bw)
@@ -187,16 +190,33 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def_readwrite("airspeed", &Airdata::airspeed)
         .def_readwrite("alpha", &Airdata::alpha)
         .def_readwrite("beta", &Airdata::beta);
-    // py::class_<SimState_t>(m_uav_utils, "UavState")
-    //     .def(py::init())
-    //     .def(py::init<Vector3d, UnitQuaternion, Vector3d, Vector3d, std::vector<double>>(),
-    //          py::arg("position") = Vector3d(),
-    //          py::arg("orientation") = UnitQuaternion(),
-    //          py::arg("velocity_linear") = Vector3d(),
-    //          py::arg("velocity_angular") = Vector3d(),
-    //          py::arg("thrusters_velocity") = std::vector<double>(4, 0.01))
-    //     .def("get_euler", [](SimState_t &s)
-    //          { return s.pose.orientation.to_euler(); });
+    py::class_<SimState_t>(m_uav_utils, "UavState")
+        .def(py::init())
+        .def(py::init<Vector3d, UnitQuaternion, Vector3d, Vector3d, std::vector<double>>(),
+             py::arg("position") = Vector3d(),
+             py::arg("orientation") = UnitQuaternion(),
+             py::arg("velocity_linear") = Vector3d(),
+             py::arg("velocity_angular") = Vector3d(),
+             py::arg("thrusters_velocity") = std::vector<double>(0))
+        .def(py::init<Vector3, UnitQuaternion, Vector3, Vector3, std::vector<double>>(),
+             py::arg("position") = Vector3(),
+             py::arg("orientation") = UnitQuaternion(),
+             py::arg("velocity_linear") = Vector3(),
+             py::arg("velocity_angular") = Vector3(),
+             py::arg("thrusters_velocity") = std::vector<double>(0))
+        .def_static("from_array", simstate_from_array)
+        .def_static("from_uavstate", simstate_from_simstate)
+        .def_property("position", &SimState_t::get_position, &SimState_t::set_position)
+        .def_property("attitude", &SimState_t::get_orientation, &SimState_t::set_orientation)
+        .def_property("velocity_linear", &SimState_t::get_velocity_linear, &SimState_t::set_velocity_linear)
+        .def_property("velocity_angular", &SimState_t::get_velocity_angular, &SimState_t::set_velocity_angular)
+        .def_readwrite("thrusters_velocity", &SimState_t::rotorspeed)
+        .def("get_euler", [](SimState_t &s)
+             { return s.pose.orientation.to_euler(); })
+        .def("to_array", &SimState_t::to_array)
+        .def("strip_thrusters", &SimState_t::strip_thrusters)
+        .def("__deepcopy__", [](const SimState_t &self, py::dict)
+             { return SimState_t(self); });
 
     auto m_programming_utils = m.def_submodule("cpp_programming_utils", "last_letter_lib programming_utils submodule");
     py::class_<Parametrized, PyParametrized>(m_programming_utils, "Parametrized")

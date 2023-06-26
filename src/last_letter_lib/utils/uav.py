@@ -25,6 +25,7 @@ from last_letter_lib.utils.math import UnitQuaternion
 from last_letter_lib.utils.math import Vector3
 
 from ..cpp_last_letter_lib.cpp_uav_utils import Airdata
+from ..cpp_last_letter_lib.cpp_uav_utils import UavState
 
 
 class Inputs:
@@ -81,122 +82,122 @@ class Inputs:
         return new_input
 
 
-class UavState:
-    position: Vector3 = None  # NED position
-    attitude: UnitQuaternion = None  # Attitude quaternion (from body to inertial)
-    velocity_linear: Vector3 = None  # Inertial velocities, body-frame
-    velocity_angular: Vector3 = None  # Body-frame angular velocity
-    thrusters_velocity: List[
-        float
-    ] = None  # Thruster rotational velocity (state), if applicable
+# class UavState:
+#     position: Vector3 = None  # NED position
+#     attitude: UnitQuaternion = None  # Attitude quaternion (from body to inertial)
+#     velocity_linear: Vector3 = None  # Inertial velocities, body-frame
+#     velocity_angular: Vector3 = None  # Body-frame angular velocity
+#     thrusters_velocity: List[
+#         float
+#     ] = None  # Thruster rotational velocity (state), if applicable
 
-    def __init__(
-        self,
-        position=Vector3(),
-        attitude=UnitQuaternion(),
-        velocity_linear=Vector3(),
-        velocity_angular=Vector3(),
-        thrusters_velocity=[],
-    ):
-        self.position = position
-        self.attitude = attitude
-        self.velocity_linear = velocity_linear
-        self.velocity_angular = velocity_angular
-        self.thrusters_velocity = thrusters_velocity
+#     def __init__(
+#         self,
+#         position=Vector3(),
+#         attitude=UnitQuaternion(),
+#         velocity_linear=Vector3(),
+#         velocity_angular=Vector3(),
+#         thrusters_velocity=[],
+#     ):
+#         self.position = position
+#         self.attitude = attitude
+#         self.velocity_linear = velocity_linear
+#         self.velocity_angular = velocity_angular
+#         self.thrusters_velocity = thrusters_velocity
 
-    def get_euler(self):
-        return self.attitude.to_euler()
+#     def get_euler(self):
+#         return self.attitude.to_euler()
 
-    def __repr__(self):
-        s = """
-        {}:
-        position={}
-        attitude={}
-        velocity_linear={}
-        velocity_angular={}
-        thrusters_velocity={}
-        """.format(
-            self.__class__.__name__,
-            repr(self.position),
-            repr(self.attitude.to_euler()),
-            repr(self.velocity_linear),
-            repr(self.velocity_angular),
-            self.thrusters_velocity,
-        )
-        return s
+#     def __repr__(self):
+#         s = """
+#         {}:
+#         position={}
+#         attitude={}
+#         velocity_linear={}
+#         velocity_angular={}
+#         thrusters_velocity={}
+#         """.format(
+#             self.__class__.__name__,
+#             repr(self.position),
+#             repr(self.attitude.to_euler()),
+#             repr(self.velocity_linear),
+#             repr(self.velocity_angular),
+#             self.thrusters_velocity,
+#         )
+#         return s
 
-    def __str__(self):
-        s = """
-        {}:
-        position={}
-        attitude={}
-        velocity_linear={}
-        OR magnitude/tilt/pan={}
-        velocity_angular={}
-        thrusters_velocity={}
-        """.format(
-            self.__class__.__name__,
-            str(self.position),
-            str(self.attitude.to_euler()),
-            str(self.velocity_linear),
-            str(Airdata.from_u(self.velocity_linear)),
-            str(self.velocity_angular),
-            self.thrusters_velocity,
-        )
-        return s
+#     def __str__(self):
+#         s = """
+#         {}:
+#         position={}
+#         attitude={}
+#         velocity_linear={}
+#         OR magnitude/tilt/pan={}
+#         velocity_angular={}
+#         thrusters_velocity={}
+#         """.format(
+#             self.__class__.__name__,
+#             str(self.position),
+#             str(self.attitude.to_euler()),
+#             str(self.velocity_linear),
+#             str(Airdata.from_u(self.velocity_linear)),
+#             str(self.velocity_angular),
+#             self.thrusters_velocity,
+#         )
+#         return s
 
-    def to_array(self, shape=None):
-        # Convert object to a 13+N x 1 numpy array
-        output = np.zeros(
-            [
-                13 + len(self.thrusters_velocity),
-            ]
-        )
-        if shape is None:
-            shape = output.shape
+#     def to_array(self, shape=None):
+#         # Convert object to a 13+N x 1 numpy array
+#         output = np.zeros(
+#             [
+#                 13 + len(self.thrusters_velocity),
+#             ]
+#         )
+#         if shape is None:
+#             shape = output.shape
 
-        output[0:3] = self.position.to_array()
-        output[3:7] = self.attitude.to_array()
-        output[7:10] = self.velocity_linear.to_array()
-        output[10:13] = self.velocity_angular.to_array()
-        if len(self.thrusters_velocity) > 0:
-            output[13:] = np.array(self.thrusters_velocity)
+#         output[0:3] = self.position.to_array()
+#         output[3:7] = self.attitude.to_array()
+#         output[7:10] = self.velocity_linear.to_array()
+#         output[10:13] = self.velocity_angular.to_array()
+#         if len(self.thrusters_velocity) > 0:
+#             output[13:] = np.array(self.thrusters_velocity)
 
-        return output.reshape(shape)
+#         return output.reshape(shape)
 
-    @classmethod
-    def from_array(cls, arr):
-        """
-        Crate a state object from a numpy array.
+#     @classmethod
+#     def from_array(cls, arr):
+#         """
+#         Crate a state object from a numpy array.
 
-        Assumes that the first 13 elements are the rigid body states and the
-        rest are motor velocities.
-        """
-        new_state = cls(
-            Vector3(arr[0], arr[1], arr[2]),
-            UnitQuaternion(arr[3], arr[4], arr[5], arr[6]),
-            Vector3(arr[7], arr[8], arr[9]),
-            Vector3(arr[10], arr[11], arr[12]),
-        )
-        if len(arr) > 13:
-            new_state.thrusters_velocity = arr[13:]
+#         Assumes that the first 13 elements are the rigid body states and the
+#         rest are motor velocities.
+#         """
+#         new_state = cls(
+#             Vector3(arr[0], arr[1], arr[2]),
+#             UnitQuaternion(arr[3], arr[4], arr[5], arr[6]),
+#             Vector3(arr[7], arr[8], arr[9]),
+#             Vector3(arr[10], arr[11], arr[12]),
+#         )
+#         if len(arr) > 13:
+#             new_state.thrusters_velocity = arr[13:]
 
-        return new_state
+#         return new_state
 
-    @classmethod
-    def from_uavstate(cls, state):
-        return copy.deepcopy(state)
+#     @classmethod
+#     def from_uavstate(cls, state):
+#         return copy.deepcopy(state)
 
-    def strip_thrusters(self):
-        """
-        Return a copy of this UavState but without the thrusters.
-        """
-        return UavState(
-            self.position,
-            self.attitude,
-            self.velocity_linear,
-            self.velocity_angular,
-        )
+#     def strip_thrusters(self):
+#         """
+#         Return a copy of this UavState but without the thrusters.
+#         """
+#         return UavState(
+#             self.position,
+#             self.attitude,
+#             self.velocity_linear,
+#             self.velocity_angular,
+#         )
 
 
 # @dataclass

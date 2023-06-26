@@ -96,7 +96,7 @@ namespace last_letter_lib
 		class Vector3
 		{
 		public:
-			Vector3(double x, double y, double z);
+			Vector3(double x = 0, double y = 0, double z = 0);
 			double get_x() const { return vector.x(); }
 			void set_x(double v) { vector.x() = v; }
 			double get_y() const { return vector.y(); }

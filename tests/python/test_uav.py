@@ -79,11 +79,11 @@ class TestUavState:
     def test_from_array(self):
         state = UavState.from_array([1, 2, 3, 1, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11])
         tests = []
-        tests.append(state.position == Vector3(1, 2, 3))
+        tests.append(np.all(state.position == [1, 2, 3]))
         tests.append(state.attitude == UnitQuaternion(1, 0, 0, 0))
-        tests.append(state.velocity_linear == Vector3(4, 5, 6))
-        tests.append(state.velocity_angular == Vector3(7, 8, 9))
-        tests.append(state.thrusters_velocity == [10, 11])
+        tests.append(np.all(state.velocity_linear == [4, 5, 6]))
+        tests.append(np.all(state.velocity_angular == [7, 8, 9]))
+        tests.append(np.all(state.thrusters_velocity == [10, 11]))
         assert np.all(tests)
 
 
