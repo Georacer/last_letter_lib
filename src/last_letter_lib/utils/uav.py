@@ -305,7 +305,7 @@ def calc_airdata_at_link(uav_airdata: Airdata, vel_ang_b: Vector3, pose_link: Po
     """
     body_wind = uav_airdata.to_u()
     link_wind = pose_link.orientation.conjugate() * body_wind + np.cross(
-        vel_ang_b.to_array(), pose_link.position.to_array()
+        vel_ang_b.to_array(), pose_link.position
     )
     # Clean up inconsistent .to_array() calls here.
     res = Airdata()

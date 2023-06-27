@@ -328,7 +328,6 @@ class PropellerStandardParameters(PropellerParameters):
 
 class PropellerStandard(Propeller):
     def __init__(self, desc):
-
         super().__init__(desc)
 
     def calc_coeff_thrust(self, ar):
@@ -372,7 +371,6 @@ class PropellerBladeElement(Propeller):
     parasitic_drag = 0.01  # Blade parasitic drag coefficient
 
     def __init__(self, desc):
-
         super().__init__(desc)
 
         if desc.pitch_nominal is not None:
@@ -811,9 +809,9 @@ class Thruster(DynamicSystem, Component, metaclass=ThrusterMeta):
     @property
     def velocity(self):
         """
-        Return NaN velocity as default for the thrusters that don't have an internal state.
+        Return zero velocity as default for the thrusters that don't have an internal state.
         """
-        return None
+        return 0
 
     @velocity.setter
     def velocity(self, omega):
@@ -1007,7 +1005,6 @@ class Motor(DynamicSystem, ABC):
     """Rotational inertia of the motor."""
 
     def __init__(self, x_0, u_0, desc):
-
         super().__init__(x_0, u_0)
         self.mass = desc.mass
         self.J_m = desc.J_m
@@ -1131,7 +1128,6 @@ class MotorElectric(Motor):
     """The idle current of the motor."""
 
     def __init__(self, desc):
-
         super().__init__(np.array([0]), np.zeros(2), desc)
 
         self.K_v = desc.Kv

@@ -587,6 +587,12 @@ namespace last_letter_lib
             return UnitQuaternion(res);
         }
 
+        UnitQuaternion UnitQuaternion::operator*=(const UnitQuaternion &other)
+        {
+            Quaterniond::operator*=(other);
+            return *this;
+        }
+
         std::string UnitQuaternion::to_str()
         {
             std::ostringstream oss;

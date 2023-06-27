@@ -532,15 +532,13 @@ class TestPose:
         pose = math.Pose()
         tests = []
         tests.append(isinstance(pose, math.Pose))
-        tests.append(
-            pose.position == math.Vector3()
-            and pose.orientation == math.UnitQuaternion()
-        )
+        tests.append(np.all(pose.position == math.Vector3().to_array()))
+        tests.append(pose.orientation == math.UnitQuaternion())
         assert np.all(tests)
 
     def test_transform_wrench(self):
         pose_bi = math.Pose(
-            position=math.Vector3(1, 0, 0),
+            position=math.Vector3(1, 0, 0).to_array(),
             orientation=math.UnitQuaternion(1, 0, 0, 0),
         )
         wrench_b = math.Wrench(force=[0, 1, 0], torque=[0, 0, 0])
@@ -554,7 +552,7 @@ class TestPose:
 
     def test_transform_wrench_2(self):
         pose_bi = math.Pose(
-            position=math.Vector3(1, 0, 0),
+            position=math.Vector3(1, 0, 0).to_array(),
             orientation=math.UnitQuaternion(1, 0, 1, 0),
         )
         wrench_b = math.Wrench(force=[1, 0, 0], torque=[1, 0, 0])
@@ -566,7 +564,7 @@ class TestPose:
 
     def test_inverse(self):
         pose_bi = math.Pose(
-            position=math.Vector3(1, 0, 0),
+            position=math.Vector3(1, 0, 0).to_array(),
             orientation=math.UnitQuaternion(1, 0, 1, 0),
         )
         wrench_b = math.Wrench(force=[1, 0, 0], torque=[1, 0, 0])
@@ -579,7 +577,7 @@ class TestPose:
 
     def test_inverse_2(self):
         pose_bi = math.Pose(
-            position=math.Vector3(1, 0, 0),
+            position=math.Vector3(1, 0, 0).to_array(),
             orientation=math.UnitQuaternion(1, 0, 0, 0),
         )
         wrench_b = math.Wrench(force=[1, 0, 0], torque=[0, 0, 0])

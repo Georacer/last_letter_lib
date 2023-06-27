@@ -167,6 +167,7 @@ namespace last_letter_lib
 			Vector4d q_dot(Vector3d omega);
 			bool is_unit() { return fabs(norm() - 1) < DOUBLE_EPS; }
 			UnitQuaternion operator*(const UnitQuaternion &) const;
+			UnitQuaternion operator*=(const UnitQuaternion &);
 			using Quaterniond::operator*; // Unmask the multiplication operator from Quaterniond.
 			friend last_letter_lib::math_utils::Vector3 operator*(const UnitQuaternion q, const last_letter_lib::math_utils::Vector3 v)
 			{

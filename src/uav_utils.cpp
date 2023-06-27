@@ -86,7 +86,7 @@ namespace last_letter_lib
 			double w = relWind.z();
 
 			airspeed = sqrt(pow(u, 2) + pow(v, 2) + pow(w, 2));
-			alpha = atan2(w, u);
+			alpha = atan2(w, fabs(u));
 			if (u == 0)
 			{
 				if (v == 0)

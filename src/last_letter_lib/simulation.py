@@ -171,7 +171,7 @@ class Aircraft:
                     ]
                 )
 
-        return Pose(build_vector3_from_array(com), UnitQuaternion())
+        return Pose(com, UnitQuaternion())
 
     def calc_components_inertia(self, components: list) -> np.array:
         """
@@ -182,19 +182,19 @@ class Aircraft:
             if c.inertial:
                 # Read the component position in the body frame and correct with the CoG position.
                 # This is because we want the inertia wrt CoG, not the aircraft frame.
-                pos = build_vector3_from_array(c.pose.position) - self.com
+                pos = c.pose.position - self.com
                 # Read the component orientation in the body frame
                 R_cb = EulerAngles(*c.pose.orientation).R_bi()
 
                 # Calculate inertia due to translation
                 inertia_t = np.zeros((3, 3))
                 # Collect the coordinate combinations
-                inertia_t[0, 0] = pos.y**2 + pos.z**2
-                inertia_t[0, 1] = inertia_t[1, 0] = -(pos.x * pos.y)
-                inertia_t[0, 2] = inertia_t[2, 0] = -(pos.x * pos.z)
-                inertia_t[1, 1] = pos.x**2 + pos.z**2
-                inertia_t[1, 2] = inertia_t[2, 1] = -(pos.y * pos.z)
-                inertia_t[2, 2] = pos.x**2 + pos.y**2
+                inertia_t[0, 0] = pos[1] ** 2 + pos[2] ** 2
+                inertia_t[0, 1] = inertia_t[1, 0] = -(pos[0] * pos[1])
+                inertia_t[0, 2] = inertia_t[2, 0] = -(pos[0] * pos[2])
+                inertia_t[1, 1] = pos[0] ** 2 + pos[2] ** 2
+                inertia_t[1, 2] = inertia_t[2, 1] = -(pos[1] * pos[2])
+                inertia_t[2, 2] = pos[0] ** 2 + pos[1] ** 2
                 # Multiply with the point mass
                 inertia_t *= c.inertial.mass
 
@@ -246,10 +246,10 @@ class Aircraft:
     @property
     def state(self):
         return UavState(
-            position=self.rigid_body.position,
-            attitude=self.rigid_body.orientation,
-            velocity_linear=self.rigid_body.velocity_linear,
-            velocity_angular=self.rigid_body.velocity_angular,
+            position=self.rigid_body.position.to_array(),
+            orientation=self.rigid_body.orientation,
+            velocity_linear=self.rigid_body.velocity_linear.to_array(),
+            velocity_angular=self.rigid_body.velocity_angular.to_array(),
             thrusters_velocity=[t.velocity for t in self.thrusters],
         )
 

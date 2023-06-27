@@ -33,11 +33,11 @@ namespace last_letter_lib
 
 	struct Environment_t
 	{
-		Vector3d wind;		// Wind velocity vector in in m/s, typically world frame
-		double density;		// in kg/m^3
-		double pressure;	// in mBar
-		double temperature; // in Kelvin
-		double gravity;		// in m/s^2
+		Vector3d wind{Vector3d()}; // Wind velocity vector in in m/s, typically world frame
+		double density{1.225};	   // in kg/m^3
+		double pressure{1013};	   // in mBar
+		double temperature{273};   // in Kelvin
+		double gravity{9.81};	   // in m/s^2
 	};
 
 	/////////

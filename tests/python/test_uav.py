@@ -92,7 +92,7 @@ def test_calc_airdata_at_link():
     Test the correct way to calculate the position error of an airdata boom.
     """
     probe_pose = Pose(
-        position=Vector3(0, 1, 0),
+        position=Vector3(0, 1, 0).to_array(),
         orientation=EulerAngles(0, 45, 0, in_degrees=True).to_quaternion(),
     )
     body_airdata = Airdata()

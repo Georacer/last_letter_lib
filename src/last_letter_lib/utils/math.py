@@ -653,23 +653,22 @@ class Pose:
     orientation: UnitQuaternion
     cpp_pose_: cpp_Pose
 
-    def __init__(self, position=Vector3(), orientation=UnitQuaternion()):
+    def __init__(self, position=np.array([0, 0, 0]), orientation=UnitQuaternion()):
         self.cpp_pose_ = cpp_Pose()
         self.cpp_pose_.position = position
-        self.cpp_pose_.orientation = orientation.to_array()
+        self.cpp_pose_.orientation = orientation
 
     @property
-    def position(self) -> Vector3:
+    def position(self) -> np.array:
         return self.cpp_pose_.position
 
     @position.setter
-    def position(self, v: Vector3):
+    def position(self, v: np.array):
         self.cpp_pose_.position = v
 
     @property
     def orientation(self) -> UnitQuaternion:
-        q = self.cpp_pose_.orientation
-        return UnitQuaternion(q[0], q[1], q[2], q[3])
+        return self.cpp_pose_.orientation
 
     @orientation.setter
     def orientation(self, q: UnitQuaternion):
@@ -693,15 +692,7 @@ class Pose:
         Define the inverse pose.
         """
         p_new = self.cpp_pose_.T
-        return Pose(
-            p_new.position,
-            UnitQuaternion(
-                p_new.orientation[0],
-                p_new.orientation[1],
-                p_new.orientation[2],
-                p_new.orientation[3],
-            ),
-        )
+        return Pose(p_new.position, p_new.orientation)
 
 
 def calc_poly_zero_crossing(poly_coeffs, xtol=0.01):

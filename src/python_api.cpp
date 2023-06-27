@@ -10,6 +10,7 @@
 #include "last_letter_lib/math_utils.hpp"
 #include "last_letter_lib/uav_utils.hpp"
 #include "last_letter_lib/prog_utils.hpp"
+#include "last_letter_lib/environment.hpp"
 #include "last_letter_lib/systems.hpp"
 
 namespace py = pybind11;
@@ -18,6 +19,7 @@ using Eigen::Matrix3d;
 using Eigen::Quaterniond;
 using Eigen::Vector3d;
 
+using last_letter_lib::Environment_t;
 using last_letter_lib::math_utils::EulerAngles;
 using last_letter_lib::math_utils::UnitQuaternion;
 using last_letter_lib::math_utils::Vector3;
@@ -129,9 +131,7 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
             "__mul__", [](const UnitQuaternion q, const Vector3 v)
             { return q * v; },
             py::is_operator())
-        // .def_static("from_euler", static_cast<void (UnitQuaternion::*)(EulerAngles)>(&UnitQuaternion::UnitQuaternion))
         .def_static("from_euler", unit_quaternion_from_euler_angles)
-        // .def_static("from_rotmat", &UnitQuaternion::UnitQuaternion<Matrix3d>)
         .def_static("from_rotmat", unit_quaternion_from_rotmat)
         // .def_static("from_two_vectors", &UnitQuaternion::UnitQuaternion<Vector3d, Vector3d, double>);
         .def("is_unit", &UnitQuaternion::is_unit)
@@ -166,8 +166,9 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
     py::class_<Pose>(m_uav_utils, "Pose")
         .def(py::init())
         .def("__matmul__", &Pose::operator*)
-        .def_property("position", &Pose::get_position_as_vector3, &Pose::set_position_from_vector3)
-        .def_property("orientation", &Pose::get_orientation_as_vector, &Pose::set_orientation_from_vector)
+        // .def_property("position", &Pose::get_position_as_vector3, &Pose::set_position_from_vector3)
+        .def_readwrite("position", &Pose::position)
+        .def_readwrite("orientation", &Pose::orientation)
         .def_property_readonly("T", &Pose::T);
     py::class_<Wrench_t>(m_uav_utils, "Wrench")
         .def(py::init<Vector3d, Vector3d>(), py::arg("force"), py::arg("torque"))
@@ -207,6 +208,7 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def_static("from_array", simstate_from_array)
         .def_static("from_uavstate", simstate_from_simstate)
         .def_property("position", &SimState_t::get_position, &SimState_t::set_position)
+        // Fix discrepancy between "attitude" property and "orientation" initialization argument
         .def_property("attitude", &SimState_t::get_orientation, &SimState_t::set_orientation)
         .def_property("velocity_linear", &SimState_t::get_velocity_linear, &SimState_t::set_velocity_linear)
         .def_property("velocity_angular", &SimState_t::get_velocity_angular, &SimState_t::set_velocity_angular)
@@ -233,4 +235,13 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def("update_parameters", &Component::update_parameters)
         .def_readwrite("pose", &Component::pose)
         .def_readwrite("inertial", &Component::inertial);
+
+    auto m_environment = m.def_submodule("cpp_environment", "last_letter_lib environment submodule");
+    py::class_<Environment_t>(m_environment, "EnvironmentData")
+        .def(py::init())
+        .def_readwrite("wind", &Environment_t::wind)
+        .def_readwrite("rho", &Environment_t::density)
+        .def_readwrite("pressure", &Environment_t::pressure)
+        .def_readwrite("temperature", &Environment_t::temperature)
+        .def_readwrite("gravity", &Environment_t::gravity);
 }

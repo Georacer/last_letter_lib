@@ -503,7 +503,9 @@ class Aerodynamic(Component):
         Calculate the aerodynamic wrench in the local airfoil frame
         """
         # Test if airspeed is zero
-        self._store_airdata(Airdata.from_state_environment(af_state, environment))
+        airdata = Airdata()
+        airdata.init_from_state_wind(af_state, environment.wind)
+        self._store_airdata(airdata)
         V_a = self.airdata.airspeed
         if V_a == 0:
             # If yes, then return zero wrench
@@ -532,25 +534,13 @@ class Aerodynamic(Component):
         af_state = copy.deepcopy(uav_state)
         # Transform the uav state and environment into the airfoil frame
         af_state.position += self.pose.orientation * self.pose.position
-        print(self.pose.orientation)
-        print(type(self.pose.orientation))
         af_state.attitude *= self.pose.orientation
-        linear_comp = (
-            UnitQuaternion(self.pose.orientation[0], self.pose.orientation[1:4])
-            * uav_state.velocity_linear.to_array()
-        )
-        af_state.velocity_linear = build_vector3_from_array(
-            linear_comp
-            + np.cross(
-                uav_state.velocity_angular.to_array(), self.pose.position.to_array()
-            )
+        linear_comp = self.pose.orientation * uav_state.velocity_linear
+        af_state.velocity_linear = linear_comp + np.cross(
+            uav_state.velocity_angular, self.pose.position
         )
         af_state.velocity_angular = (
-            UnitQuaternion(
-                self.pose.orientation.conjugate()[0],
-                self.pose.orientation.conjugate()[1:4],
-            )
-            * af_state.velocity_angular
+            self.pose.orientation.conjugate() * af_state.velocity_angular
         )
         wrench_airfoil = self.get_wrench_airfoil(af_state, environment, u)
         return self.pose @ wrench_airfoil
