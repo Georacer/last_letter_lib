@@ -2,13 +2,21 @@
 #define UAV_UTILS_
 
 #include <cstdio>
+#include <iomanip>
 #include <cmath>
 #include <unordered_map>
 #include <Eigen/Eigen>
 #include <random>
 
-using Eigen::Quaterniond;
+#include <last_letter_lib/math_utils.hpp>
+
+using Eigen::Matrix3d;
 using Eigen::Vector3d;
+using Eigen::Vector4d;
+using Eigen::VectorXd;
+
+using last_letter_lib::math_utils::UnitQuaternion;
+using last_letter_lib::math_utils::Vector3;
 
 namespace last_letter_lib
 {
@@ -20,33 +28,18 @@ namespace last_letter_lib
 		//////////////////
 
 		// Quaternion from ENU inertial frame to NED inertial frame
-		const Quaterniond q_enu_ned = Eigen::AngleAxis<double>(M_PI / 2, Vector3d::UnitZ()) *
-									  Eigen::AngleAxis<double>(M_PI, Vector3d::UnitX());
+		const UnitQuaternion q_enu_ned = UnitQuaternion(Eigen::AngleAxis<double>(M_PI / 2, Vector3d::UnitZ()) *
+														Eigen::AngleAxis<double>(M_PI, Vector3d::UnitX()));
 
-		const Quaterniond q_ned_enu = q_enu_ned.conjugate();
+		const UnitQuaternion q_ned_enu = q_enu_ned.conjugate();
 		// Quaternion from Gazebo Body frame to Aerospace Body frame
-		const Quaterniond q_bg_ba{Eigen::AngleAxis<double>(M_PI, Vector3d::UnitX())};
-		const Quaterniond q_ba_bg = q_bg_ba.conjugate();
+		const UnitQuaternion q_bg_ba{Quaterniond{Eigen::AngleAxis<double>(M_PI, Vector3d::UnitX())}};
+		const UnitQuaternion q_ba_bg = q_bg_ba.conjugate();
 
-		struct Geoid
+		struct Inertial
 		{
-			Geoid() : latitude(0), longitude(0), altitude(0), velocity(Vector3d::Zero()) {}
-			constexpr static double WGS84_Ra = 6378137.0; // Earth ellipsoid semi-major axis (alpha);
-			constexpr static double EARTH_flattening = 0.003352811;
-			constexpr static double WGS84_e2 = 0.006694380022901;
-			constexpr static double EARTH_Omega = 7.292115e-5;
-			constexpr static double EARTH_grav = 9.7803267714;
-			double latitude;
-			double longitude;
-			double altitude;
-			Vector3d velocity; // in m/s North, East, Up
-		};
-
-		struct Pose
-		{
-			Pose() : position(Vector3d::Zero()), orientation(Quaterniond::Identity()) {}
-			Vector3d position;
-			Quaterniond orientation;
+			double mass{0};
+			Matrix3d tensor{Matrix3d::Zero()};
 		};
 
 		struct Twist
@@ -56,11 +49,85 @@ namespace last_letter_lib
 			Vector3d angular;
 		};
 
-		struct Wrench_t
+		class Wrench_t
 		{
+		public:
 			Wrench_t() : force(Vector3d::Zero()), torque(Vector3d::Zero()) {}
+			Wrench_t(const Vector3d force_p, const Vector3d torque_p) : force(force_p), torque(torque_p) {}
+
+			Wrench_t operator+(const Wrench_t &w) const
+			{
+				auto res = Wrench_t();
+				res.force = force + w.force;
+				res.torque = torque + w.torque;
+				return res;
+			}
+			Wrench_t operator-(const Wrench_t &w) const
+			{
+				auto res = Wrench_t();
+				res.force = force - w.force;
+				res.torque = torque - w.torque;
+				return res;
+			}
+
+			Eigen::VectorXd to_array() const
+			{
+				Eigen::VectorXd v(6);
+				v << force(0), force(1), force(2),
+					torque(0), torque(1), torque(2);
+				return v;
+			}
+
 			Vector3d force;
 			Vector3d torque;
+		};
+
+		struct Pose
+		{
+			Pose() : position(Vector3d::Zero()), orientation(UnitQuaternion()) {}
+			Vector3d position;
+			UnitQuaternion orientation;
+			Pose T() const
+			{
+				Pose p = Pose();
+				p.position = this->orientation * this->position * -1;
+				p.orientation = this->orientation.conjugate();
+				return p;
+			}
+
+			Wrench_t operator*(const Wrench_t w) const
+			{
+				auto rot_force = orientation * w.force;
+				auto lever_arm = position.cross(rot_force);
+				auto rot_torque = orientation * w.torque;
+
+				return Wrench_t(rot_force, rot_torque + lever_arm);
+			}
+
+			// Used in Pybind11
+			void set_position_from_vector3(const Vector3 v)
+			{
+				position = v.vector;
+			}
+			Vector3 get_position_as_vector3()
+			{
+				return Vector3(position.x(), position.y(), position.z());
+			}
+			void set_orientation_from_vector(const Vector4d v)
+			{
+				orientation.w() = v(0);
+				orientation.x() = v(1);
+				orientation.y() = v(2);
+				orientation.z() = v(3);
+			}
+			Vector4d get_orientation_as_vector()
+			{
+				return Vector4d(
+					orientation.w(),
+					orientation.x(),
+					orientation.y(),
+					orientation.z());
+			}
 		};
 
 		typedef std::unordered_map<std::string, Wrench_t> LinkWrenchMap_t;
@@ -81,9 +148,55 @@ namespace last_letter_lib
 			Vector3d angular;
 		};
 
-		struct SimState_t
+		struct Geoid
 		{
+			Geoid() : latitude(0), longitude(0), altitude(0), velocity(Vector3d::Zero()) {}
+			constexpr static double WGS84_Ra = 6378137.0; // Earth ellipsoid semi-major axis (alpha);
+			constexpr static double EARTH_flattening = 0.003352811;
+			constexpr static double WGS84_e2 = 0.006694380022901;
+			constexpr static double EARTH_Omega = 7.292115e-5;
+			constexpr static double EARTH_grav = 9.7803267714;
+			double latitude;
+			double longitude;
+			double altitude;
+			Vector3d velocity; // in m/s North, East, Up
+		};
+
+		class SimState_t
+		{
+		public:
 			SimState_t() : rotorspeed(4, 0.01) {}
+			SimState_t(Vector3d position,
+					   UnitQuaternion orientation,
+					   Vector3d velocity_linear,
+					   Vector3d velocity_angular,
+					   std::vector<double> thrusters_velocity = std::vector<double>(0));
+			SimState_t(Vector3 position,
+					   UnitQuaternion orientation,
+					   Vector3 velocity_linear,
+					   Vector3 velocity_angular,
+					   std::vector<double> thrusters_velocity = std::vector<double>(0));
+			// Decode a SimState_t from a vector as
+			// 0-2: position
+			// 3-6: orientation quaternion
+			// 7-9: linear velocity
+			// 10-12: angular velocity
+			// 12-: thruster velocity
+			// This constructor is problematic because it doesn't contain all of the class elements,
+			// but is implemented for pickling the Python bound object.
+			SimState_t(const VectorXd);
+			SimState_t(const SimState_t &) = default;
+			// Inverse of the constructor from VectorXd.
+			VectorXd to_array();
+			SimState_t strip_thrusters();
+			Vector3d get_position() { return pose.position; }
+			void set_position(const Vector3d &v) { pose.position = v; }
+			UnitQuaternion get_orientation() { return pose.orientation; }
+			void set_orientation(const UnitQuaternion &q) { pose.orientation = q; }
+			Vector3d get_velocity_linear() { return velocity.linear; }
+			void set_velocity_linear(const Vector3d &v) { velocity.linear = v; }
+			Vector3d get_velocity_angular() { return velocity.angular; }
+			void set_velocity_angular(const Vector3d &v) { velocity.angular = v; }
 			Geoid geoid;
 			Pose pose;						// NED
 			Twist velocity;					// NED
@@ -115,18 +228,40 @@ namespace last_letter_lib
 		class Airdata
 		{
 		public:
-			Airdata();
-			~Airdata();
-			Vector3d relWind; // relative wind vector elements
-			// double u_r, v_r, w_r; // relative wind vector elements
-			double airspeed; // relative airspeed
-			double alpha;	 // angle of attach
-			double beta;	 // angle of sideslip
-			void calcAirData(Vector3d velBody, Vector3d velWind);
-		};
+			Airdata(double airspeed_p = 0, double alpha_p = 0, double beta_p = 0)
+				: airspeed(airspeed_p), alpha(alpha_p), beta(beta_p){};
+			~Airdata(){};
+			/*
+			Calculate the relative air data from inertial and wind speeds
 
-		Vector3d getAirData(Vector3d speeds);
-		Vector3d getVelocityFromAirdata(Vector3d airdata);
+			INPUTS:
+				v_b: Inertial velocity, body-frame
+				v_w: Wind (air-mass) velocity, body-frame
+
+			OUTPUTS:
+				airspeed: The norm of the relative wind
+				alpha: The angle of attack
+				beta: The angle of sideslip
+			*/
+			void init_from_velocity(Vector3d velBody, Vector3d velWind = Vector3d::Zero());
+			// Calculate airdata given the UAV state and the environment data.
+			void init_from_state_wind(SimState_t, Vector3d);
+			/*
+			Create rotation matrix S, which transforms from body frame to wind frame
+			Taken from Aircraft Control and Simulation, Stevens Lewis, p.63
+			*/
+			Eigen::Matrix3d S_bw();
+			// Create rotation matrix S^T, which transforms from wind frame to body frame
+			Eigen::Matrix3d S_wb();
+			// Convert airdata into body-frame velocities
+			Vector3d to_velocity();
+			Vector3d to_vector3d() { return Vector3d(airspeed, alpha, beta); }
+			std::string str();
+
+			double airspeed{0}; // relative airspeed
+			double alpha{0};	// angle of attach
+			double beta{0};		// angle of sideslip
+		};
 
 		////////////////////////////
 		// Kinematic Transformations
@@ -144,20 +279,20 @@ namespace last_letter_lib
 		private:
 		public:
 			///////////
-			//Variables
+			// Variables
 			double P, I, D, satU, satL, Ts, Tau, trim;
 			double Iterm, Iprev, Eprev, Uprev, Dprev;
 			double output;
 			///////////
-			//Functions
+			// Functions
 
-			//Constructor
+			// Constructor
 			PID(double Pi, double Ii, double Di, double satUi, double satLi, double trim, double Tsi, double Ni);
 
-			//Destructor
+			// Destructor
 			~PID();
 
-			//Main step
+			// Main step
 			double step(double error);
 			double step(double error, double dt);
 			double step(double error, double dt, double derivative);
@@ -168,22 +303,22 @@ namespace last_letter_lib
 		{
 		public:
 			///////////
-			//Variables
+			// Variables
 			double P, I, D, satU, satL, Ts, Tau, trim;
 			double Pinit, Iinit, Dinit;
 			double Iterm, Iprev, Eprev, Uprev, Dprev;
 			double Ierror, bumplessI1, bumplessI2, trErr;
 			double output;
 			///////////
-			//Functions
+			// Functions
 
-			//Constructor
+			// Constructor
 			APID(double Pi, double Ii, double Di, double satUi, double satLi, double trim, double Tsi, double Ni);
 
-			//Destructor
+			// Destructor
 			~APID();
 
-			//Main step
+			// Main step
 			double step(double error, bool track, double trInput);
 			void init(void);
 		};
@@ -193,17 +328,17 @@ namespace last_letter_lib
 		/////////////////////////////
 
 		/**
- * [WGS84_RN Calculate the curvature of the Earth in the prime vertical
- * @param  lat The latitude in degrees
- * @return     RN - radius corresponding to curvature in meters
- */
+		 * [WGS84_RN Calculate the curvature of the Earth in the prime vertical
+		 * @param  lat The latitude in degrees
+		 * @return     RN - radius corresponding to curvature in meters
+		 */
 		double WGS84_RN(double lat);
 
 		/**
- * [WGS84_RM Calculate the curvature of the Earth in the meridian
- * @param  lat The latitude in degrees
- * @return     RM - radius corresponding to curvature in meters
- */
+		 * [WGS84_RM Calculate the curvature of the Earth in the meridian
+		 * @param  lat The latitude in degrees
+		 * @return     RM - radius corresponding to curvature in meters
+		 */
 		double WGS84_RM(double lat);
 
 		/////////////////////////////
@@ -211,16 +346,16 @@ namespace last_letter_lib
 		/////////////////////////////
 
 		/**
- * @brief Get latitude and longitude coordinates fromlocal position.
- * @details Taken from https://github.com/PX4/PX4-SITL_gazebo/blob/97106007eb5c934b902a5329afb55b45e94d5063/include/common.h
- * Makes the small-angle assumption and disregards altitude.
- *
- * @param pos_north Local position North
- * @param pos_east Local position East
- * @param lat_home Home (initialization) latitude, in degrees
- * @param lon_home Home (initialization) longitude, in degrees
- * @return std::pair<double, double> The new (lat, lon) coordinates, in degrees
- */
+		 * @brief Get latitude and longitude coordinates fromlocal position.
+		 * @details Taken from https://github.com/PX4/PX4-SITL_gazebo/blob/97106007eb5c934b902a5329afb55b45e94d5063/include/common.h
+		 * Makes the small-angle assumption and disregards altitude.
+		 *
+		 * @param pos_north Local position North
+		 * @param pos_east Local position East
+		 * @param lat_home Home (initialization) latitude, in degrees
+		 * @param lon_home Home (initialization) longitude, in degrees
+		 * @return std::pair<double, double> The new (lat, lon) coordinates, in degrees
+		 */
 		std::pair<double, double> reproject(const double pos_north,
 											const double pos_east,
 											const double lat_home,

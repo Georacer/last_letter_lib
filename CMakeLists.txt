@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.15)
 project(last_letter_lib VERSION 2.1.0)
 
 # Set compiler standards
@@ -17,7 +17,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# Find dependence
+# Find dependences
 # find_package(ament_cmake REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
 
@@ -25,6 +25,11 @@ find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(LAPACK REQUIRED)
 
 # find_package(NLopt REQUIRED) # Will enable later with trimmer
+find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+message(STATUS "Current Python site-packages dir: ${Python3_SITELIB}")
+find_package(pybind11 PATHS ${Python3_SITELIB}/pybind11/share/cmake/pybind11 CONFIG REQUIRED)
+
+# add_subdirectory(external/pybind11)
 
 # Declare and compile the yaml-cpp project
 include(ExternalProject)
@@ -69,6 +74,7 @@ add_library(last_letter_lib SHARED
   src/uav_utils.cpp
   src/geo_mag_declination.cpp
   src/prog_utils.cpp
+  src/systems.cpp
   src/environment.cpp
   src/gravity.cpp
   src/aerodynamics.cpp
@@ -90,6 +96,11 @@ target_link_libraries(last_letter_lib
 # target_link_libraries(lib_trimmer
 # ${NLOPT_LIBRARIES}
 # lib_uav_model)
+list(APPEND pybind11_sources
+  src/python_api.cpp
+)
+pybind11_add_module(cpp_last_letter_lib ${pybind11_sources})
+target_link_libraries(cpp_last_letter_lib PRIVATE last_letter_lib)
 
 # Copy data files to home folder
 # file(COPY last_letter_models DESTINATION $ENV{HOME}) # Deprecated, using new models folder
@@ -129,12 +140,15 @@ list(APPEND test_sources
   tests/cpp/test_prog_utils.cpp
   tests/cpp/test_uav_utils.cpp
   tests/cpp/test_math_utils.cpp
+  tests/cpp/test_systems.cpp
   tests/cpp/test_environment.cpp
   tests/cpp/test_aerodynamics.cpp
   tests/cpp/test_propulsion.cpp
   tests/cpp/test_gravity.cpp
   tests/cpp/test_dynamics.cpp
   tests/cpp/test_uav_model.cpp
+
+  # tests/cpp/test_pybind.cpp
 )
 add_executable(all_tests ${test_sources})
 target_include_directories(all_tests PUBLIC

@@ -20,14 +20,17 @@ from typing import List
 from typing import Optional
 
 import numpy as np
+import yaml
 from pydantic import Field
 from scipy.optimize import minimize_scalar
 
 from last_letter_lib.environment import EnvironmentData
 from last_letter_lib.systems import Component
 from last_letter_lib.systems import ComponentParameters
+from last_letter_lib.utils.math import UnitQuaternion
 from last_letter_lib.utils.math import Vector3
 from last_letter_lib.utils.math import Wrench
+from last_letter_lib.utils.math import build_vector3_from_array
 from last_letter_lib.utils.math import sigmoid
 from last_letter_lib.utils.uav import Airdata
 from last_letter_lib.utils.uav import Inputs
@@ -72,7 +75,9 @@ def calc_max_l_d(Cl_coeffs, Cd_coeffs, xtol=0.0001):
 
     try:
         optim_res = minimize_scalar(cost_function, method=method, options=options)
-    except RuntimeWarning:  # Ensure there is no number overflow warning, signifying failure
+    except (
+        RuntimeWarning
+    ):  # Ensure there is no number overflow warning, signifying failure
         raise RuntimeError("Errors occurred during optimization.")
     if abs(optim_res.fun) > glide_ratio_bounds:
         optim_res.success = False
@@ -275,8 +280,9 @@ class Aerodynamic(Component):
         """
 
         self.params = desc
-
-        super().__init__(desc)
+        yaml_desc = yaml.load(desc.json(), Loader=yaml.SafeLoader)
+        Component.__init__(self, desc.name)
+        self.initialize(yaml.dump(yaml_desc))
 
     def _lift_coeff_alpha(self, alpha):
         s = sigmoid(alpha, self.params.alpha_stall, self.params.stall_width)
@@ -292,7 +298,7 @@ class Aerodynamic(Component):
         """
         alpha = self.airdata.alpha
         beta = self.airdata.beta
-        qn = af_state.velocity_angular.y * self.params.c / (2 * self.airdata.airspeed)
+        qn = af_state.velocity_angular[1] * self.params.c / (2 * self.airdata.airspeed)
         c_lift = (
             self._lift_coeff_alpha(alpha)
             + np.polyval(self.params.c_L_beta, abs(beta))
@@ -323,7 +329,7 @@ class Aerodynamic(Component):
         if beta < -np.pi / 2:
             beta = -np.pi - beta
 
-        qn = af_state.velocity_angular.y * self.params.c / (2 * self.airdata.airspeed)
+        qn = af_state.velocity_angular[1] * self.params.c / (2 * self.airdata.airspeed)
         deltae = u[1]
         drag_coeff = (
             self._drag_coeff_alpha(alpha)
@@ -497,11 +503,13 @@ class Aerodynamic(Component):
         Calculate the aerodynamic wrench in the local airfoil frame
         """
         # Test if airspeed is zero
-        self._store_airdata(Airdata.from_state_environment(af_state, environment))
+        airdata = Airdata()
+        airdata.init_from_state_wind(af_state, environment.wind)
+        self._store_airdata(airdata)
         V_a = self.airdata.airspeed
         if V_a == 0:
             # If yes, then return zero wrench
-            return Wrench()
+            return Wrench(np.zeros((3, 1)), np.zeros((3, 1)))
 
         # Collect aerodynamic inputs
         u = [
@@ -510,9 +518,9 @@ class Aerodynamic(Component):
             u.delta_r * self.params.delta_r_max,
         ]
         force_wind = self.calc_forces(af_state, environment, u)
-        force = Vector3.from_array(self.airdata.S_wb @ force_wind.to_array())
+        force = self.airdata.S_wb @ force_wind.to_array()
         torque = self.calc_moments(af_state, environment, u)
-        return Wrench(force, torque)
+        return Wrench(force, torque.to_array())
 
     def get_wrench(
         self, uav_state: UavState, environment: EnvironmentData, u: Inputs
@@ -527,11 +535,9 @@ class Aerodynamic(Component):
         # Transform the uav state and environment into the airfoil frame
         af_state.position += self.pose.orientation * self.pose.position
         af_state.attitude *= self.pose.orientation
-        af_state.velocity_linear = Vector3.from_array(
-            self.pose.orientation.conjugate() * uav_state.velocity_linear.to_array()
-            + np.cross(
-                uav_state.velocity_angular.to_array(), self.pose.position.to_array()
-            )
+        linear_comp = self.pose.orientation * uav_state.velocity_linear
+        af_state.velocity_linear = linear_comp + np.cross(
+            uav_state.velocity_angular, self.pose.position
         )
         af_state.velocity_angular = (
             self.pose.orientation.conjugate() * af_state.velocity_angular

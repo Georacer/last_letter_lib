@@ -19,6 +19,7 @@ from last_letter_lib import simulation as sim
 from last_letter_lib import systems
 from last_letter_lib.utils.math import EulerAngles
 from last_letter_lib.utils.math import Vector3
+from last_letter_lib.utils.math import build_vector3_from_array
 from last_letter_lib.utils.uav import Inputs
 from last_letter_lib.utils.uav import UavState
 
@@ -210,14 +211,14 @@ class TestAircraft:
             ac.step(u, dt)
             t += dt
 
-        assert ac.state.position.z > 0
+        assert ac.state.position[2] > 0
 
     def test_glide(self, build_desc_aircraft):
         ac = sim.Aircraft(build_desc_aircraft)
         vel = 15
         state = ac.state
         state.attitude = EulerAngles(pitch=-10, in_degrees=True).to_quaternion()
-        state.velocity_linear = Vector3(vel, 0, 0)
+        state.velocity_linear = np.array([vel, 0, 0])
         ac.reset(state)
         u = Inputs(0, 0, 0, [0])
         dt = 0.1
@@ -228,23 +229,23 @@ class TestAircraft:
 
         tests = []
         # Position is reasonable
-        tests.append(ac.state.position.x > vel * t_end / 2)
-        tests.append(abs(ac.state.position.y) < 1)
-        tests.append(ac.state.position.z > 0)
+        tests.append(ac.state.position[0] > vel * t_end / 2)
+        tests.append(abs(ac.state.position[1]) < 1)
+        tests.append(ac.state.position[2] > 0)
         # Angles are reasonable
         angles = ac.state.attitude.to_euler()
         tests.append(angles.pitch < 0)
         tests.append(abs(angles.roll) < np.deg2rad(30))
         tests.append(abs(angles.yaw) < np.deg2rad(30))
         # Velocity is reasonable
-        tests.append(ac.state.velocity_linear.x > vel / 2)
-        tests.append(abs(ac.state.velocity_linear.y) < 2)
-        tests.append(ac.state.velocity_linear.z > 0)
-        tests.append(ac.state.velocity_linear.z < vel / 2)
+        tests.append(ac.state.velocity_linear[0] > vel / 2)
+        tests.append(abs(ac.state.velocity_linear[1]) < 2)
+        tests.append(ac.state.velocity_linear[2] > 0)
+        tests.append(ac.state.velocity_linear[2] < vel / 2)
         # Angular velocity is close to 0
-        tests.append(abs(ac.state.velocity_angular.x) < 0.1)
-        tests.append(abs(ac.state.velocity_angular.y) < 0.1)
-        tests.append(abs(ac.state.velocity_angular.z) < 0.1)
+        tests.append(abs(ac.state.velocity_angular[0]) < 0.1)
+        tests.append(abs(ac.state.velocity_angular[1]) < 0.1)
+        tests.append(abs(ac.state.velocity_angular[2]) < 0.1)
         assert np.all(tests)
 
     def test_roll(self, build_desc_aircraft):
@@ -252,7 +253,7 @@ class TestAircraft:
         vel = 15
         state = ac.state
         state.attitude = EulerAngles(pitch=-10, in_degrees=True).to_quaternion()
-        state.velocity_linear = Vector3(vel, 0, 0)
+        state.velocity_linear = np.array([vel, 0, 0])
         ac.reset(state)
         u = Inputs(0.5, 0, 0, [0])
         dt = 0.1
@@ -263,22 +264,22 @@ class TestAircraft:
 
         tests = []
         # Position is reasonable
-        tests.append(ac.state.position.x > vel * t_end / 2)
-        tests.append(ac.state.position.y > 0)
-        tests.append(ac.state.position.z > 0)
+        tests.append(ac.state.position[0] > vel * t_end / 2)
+        tests.append(ac.state.position[1] > 0)
+        tests.append(ac.state.position[2] > 0)
         # Angles are reasonable
         angles = ac.state.attitude.to_euler()
         tests.append(angles.pitch < 0)
         tests.append(0 < angles.roll < np.deg2rad(60))
         tests.append(0 < angles.yaw < np.deg2rad(30))
         # Velocity is reasonable
-        tests.append(ac.state.velocity_linear.x > vel / 2)
-        tests.append(abs(ac.state.velocity_linear.y) < 2)
-        tests.append(abs(ac.state.velocity_linear.z) < 1)
+        tests.append(ac.state.velocity_linear[0] > vel / 2)
+        tests.append(abs(ac.state.velocity_linear[1]) < 2)
+        tests.append(abs(ac.state.velocity_linear[2]) < 1)
         # Angular velocity is reasonable
-        tests.append(ac.state.velocity_angular.x > 0)
-        tests.append(abs(ac.state.velocity_angular.y) < 0.1)
-        tests.append(abs(ac.state.velocity_angular.z) < 0.5)
+        tests.append(ac.state.velocity_angular[0] > 0)
+        tests.append(abs(ac.state.velocity_angular[1]) < 0.1)
+        tests.append(abs(ac.state.velocity_angular[2]) < 0.5)
         assert np.all(tests)
 
     def test_pitch(self, build_desc_aircraft):
@@ -286,7 +287,7 @@ class TestAircraft:
         vel = 15
         state = ac.state
         state.attitude = EulerAngles(pitch=-10, in_degrees=True).to_quaternion()
-        state.velocity_linear = Vector3(vel, 0, 0)
+        state.velocity_linear = np.array([vel, 0, 0])
         ac.reset(state)
         u = Inputs(0, 0.5, 0, [0])
         dt = 0.1
@@ -297,22 +298,22 @@ class TestAircraft:
 
         tests = []
         # Position is reasonable
-        tests.append(ac.state.position.x > vel * t_end / 2)
-        tests.append(abs(ac.state.position.y) < 1)
-        tests.append(abs(ac.state.position.z) < vel * t_end / 2)
+        tests.append(ac.state.position[0] > vel * t_end / 2)
+        tests.append(abs(ac.state.position[1]) < 1)
+        tests.append(abs(ac.state.position[2]) < vel * t_end / 2)
         # Angles are reasonable
         angles = ac.state.attitude.to_euler()
         tests.append(0 < angles.pitch < np.deg2rad(90))
         tests.append(abs(angles.roll) < np.deg2rad(10))
         tests.append(abs(angles.yaw) < np.deg2rad(10))
         # Velocity is reasonable
-        tests.append(ac.state.velocity_linear.x > vel / 2)
-        tests.append(abs(ac.state.velocity_linear.y) < 2)
-        tests.append(0 < ac.state.velocity_linear.z < vel / 2)
+        tests.append(ac.state.velocity_linear[0] > vel / 2)
+        tests.append(abs(ac.state.velocity_linear[1]) < 2)
+        tests.append(0 < ac.state.velocity_linear[2] < vel / 2)
         # Angular velocity is reasonable
-        tests.append(abs(ac.state.velocity_angular.x) < 0.1)
-        tests.append(ac.state.velocity_angular.y > 0.1)
-        tests.append(abs(ac.state.velocity_angular.z) < 0.1)
+        tests.append(abs(ac.state.velocity_angular[0]) < 0.1)
+        tests.append(ac.state.velocity_angular[1] > 0.1)
+        tests.append(abs(ac.state.velocity_angular[2]) < 0.1)
         assert np.all(tests)
 
     def test_thruster_1(self, build_desc_aircraft):
@@ -321,19 +322,19 @@ class TestAircraft:
         dt = 0.1
         ac.step(u, dt)
 
-        assert ac.acceleration_linear.x > 0
-        assert ac.acceleration_linear.y == pytest.approx(0)
-        assert ac.acceleration_linear.z > 0
-        assert ac.acceleration_angular.x > 0
-        assert ac.acceleration_angular.y == pytest.approx(0)
-        assert ac.acceleration_angular.z > 0
+        assert ac.acceleration_linear[0] > 0
+        assert ac.acceleration_linear[1] == pytest.approx(0)
+        assert ac.acceleration_linear[2] > 0
+        assert ac.acceleration_angular[0] > 0
+        assert ac.acceleration_angular[1] == pytest.approx(0)
+        assert ac.acceleration_angular[2] > 0
 
     def test_thruster_2(self, build_desc_aircraft):
         ac = sim.Aircraft(build_desc_aircraft)
         vel = 15
         state = ac.state
         state.attitude = EulerAngles(pitch=-10, in_degrees=True).to_quaternion()
-        state.velocity_linear = Vector3(vel, 0, 0)
+        state.velocity_linear = np.array([vel, 0, 0])
         ac.reset(state)
         u = Inputs(0, 0, 0, [0])
         dt = 0.1
@@ -352,5 +353,5 @@ class TestAircraft:
         state_2 = UavState.from_uavstate(ac.state)
 
         tests = []
-        tests.append(state_1.velocity_linear.x < state_2.velocity_linear.x)
+        tests.append(state_1.velocity_linear[0] < state_2.velocity_linear[0])
         assert np.all(tests)

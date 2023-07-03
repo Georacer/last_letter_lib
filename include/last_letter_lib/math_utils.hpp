@@ -2,15 +2,20 @@
 #define MATH_UTILS_
 
 #include <cstdio>
+#include <iomanip>
 #include <Eigen/Eigen>
 #include <cmath>
 
 #define R_earth 6378137.0
 #define f_earth 1.0 / 298.257223563
 #define e_earth sqrt(2.0 * f_earth - f_earth * f_earth)
+#define DOUBLE_EPS 1e-9
 
+using Eigen::Matrix3d;
+using Eigen::Matrix4d;
 using Eigen::Quaterniond;
 using Eigen::Vector3d;
+using Eigen::Vector4d;
 
 extern "C"
 {
@@ -30,12 +35,12 @@ namespace last_letter_lib
 		// Functions
 
 		template <typename T>
-		T rad_to_deg(T angle)
+		double rad_to_deg(T angle)
 		{
 			return angle * 180 / M_PI;
 		}
 		template <typename T>
-		T deg_to_rad(T angle)
+		double deg_to_rad(T angle)
 		{
 			return angle * M_PI / 180;
 		}
@@ -87,6 +92,116 @@ namespace last_letter_lib
 
 		//////////
 		// Classes
+
+		class Vector3
+		{
+		public:
+			Vector3(double x = 0, double y = 0, double z = 0);
+			double get_x() const { return vector.x(); }
+			void set_x(double v) { vector.x() = v; }
+			double get_y() const { return vector.y(); }
+			void set_y(double v) { vector.y() = v; }
+			double get_z() const { return vector.z(); }
+			void set_z(double v) { vector.z() = v; }
+			Vector3d to_array() const { return vector; }
+			std::vector<double> to_vector() const
+			{
+				return std::vector<double>{vector.x(), vector.y(), vector.z()};
+			}
+			double norm() const
+			{
+				return vector.norm();
+			}
+			Vector3 operator+(const Vector3 &v) const;
+			Vector3 &operator+=(const Vector3 &v);
+			Vector3 operator-() const;
+			Vector3 operator-(const Vector3 &v) const;
+			Vector3 &operator-=(const Vector3 &v);
+			Vector3 operator*(double c) const;
+			Vector3 &operator*=(double c);
+			friend Vector3 operator*(double c, const Vector3 &v)
+			{
+				Vector3d res = c * v.vector;
+				return Vector3(res.x(), res.y(), res.z());
+			}
+			bool operator==(const Vector3 &v) const;
+			double operator[](const size_t idx) const;
+			std::string to_str() const;
+			std::string repr() const;
+
+			Vector3d vector{0, 0, 0};
+		};
+
+		class EulerAngles;
+
+		class UnitQuaternion : public Quaterniond
+		{
+		public:
+			UnitQuaternion(double w = 1, double x = 0, double y = 0, double z = 0) : Quaterniond(w, x, y, z) { normalize(); }
+			UnitQuaternion(Quaterniond q) : Quaterniond(q) {}
+			UnitQuaternion(EulerAngles);
+			UnitQuaternion(Matrix3d R) : Quaterniond(R) { normalize(); }
+			UnitQuaternion(Vector3d, Vector3d, double eps = 1e-5);
+			double get_w() const { return w(); }
+			void set_w(double v) { w() = v; }
+			double get_x() const { return x(); }
+			void set_x(double v) { x() = v; }
+			double get_y() const { return y(); }
+			void set_y(double v) { y() = v; }
+			double get_z() const { return z(); }
+			void set_z(double v) { z() = v; }
+			Vector4d get_coeffs() const { return Vector4d(w(), x(), y(), z()); }
+			double real() { return this->w(); }
+			Vector3d imag() { return Vector3d(this->x(), this->y(), this->z()); }
+			UnitQuaternion flipped() { return UnitQuaternion(-this->w(), this->x(), this->y(), this->z()); }
+			UnitQuaternion conjugate() const;
+			Matrix4d to_prodmat();
+			EulerAngles to_euler();
+			Vector3d unitX();
+			Vector3d unitY();
+			Vector3d unitZ();
+			// Matrix3d R_ib() { return toRotationMatrix(); }
+			// Matrix3d R_bi() { return inverse().toRotationMatrix(); }
+			Matrix3d R_ib() { return inverse().toRotationMatrix(); }
+			Matrix3d R_bi() { return toRotationMatrix(); }
+			Vector4d q_dot(Vector3d omega);
+			bool is_unit() { return fabs(norm() - 1) < DOUBLE_EPS; }
+			UnitQuaternion operator*(const UnitQuaternion &) const;
+			UnitQuaternion operator*=(const UnitQuaternion &);
+			using Quaterniond::operator*; // Unmask the multiplication operator from Quaterniond.
+			friend last_letter_lib::math_utils::Vector3 operator*(const UnitQuaternion q, const last_letter_lib::math_utils::Vector3 v)
+			{
+				Vector3d res = q * v.vector;
+				return last_letter_lib::math_utils::Vector3(res.x(), res.y(), res.z());
+			}
+			std::string to_str();
+		};
+
+		class EulerAngles
+		{
+		public:
+			EulerAngles(double roll_p = 0, double pitch_p = 0, double yaw_p = 0, bool in_degrees = false);
+			EulerAngles(UnitQuaternion);
+			EulerAngles(Matrix3d R);
+			bool operator==(const EulerAngles) const;
+			bool operator==(const Vector3d) const;
+			Vector3d to_vector();
+			UnitQuaternion to_quaternion();
+			Matrix3d R_roll();
+			Matrix3d R_pitch();
+			Matrix3d R_yaw();
+			Matrix3d R_bi();
+			Matrix3d R_ib();
+			Matrix3d T_eb();
+			Matrix3d T_be();
+			std::string to_str();
+
+			double roll;
+			double pitch;
+			double yaw;
+		};
+
+		EulerAngles build_euler_from_vector();
 
 		class Polynomial
 		{
@@ -168,13 +283,13 @@ namespace last_letter_lib
 		{
 		public:
 			///////////
-			//Variables
+			// Variables
 			double *alpha, *beta;
 			double *outputHist, *inputHist;
 			int alphaOrder, betaOrder;
 
 			///////////
-			//Functions
+			// Functions
 
 			// Constructor
 			discrTF(double *alphaIn, int alphaOrderIn, double *betaIn, int betaOrderIn);
@@ -188,8 +303,6 @@ namespace last_letter_lib
 			// main step
 			double step(double input);
 		};
-
-		Vector3d getAirData(Vector3d speeds);
 
 		void WGS84_NM(double lat, double *NE, double *ME);
 

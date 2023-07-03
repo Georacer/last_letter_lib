@@ -184,9 +184,9 @@ class TestAerodynamic:
         build_environment_data,
     ):
         airfoil = build_airfoil_simple
-        airfoil._store_airdata(
-            Airdata.from_state_environment(build_uav_state, build_environment_data)
-        )
+        airdata = Airdata()
+        airdata.init_from_state_wind(build_uav_state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         c_L = airfoil.lift_coeff(
             build_uav_state, build_environment_data, build_aero_inputs
         )
@@ -200,9 +200,9 @@ class TestAerodynamic:
         build_environment_data,
     ):
         airfoil = build_airfoil_simple
-        airfoil._store_airdata(
-            Airdata.from_state_environment(build_uav_state, build_environment_data)
-        )
+        airdata = Airdata()
+        airdata.init_from_state_wind(build_uav_state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         c_d = airfoil.drag_coeff(
             build_uav_state, build_environment_data, build_aero_inputs
         )
@@ -216,21 +216,27 @@ class TestAerodynamic:
         build_environment_data,
     ):
         airfoil = build_airfoil_simple
-        airfoil._store_airdata(
-            Airdata.from_state_environment(build_uav_state, build_environment_data)
-        )
+        airdata = Airdata()
+        airdata.init_from_state_wind(build_uav_state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         c_l_1 = airfoil.lift_coeff(
             build_uav_state, build_environment_data, build_aero_inputs
         )
         # Make a state in higher AoA
         airdata = Airdata(20, np.deg2rad(10), 0)
         airfoil._store_airdata(airdata)
-        state_2 = UavState(Vector3(), UnitQuaternion(), airdata.to_u(), Vector3())
+        v = airdata.to_u()
+        state_2 = UavState(
+            Vector3(), UnitQuaternion(), Vector3(v[0], v[1], v[2]), Vector3()
+        )
         c_l_2 = airfoil.lift_coeff(state_2, build_environment_data, build_aero_inputs)
         # Make a state post stall
         airdata = Airdata(20, airfoil.params.alpha_stall + np.deg2rad(10), 0)
         airfoil._store_airdata(airdata)
-        state_3 = UavState(Vector3(), UnitQuaternion(), airdata.to_u(), Vector3())
+        v = airdata.to_u()
+        state_3 = UavState(
+            Vector3(), UnitQuaternion(), Vector3(v[0], v[1], v[2]), Vector3()
+        )
         c_l_3 = airfoil.lift_coeff(state_3, build_environment_data, build_aero_inputs)
 
         tests = []
@@ -252,35 +258,40 @@ class TestAerodynamic:
         """
         airfoil = build_airfoil_simple
         state = build_uav_state
-        state.velocity_linear.x = 5  # Aircraft is going forward with 0 pitch.
-        state.velocity_linear.z = 5  # Aircraft is descending with 0 pitch.
-        airfoil._store_airdata(
-            Airdata.from_state_environment(state, build_environment_data)
-        )
+        new_velocity = np.array([20, 0, 0])
+        new_velocity[0] = 5  # Aircraft is going forward with 0 pitch.
+        new_velocity[2] = 5  # Aircraft is descending with 0 pitch.
+        state.velocity_linear = new_velocity
+        airdata = Airdata()
+        airdata.init_from_state_wind(state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         c_d_1 = airfoil.drag_coeff(state, build_environment_data, build_aero_inputs)
         assert c_d_1 > 0
 
-        state.velocity_linear.x = 5  # Aircraft is going forward with 0 pitch.
-        state.velocity_linear.z = -5  # Aircraft is ascending with 0 pitch.
-        airfoil._store_airdata(
-            Airdata.from_state_environment(state, build_environment_data)
-        )
+        new_velocity[0] = 5  # Aircraft is going forward with 0 pitch.
+        new_velocity[2] = -5  # Aircraft is ascending with 0 pitch.
+        state.velocity_linear = new_velocity
+        airdata = Airdata()
+        airdata.init_from_state_wind(state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         c_d_2 = airfoil.drag_coeff(state, build_environment_data, build_aero_inputs)
         assert c_d_2 > 0
 
-        state.velocity_linear.x = -5  # Aircraft is going backwards with 0 pitch.
-        state.velocity_linear.z = 5  # Aircraft is descending with 0 pitch.
-        airfoil._store_airdata(
-            Airdata.from_state_environment(state, build_environment_data)
-        )
+        new_velocity[0] = -5  # Aircraft is going backwards with 0 pitch.
+        new_velocity[2] = 5  # Aircraft is descending with 0 pitch.
+        state.velocity_linear = new_velocity
+        airdata = Airdata()
+        airdata.init_from_state_wind(state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         c_d_3 = airfoil.drag_coeff(state, build_environment_data, build_aero_inputs)
         assert c_d_3 > 0
 
-        state.velocity_linear.x = -5  # Aircraft is going bachwards with 0 pitch.
-        state.velocity_linear.z = -5  # Aircraft is ascending with 0 pitch.
-        airfoil._store_airdata(
-            Airdata.from_state_environment(state, build_environment_data)
-        )
+        new_velocity[0] = -5  # Aircraft is going bachwards with 0 pitch.
+        new_velocity[2] = -5  # Aircraft is ascending with 0 pitch.
+        state.velocity_linear = new_velocity
+        airdata = Airdata()
+        airdata.init_from_state_wind(state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         c_d_4 = airfoil.drag_coeff(state, build_environment_data, build_aero_inputs)
         assert c_d_4 > 0
 
@@ -297,45 +308,50 @@ class TestAerodynamic:
         """
         airfoil = build_airfoil_simple
         state = build_uav_state
-        state.velocity_linear.x = 5  # Aircraft is going forward with 0 pitch.
-        state.velocity_linear.z = 5  # Aircraft is descending with 0 pitch.
-        airfoil._store_airdata(
-            Airdata.from_state_environment(state, build_environment_data)
-        )
+        new_velocity = np.array([20, 0, 0])
+        new_velocity[0] = 5  # Aircraft is going forward with 0 pitch.
+        new_velocity[2] = 5  # Aircraft is descending with 0 pitch.
+        state.velocity_linear = new_velocity
+        airdata = Airdata()
+        airdata.init_from_state_wind(state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         w_1 = airfoil.get_wrench_airfoil(
             state, build_environment_data, build_uav_inputs
         )
-        assert w_1.force.x < 0
+        assert w_1.force[0] < 0
 
-        state.velocity_linear.x = 5  # Aircraft is going forward with 0 pitch.
-        state.velocity_linear.z = -5  # Aircraft is ascending with 0 pitch.
-        airfoil._store_airdata(
-            Airdata.from_state_environment(state, build_environment_data)
-        )
+        new_velocity[0] = 5  # Aircraft is going forward with 0 pitch.
+        new_velocity[2] = -5  # Aircraft is ascending with 0 pitch.
+        state.velocity_linear = new_velocity
+        airdata = Airdata()
+        airdata.init_from_state_wind(state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         w_2 = airfoil.get_wrench_airfoil(
             state, build_environment_data, build_uav_inputs
         )
-        assert w_2.force.x < 0
+        assert w_2.force[0] < 0
 
-        state.velocity_linear.x = -5  # Aircraft is going backwards with 0 pitch.
-        state.velocity_linear.z = 5  # Aircraft is descending with 0 pitch.
-        airfoil._store_airdata(
-            Airdata.from_state_environment(state, build_environment_data)
-        )
+        new_velocity[0] = -5  # Aircraft is going backwards with 0 pitch.
+        new_velocity[2] = 5  # Aircraft is descending with 0 pitch.
+        state.velocity_linear = new_velocity
+        airdata = Airdata()
+        airdata.init_from_state_wind(state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         w_3 = airfoil.get_wrench_airfoil(
             state, build_environment_data, build_uav_inputs
         )
-        assert w_3.force.x > 0
+        assert w_3.force[0] > 0
 
-        state.velocity_linear.x = -5  # Aircraft is going bachwards with 0 pitch.
-        state.velocity_linear.z = -5  # Aircraft is ascending with 0 pitch.
-        airfoil._store_airdata(
-            Airdata.from_state_environment(state, build_environment_data)
-        )
+        new_velocity[0] = -5  # Aircraft is going bachwards with 0 pitch.
+        new_velocity[2] = -5  # Aircraft is ascending with 0 pitch.
+        state.velocity_linear = new_velocity
+        airdata = Airdata()
+        airdata.init_from_state_wind(state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         w_4 = airfoil.get_wrench_airfoil(
             state, build_environment_data, build_uav_inputs
         )
-        assert w_4.force.x > 0
+        assert w_4.force[0] > 0
 
     def test_sideforce_coeff(
         self,
@@ -346,9 +362,9 @@ class TestAerodynamic:
     ):
         tests = []
         airfoil = build_airfoil_simple
-        airfoil._store_airdata(
-            Airdata.from_state_environment(build_uav_state, build_environment_data)
-        )
+        airdata = Airdata()
+        airdata.init_from_state_wind(build_uav_state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         c_y_1 = airfoil.sideforce_coeff(
             build_uav_state, build_environment_data, build_aero_inputs
         )
@@ -357,7 +373,10 @@ class TestAerodynamic:
         # Generate positive AoS
         airdata = Airdata(20, 0, np.deg2rad(10))
         airfoil._store_airdata(airdata)
-        state_2 = UavState(Vector3(), UnitQuaternion(), airdata.to_u(), Vector3())
+        v = airdata.to_u()
+        state_2 = UavState(
+            Vector3(), UnitQuaternion(), Vector3(v[0], v[1], v[2]), Vector3()
+        )
         c_y_2 = airfoil.sideforce_coeff(
             state_2, build_environment_data, build_aero_inputs
         )
@@ -366,7 +385,10 @@ class TestAerodynamic:
         # Generate negative AoS
         airdata = Airdata(20, 0, np.deg2rad(-10))
         airfoil._store_airdata(airdata)
-        state_3 = UavState(Vector3(), UnitQuaternion(), airdata.to_u(), Vector3())
+        v = airdata.to_u()
+        state_3 = UavState(
+            Vector3(), UnitQuaternion(), Vector3(v[0], v[1], v[2]), Vector3()
+        )
         c_y_3 = airfoil.sideforce_coeff(
             state_3, build_environment_data, build_aero_inputs
         )
@@ -383,9 +405,9 @@ class TestAerodynamic:
     ):
         tests = []
         airfoil = build_airfoil_simple
-        airfoil._store_airdata(
-            Airdata.from_state_environment(build_uav_state, build_environment_data)
-        )
+        airdata = Airdata()
+        airdata.init_from_state_wind(build_uav_state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         # Generate pitching moment at 0 AoA
         c_m_1 = airfoil.pitch_moment_coeff(
             build_uav_state, build_environment_data, build_aero_inputs
@@ -395,7 +417,10 @@ class TestAerodynamic:
         # Generate pitching moment at positive AoA
         airdata = Airdata(20, np.deg2rad(10), 0)
         airfoil._store_airdata(airdata)
-        state_2 = UavState(Vector3(), UnitQuaternion(), airdata.to_u(), Vector3())
+        v = airdata.to_u()
+        state_2 = UavState(
+            Vector3(), UnitQuaternion(), Vector3(v[0], v[1], v[2]), Vector3()
+        )
         c_m_2 = airfoil.pitch_moment_coeff(
             state_2, build_environment_data, build_aero_inputs
         )
@@ -404,7 +429,10 @@ class TestAerodynamic:
         # Generate pitching moment at negative AoA
         airdata = Airdata(20, np.deg2rad(-10), 0)
         airfoil._store_airdata(airdata)
-        state_3 = UavState(Vector3(), UnitQuaternion(), airdata.to_u(), Vector3())
+        v = airdata.to_u()
+        state_3 = UavState(
+            Vector3(), UnitQuaternion(), Vector3(v[0], v[1], v[2]), Vector3()
+        )
         c_m_3 = airfoil.pitch_moment_coeff(
             state_3, build_environment_data, build_aero_inputs
         )
@@ -433,9 +461,9 @@ class TestAerodynamic:
     ):
         tests = []
         airfoil = build_airfoil_simple
-        airfoil._store_airdata(
-            Airdata.from_state_environment(build_uav_state, build_environment_data)
-        )
+        airdata = Airdata()
+        airdata.init_from_state_wind(build_uav_state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         # Generate rolling moment at 0 AoA
         c_m_1 = airfoil.roll_moment_coeff(
             build_uav_state, build_environment_data, build_aero_inputs
@@ -467,9 +495,9 @@ class TestAerodynamic:
     ):
         tests = []
         airfoil = build_airfoil_simple
-        airfoil._store_airdata(
-            Airdata.from_state_environment(build_uav_state, build_environment_data)
-        )
+        airdata = Airdata()
+        airdata.init_from_state_wind(build_uav_state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         # Generate yawing moment at 0 AoS
         c_m_1 = airfoil.yaw_moment_coeff(
             build_uav_state, build_environment_data, build_aero_inputs
@@ -479,7 +507,10 @@ class TestAerodynamic:
         # Generate yawing moment at positive AoS
         airdata = Airdata(20, 0, np.deg2rad(10))
         airfoil._store_airdata(airdata)
-        state_2 = UavState(Vector3(), UnitQuaternion(), airdata.to_u(), Vector3())
+        v = airdata.to_u()
+        state_2 = UavState(
+            Vector3(), UnitQuaternion(), Vector3(v[0], v[1], v[2]), Vector3()
+        )
         c_m_2 = airfoil.yaw_moment_coeff(
             state_2, build_environment_data, build_aero_inputs
         )
@@ -488,25 +519,28 @@ class TestAerodynamic:
         # Generate yawing moment at negative AoS
         airdata = Airdata(20, 0, np.deg2rad(-10))
         airfoil._store_airdata(airdata)
-        state_3 = UavState(Vector3(), UnitQuaternion(), airdata.to_u(), Vector3())
+        v = airdata.to_u()
+        state_3 = UavState(
+            Vector3(), UnitQuaternion(), Vector3(v[0], v[1], v[2]), Vector3()
+        )
         c_m_3 = airfoil.yaw_moment_coeff(
             state_3, build_environment_data, build_aero_inputs
         )
 
         tests.append(c_m_3 < c_m_1)
         # Generate yawing moment at positive deltar
-        airfoil._store_airdata(
-            Airdata.from_state_environment(build_uav_state, build_environment_data)
-        )
+        airdata = Airdata()
+        airdata.init_from_state_wind(build_uav_state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         inputs = np.array((0, 0, 0.1))
         c_m_4 = airfoil.yaw_moment_coeff(
             build_uav_state, build_environment_data, inputs
         )
         tests.append(c_m_4 > c_m_1)
         # Generate yawing moment at negative deltar
-        airfoil._store_airdata(
-            Airdata.from_state_environment(build_uav_state, build_environment_data)
-        )
+        airdata = Airdata()
+        airdata.init_from_state_wind(build_uav_state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         inputs = np.array((0, 0, -0.1))
         c_m_5 = airfoil.yaw_moment_coeff(
             build_uav_state, build_environment_data, inputs
@@ -524,17 +558,17 @@ class TestAerodynamic:
     ):
         # Test nominal force generation
         airfoil = build_airfoil_simple
-        airfoil._store_airdata(
-            Airdata.from_state_environment(build_uav_state, build_environment_data)
-        )
+        airdata = Airdata()
+        airdata.init_from_state_wind(build_uav_state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         forces = airfoil.calc_forces(
             build_uav_state, build_environment_data, build_aero_inputs
         )
         tests = []
         tests.append(isinstance(forces, Vector3))
-        tests.append(forces.x < 0)  # Drag is negative in the airfoil frame
-        tests.append(forces.y == pytest.approx(0))  # Sideforce is 0
-        tests.append(forces.z < 0)  # Lift is negative in the airfoil frame
+        tests.append(forces[0] < 0)  # Drag is negative in the airfoil frame
+        tests.append(forces[1] == pytest.approx(0))  # Sideforce is 0
+        tests.append(forces[2] < 0)  # Lift is negative in the airfoil frame
 
         assert np.all(tests)
 
@@ -547,17 +581,17 @@ class TestAerodynamic:
     ):
         # Test nominal moment generation
         airfoil = build_airfoil_simple
-        airfoil._store_airdata(
-            Airdata.from_state_environment(build_uav_state, build_environment_data)
-        )
+        airdata = Airdata()
+        airdata.init_from_state_wind(build_uav_state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         moments = airfoil.calc_moments(
             build_uav_state, build_environment_data, build_aero_inputs
         )
         tests = []
         tests.append(isinstance(moments, Vector3))
-        tests.append(moments.x == pytest.approx(0))  # Roll moment is 0
-        tests.append(moments.y > 0)  # Pitch moment is positive
-        tests.append(moments.z == pytest.approx(0))  # Yaw moment is 0
+        tests.append(moments[0] == pytest.approx(0))  # Roll moment is 0
+        tests.append(moments[1] > 0)  # Pitch moment is positive
+        tests.append(moments[2] == pytest.approx(0))  # Yaw moment is 0
 
         assert np.all(tests)
 
@@ -574,8 +608,8 @@ class TestAerodynamic:
         )
         tests = []
         tests.append(isinstance(wrench, Wrench))
-        tests.append(isinstance(wrench.force, Vector3))
-        tests.append(isinstance(wrench.torque, Vector3))
+        tests.append(isinstance(wrench.force, np.ndarray))
+        tests.append(isinstance(wrench.torque, np.ndarray))
 
         assert np.all(tests)
 
@@ -594,7 +628,10 @@ class TestAerodynamic:
         alpha = np.deg2rad(10)
         airdata = Airdata(20, alpha, 0)
         airfoil._store_airdata(airdata)
-        state = UavState(Vector3(), UnitQuaternion(), airdata.to_u(), Vector3())
+        v = airdata.to_u()
+        state = UavState(
+            Vector3(), UnitQuaternion(), Vector3(v[0], v[1], v[2]), Vector3()
+        )
         # Get forces/moments in the airfoil frame
         inputs = np.array([0, 0, 0])
         forces_a = airfoil.calc_forces(state, build_environment_data, inputs)
@@ -604,15 +641,17 @@ class TestAerodynamic:
         tests = []
         # Test that forces are properly rotated
         tests.append(
-            wrench.force.x
-            == pytest.approx(forces_a.x * np.cos(alpha) - forces_a.z * np.sin(alpha))
+            wrench.force[0]
+            == pytest.approx(forces_a[0] * np.cos(alpha) - forces_a[2] * np.sin(alpha))
         )
         tests.append(
-            wrench.force.z
-            == pytest.approx(forces_a.x * np.sin(alpha) + forces_a.z * np.cos(alpha))
+            wrench.force[2]
+            == pytest.approx(forces_a[0] * np.sin(alpha) + forces_a[2] * np.cos(alpha))
         )
         # Test that moments are not rotated
-        tests.append((moments_a - wrench.torque).norm == pytest.approx(0))
+        tests.append(
+            np.linalg.norm(moments_a.to_array() - wrench.torque) == pytest.approx(0)
+        )
 
         assert np.all(tests)
 
@@ -626,17 +665,20 @@ class TestAerodynamic:
         """Test that the correct pitching moment sign is generated for forward flight."""
         airfoil = build_airfoil_simple
         state = build_uav_state
-        state.velocity_linear.z = 5  # Aircraft is descending with 0 pitch.
-        airfoil._store_airdata(
-            Airdata.from_state_environment(state, build_environment_data)
-        )
+        new_velocity = np.array([20, 0, 0])
+        new_velocity[2] = 5  # Aircraft is descending with 0 pitch.
+        state.velocity_linear = new_velocity
+        airdata = Airdata()
+        airdata.init_from_state_wind(state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         moments = airfoil.calc_moments(state, build_environment_data, build_aero_inputs)
         assert moments.y < 0  # Pitch moment is negative
 
-        state.velocity_linear.z = -5  # Aircraft is ascending with 0 pitch.
-        airfoil._store_airdata(
-            Airdata.from_state_environment(state, build_environment_data)
-        )
+        new_velocity[2] = -5  # Aircraft is ascending with 0 pitch.
+        state.velocity_linear = new_velocity
+        airdata = Airdata()
+        airdata.init_from_state_wind(state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         moments = airfoil.calc_moments(state, build_environment_data, build_aero_inputs)
         assert moments.y > 0  # Pitch moment is positive
 
@@ -650,17 +692,20 @@ class TestAerodynamic:
         """Test that the correct pitching moment sign is generated for rearwards flight."""
         airfoil = build_airfoil_simple
         state = build_uav_state
-        state.velocity_linear.x = -20
-        state.velocity_linear.z = 5  # Aircraft is descending with 0 pitch.
-        airfoil._store_airdata(
-            Airdata.from_state_environment(state, build_environment_data)
-        )
+        new_velocity = np.array([20, 0, 0])
+        new_velocity[0] = -20
+        new_velocity[2] = 5  # Aircraft is descending with 0 pitch.
+        state.velocity_linear = new_velocity
+        airdata = Airdata()
+        airdata.init_from_state_wind(state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         moments = airfoil.calc_moments(state, build_environment_data, build_aero_inputs)
         assert moments.y < 0  # Pitch moment is negative
 
-        state.velocity_linear.z = -5  # Aircraft is ascending with 0 pitch.
-        airfoil._store_airdata(
-            Airdata.from_state_environment(state, build_environment_data)
-        )
+        new_velocity[2] = -5  # Aircraft is ascending with 0 pitch.
+        state.velocity_linear = new_velocity
+        airdata = Airdata()
+        airdata.init_from_state_wind(state, build_environment_data.wind)
+        airfoil._store_airdata(airdata)
         moments = airfoil.calc_moments(state, build_environment_data, build_aero_inputs)
         assert moments.y > 0  # Pitch moment is positive

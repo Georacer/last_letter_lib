@@ -114,7 +114,7 @@ namespace last_letter_lib
 		// 		  << environment.wind << "\n"
 		// 		  << std::endl;
 
-		airdata.calcAirData(states.velocity.linear, environment.wind);
+		airdata.init_from_velocity(states.velocity.linear, environment.wind);
 		// Calculate the new, relative air data
 		airspeed_ = airdata.airspeed;
 		alpha_ = airdata.alpha;

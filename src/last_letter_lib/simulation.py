@@ -17,6 +17,7 @@ from typing import Optional
 from typing import Union
 
 import numpy as np
+import yaml
 from pydantic import BaseModel
 
 import last_letter_lib.aerodynamics as aero
@@ -32,6 +33,7 @@ from last_letter_lib.utils.math import Pose
 from last_letter_lib.utils.math import UnitQuaternion
 from last_letter_lib.utils.math import Vector3
 from last_letter_lib.utils.math import Wrench
+from last_letter_lib.utils.math import build_vector3_from_array
 from last_letter_lib.utils.programming import _traverse_collect_pydantic
 from last_letter_lib.utils.uav import Airdata
 from last_letter_lib.utils.uav import UavState
@@ -99,7 +101,9 @@ def build_aircraft_components(params: AircraftParameters):
         elif isinstance(c, prop.BatteryParameters):
             component_list.append(prop.Battery(c))
         elif isinstance(c, llsys.ComponentParameters):
-            component_list.append(llsys.Component(c))
+            component_list.append(llsys.Component(c.name))
+            yaml_desc = yaml.load(c.json(), Loader=yaml.SafeLoader)
+            component_list[-1].initialize(yaml.dump(yaml_desc))
         else:
             raise TypeError(f"Unsupported component type {c.__class__.__name__}.")
     return component_list
@@ -167,7 +171,7 @@ class Aircraft:
                     ]
                 )
 
-        return Pose(Vector3.from_array(com), UnitQuaternion())
+        return Pose(com, UnitQuaternion())
 
     def calc_components_inertia(self, components: list) -> np.array:
         """
@@ -178,19 +182,19 @@ class Aircraft:
             if c.inertial:
                 # Read the component position in the body frame and correct with the CoG position.
                 # This is because we want the inertia wrt CoG, not the aircraft frame.
-                pos = Vector3.from_array(c.pose.position) - self.com
+                pos = c.pose.position - self.com
                 # Read the component orientation in the body frame
-                R_cb = EulerAngles.from_array(c.pose.orientation).R_bi()
+                R_cb = EulerAngles(*c.pose.orientation).R_bi()
 
                 # Calculate inertia due to translation
                 inertia_t = np.zeros((3, 3))
                 # Collect the coordinate combinations
-                inertia_t[0, 0] = pos.y**2 + pos.z**2
-                inertia_t[0, 1] = inertia_t[1, 0] = -(pos.x * pos.y)
-                inertia_t[0, 2] = inertia_t[2, 0] = -(pos.x * pos.z)
-                inertia_t[1, 1] = pos.x**2 + pos.z**2
-                inertia_t[1, 2] = inertia_t[2, 1] = -(pos.y * pos.z)
-                inertia_t[2, 2] = pos.x**2 + pos.y**2
+                inertia_t[0, 0] = pos[1] ** 2 + pos[2] ** 2
+                inertia_t[0, 1] = inertia_t[1, 0] = -(pos[0] * pos[1])
+                inertia_t[0, 2] = inertia_t[2, 0] = -(pos[0] * pos[2])
+                inertia_t[1, 1] = pos[0] ** 2 + pos[2] ** 2
+                inertia_t[1, 2] = inertia_t[2, 1] = -(pos[1] * pos[2])
+                inertia_t[2, 2] = pos[0] ** 2 + pos[1] ** 2
                 # Multiply with the point mass
                 inertia_t *= c.inertial.mass
 
@@ -242,10 +246,10 @@ class Aircraft:
     @property
     def state(self):
         return UavState(
-            position=self.rigid_body.position,
-            attitude=self.rigid_body.orientation,
-            velocity_linear=self.rigid_body.velocity_linear,
-            velocity_angular=self.rigid_body.velocity_angular,
+            position=self.rigid_body.position.to_array(),
+            orientation=self.rigid_body.orientation,
+            velocity_linear=self.rigid_body.velocity_linear.to_array(),
+            velocity_angular=self.rigid_body.velocity_angular.to_array(),
             thrusters_velocity=[t.velocity for t in self.thrusters],
         )
 
@@ -327,11 +331,13 @@ class Aircraft:
             else:
                 raise TypeError(f"Unknown thruster type {thruster.__class__}.")
 
-        total_wrench = Wrench()
+        total_wrench = Wrench(np.zeros((3, 1)), np.zeros((3, 1)))
 
         # Collect thruster wrenches and convert to aircraft frame
         prop_wrenches = [t.pose @ t.wrench for t in self.thrusters]
-        total_wrench_aircraft = sum(prop_wrenches, Wrench())
+        total_wrench_aircraft = sum(
+            prop_wrenches, Wrench(np.zeros((3, 1)), np.zeros((3, 1)))
+        )
         # Then convert from aircraft frame to body frame
         self.wrench_propulsion = self._com_pose.T @ total_wrench_aircraft
         total_wrench += self.wrench_propulsion
@@ -340,7 +346,9 @@ class Aircraft:
         aero_wrenches = [
             a.get_wrench(state, self.environment.data, inputs) for a in self.airfoils
         ]
-        total_wrench_aircraft = sum(aero_wrenches, Wrench())
+        total_wrench_aircraft = sum(
+            aero_wrenches, Wrench(np.zeros((3, 1)), np.zeros((3, 1)))
+        )
         # Then convert from aircraft frame to body frame
         self.wrench_aero = self._com_pose.T @ total_wrench_aircraft
         total_wrench += self.wrench_aero
@@ -350,7 +358,7 @@ class Aircraft:
             self.rigid_body.mass * self.gravity.g(self.state.position).to_array()
         )
         gravity_force_b = self.rigid_body.orientation.R_ib() @ gravity_force_i
-        total_wrench += Wrench(Vector3.from_array(gravity_force_b), Vector3())
+        total_wrench += Wrench(gravity_force_b, np.zeros((3, 1)))
 
         # Step 6DOF model
         self.rigid_body.rk4(total_wrench.to_array(), dt)

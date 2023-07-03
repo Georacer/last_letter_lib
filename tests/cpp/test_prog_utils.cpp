@@ -48,6 +48,12 @@ TEST(ProgUtilsTest, TestYaml1)
     // EXPECT_EQ(vectorString, "0, 1.1, 2.2, ");
 }
 
+TEST(ProgUtilsTest, TestYaml2)
+{
+    YAML::Node n = YAML::Node();
+    ASSERT_TRUE(n.IsNull());
+}
+
 TEST(ProgUtilsTest, GeneralTest)
 {
 
@@ -169,4 +175,128 @@ TEST_F(ParameterManagerTest, TestFilter)
 {
     ParameterManager node = parent->parameters.filter("child");
     ASSERT_EQ(node.get<int>("param_1"), 1);
+}
+
+TEST_F(ParameterManagerTest, TestKeys)
+{
+    vector<string> v = child->parameters.keys();
+    EXPECT_EQ(v.size(), 3);
+    EXPECT_EQ(v[0], "name");
+    EXPECT_EQ(v[1], "param_1");
+    EXPECT_EQ(v[2], "param_2/param_3");
+}
+
+TEST(ParameterManagerTest2, TestLoadFile)
+{
+    auto pm = ParameterManager("pm");
+    pm.set("lastLogin", 0, false);
+    pm.set("world/simRate", 100, false);
+    pm.set("cantfindme", 13, false);
+    pm.load_file("tests/cpp/test_params.yaml");
+
+    EXPECT_EQ(pm.get<double>("lastLogin"), 5);
+    EXPECT_EQ(pm.get<double>("world/simRate"), 500);
+    EXPECT_EQ(pm.get<double>("cantfindme"), 13);
+}
+
+TEST(ParameterManagerTest2, TestLoadStream)
+{
+    auto pm = ParameterManager("pm");
+    pm.set("lastLogin", 0, false);
+    pm.set("world/simRate", 100, false);
+    pm.set("cantfindme", 13, false);
+    // std::stringstream ss;
+    std::string ss;
+    // ss << "lastLogin: 5\nworld:\n simRate: 500\n";
+    ss = "lastLogin: 5\nworld:\n simRate: 500\n";
+    pm.load_stream(ss);
+
+    EXPECT_EQ(pm.get<double>("lastLogin"), 5);
+    EXPECT_EQ(pm.get<double>("world/simRate"), 500);
+    EXPECT_EQ(pm.get<double>("cantfindme"), 13);
+}
+
+class ConcreteParametrizedChild : public Parametrized
+{
+public:
+    ConcreteParametrizedChild(string name) : Parametrized(name)
+    {
+        initialize_parameters();
+        update_parameters();
+    };
+    void initialize_parameters()
+    {
+        set_param("param_1", 1.0, false);
+        set_param("param_2", false, false);
+    };
+    void update_parameters()
+    {
+        param_1 = get_param<double>("param_1");
+        param_2 = get_param<bool>("param_2");
+    }
+
+    double param_1;
+    bool param_2;
+};
+
+class ConcreteParametrizedParent : public Parametrized
+{
+public:
+    ConcreteParametrizedParent(string name) : Parametrized(name)
+    {
+        initialize_parameters();
+        update_parameters();
+    };
+    void initialize_parameters()
+    {
+        set_param("param_3", 3.0, false);
+        set_param("param_4", true, false);
+    };
+    void update_parameters()
+    {
+        param_3 = get_param<double>("param_3");
+        param_4 = get_param<bool>("param_4");
+    }
+
+    double param_3;
+    bool param_4;
+};
+
+class ParametrizedTest : public ::testing::Test
+{
+protected:
+    void SetUp() override
+    {
+        child = make_shared<ConcreteParametrizedChild>("child");
+        parent = make_shared<ConcreteParametrizedParent>("parent");
+        parent->add_child(*child);
+    }
+
+    shared_ptr<ConcreteParametrizedChild> child;
+    shared_ptr<ConcreteParametrizedParent> parent;
+};
+
+TEST_F(ParametrizedTest, TestAccessParent1)
+{
+    EXPECT_EQ(parent->param_3, 3);
+    EXPECT_EQ(parent->param_4, true);
+}
+
+TEST_F(ParametrizedTest, TestAccessChild1)
+{
+    EXPECT_EQ(child->param_1, 1);
+    EXPECT_EQ(child->param_2, false);
+}
+
+TEST_F(ParametrizedTest, TestAccessChild2)
+{
+    double r = parent->get_param<double>("child/param_1");
+    EXPECT_EQ(r, 1);
+}
+
+TEST_F(ParametrizedTest, TestSetChild1)
+{
+    parent->set_param("child/param_1", 10.0);
+    double r = parent->get_param<double>("child/param_1");
+    EXPECT_EQ(r, 10);
 }

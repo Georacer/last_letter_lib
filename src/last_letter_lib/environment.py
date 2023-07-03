@@ -18,14 +18,16 @@ from dataclasses import dataclass
 
 from last_letter_lib.utils.math import Vector3
 
+from .cpp_last_letter_lib.cpp_environment import EnvironmentData
 
-@dataclass
-class EnvironmentData:
-    wind: Vector3 = Vector3()  # Wind vector in the inertial frame, in m/s
-    rho: float = 1.225  # Air density, in kg/m^3
-    pressure: float = 1013  # Atmospheric pressure, in hPa
-    temperature: float = 273  # Air temperature, in degrees Kelvin
-    gravity: float = 9.81  # Gravity acceleration, in m/s^2
+
+# @dataclass
+# class EnvironmentData:
+#     wind: Vector3 = Vector3()  # Wind vector in the inertial frame, in m/s
+#     rho: float = 1.225  # Air density, in kg/m^3
+#     pressure: float = 1013  # Atmospheric pressure, in hPa
+#     temperature: float = 273  # Air temperature, in degrees Kelvin
+#     gravity: float = 9.81  # Gravity acceleration, in m/s^2
 
 
 class EnvironmentModel(ABC):

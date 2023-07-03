@@ -189,7 +189,7 @@ namespace last_letter_lib
             {
                 if (exists(param_name))
                 {
-                    YAML::Node temp_node{find_parameter_(param_name)};
+                    YAML::Node temp_node{find_parameter_(parameters_, param_name)};
                     return temp_node.as<T>();
                 }
                 else
@@ -228,23 +228,81 @@ namespace last_letter_lib
                     return false;
                 }
             }
+            // Load parameters from a .yaml file
+            void load_file(string filepath);
+            // void load_stream(std::istream &yaml_str);
+            void load_stream(const std::string yaml_str);
             void register_child_mngr(ParameterManager);
             bool exists(const string param_name);
             ParameterManager filter(const string prefix);
+            // Return a vector of all included keys
+            vector<string> keys() { return get_keys_(parameters_); }
             string str();
             string name;
 
         private:
             // Methods
-            YAML::Node find_parameter_(const string param_name);
+            YAML::Node find_parameter_(const YAML::Node node, const string param_name);
+            void load_parameters_(YAML::Node);
+            vector<string> get_keys_(YAML::Node) const; // It's also a classmethod
             // Variables
             YAML::Node parameters_{YAML::Node()};
         };
 
         ParameterManager loadModelConfig(string modelName);
 
+        class Parametrized
+        {
+        public:
+            Parametrized(string name_p) : params_(name_p)
+            {
+                set_param("name", name_p, false);
+                name = name_p;
+            };
+            // Create your class-specific parameters here, along with their defaults.
+            virtual void initialize_parameters(){};
+            // Assign values from the parameter dictionary to the local variables here.
+            virtual void update_parameters() = 0;
+            // Initialize parameters, read from custom values and set attribute values.
+            void initialize(ParameterManager params_p = ParameterManager("temp_node"))
+            {
+                initialize_parameters();
+                // TODO: Refactor this for-loop into the ParameterManager
+                for (string key : params_p.keys())
+                {
+                    try
+                    {
+                        set_param(key, params_p.get<double>(key));
+                    }
+                    catch (const std::exception &)
+                    {
+                        set_param(key, params_p.get<string>(key));
+                    }
+                }
+                update_parameters();
+            }
+            // Initializing object from YAML stream.
+            void initialize(const std::string yaml_str)
+            {
+                initialize_parameters();
+                params_.load_stream(yaml_str);
+                update_parameters();
+            }
+            // Register another Parametrized object as a child, in order to access and manage their parameters.
+            void add_child(Parametrized &c) { params_.register_child_mngr(c.params_); }
+            template <typename T>
+            bool set_param(string param_name, T value, bool safe = true) { return params_.set(param_name, value, safe); }
+            template <typename T>
+            T get_param(string param_name) { return params_.get<T>(param_name); }
+
+        private:
+            ParameterManager params_;
+            string name;
+        };
+
         // Build a new polynomial, reading from a configuration ParameterManager
-        math_utils::Polynomial *buildPolynomial(ParameterManager config);
+        math_utils::Polynomial *
+        buildPolynomial(ParameterManager config);
 
         // Generic logic
         ////////////////

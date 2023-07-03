@@ -26,6 +26,9 @@ from pydantic import validator
 import last_letter_lib.utils.math as llmath
 from last_letter_lib.utils.math import UnitQuaternion
 from last_letter_lib.utils.math import Vector3
+from last_letter_lib.utils.math import build_vector3_from_array
+
+from .cpp_last_letter_lib.cpp_systems import Component
 
 
 class PoseParameters(BaseModel):
@@ -147,28 +150,29 @@ class ComponentParameters(BaseModel, extra="forbid"):
     """The appearance of this component."""
 
 
-class Component:
-    """
-    A component description.
-    """
+# class Component:
+#     """
+#     A component description.
+#     """
 
-    def __init__(self, parameters: ComponentParameters):
-        self.name = parameters.name
-        self.pose = llmath.Pose(
-            Vector3(*parameters.pose.position),
-            UnitQuaternion.from_euler(parameters.pose.orientation),
-        )
-        if parameters.inertial:
-            self.inertial = llmath.Inertial(
-                parameters.inertial.mass, np.array(parameters.inertial.inertia)
-            )
-        else:
-            self.inertial = None
+#     def __init__(self, parameters: ComponentParameters):
+#         self.name = parameters.name
+#         self.pose = llmath.Pose(
+#             Vector3(*parameters.pose.position),
+#             UnitQuaternion.from_euler(parameters.pose.orientation),
+#         )
+#         if parameters.inertial:
+#             self.inertial = llmath.Inertial(
+#                 parameters.inertial.mass, np.array(parameters.inertial.inertia)
+#             )
+#         else:
+#             self.inertial = None
 
 
 class DynamicSystem(ABC):
     """Dynamic System class to simulate nonlinear systems. Uses rk4 to increment the system.
-    Child classes must implement _dynamics function for the nonlinear system: x_dot = f(x, u, t)"""
+    Child classes must implement _dynamics function for the nonlinear system: x_dot = f(x, u, t)
+    """
 
     def __init__(self, x_init: np.array, u_init: np.array):
         # States:
@@ -190,7 +194,6 @@ class DynamicSystem(ABC):
 
     @t.setter
     def t(self, t):
-
         self.__t = t
 
     @property
@@ -291,7 +294,6 @@ class RigidBody6DOF(DynamicSystem):
     velocity_angular: Vector3 = None
 
     def __init__(self, x_init=None, u_init=None, mass=10.0, inertia_matrix=None):
-
         # vehicle mass                                      [kg]
         self.mass = mass
 
@@ -334,13 +336,13 @@ class RigidBody6DOF(DynamicSystem):
     def acceleration_linear(self) -> Vector3:
         """Returns the acceleration in body frame."""
 
-        return Vector3.from_array(self.x_dot[7:10])
+        return build_vector3_from_array(self.x_dot[7:10])
 
     @property
     def acceleration_angular(self) -> Vector3:
         """Returns the angular acceleration of the body FRD frame."""
 
-        return Vector3.from_array(self.x_dot[10:13])
+        return build_vector3_from_array(self.x_dot[10:13])
 
     def post_propagation(self):
         self._update_attributes()
@@ -352,8 +354,11 @@ class RigidBody6DOF(DynamicSystem):
         self.position.x = self.x[0]
         self.position.y = self.x[1]
         self.position.z = self.x[2]
-        self.orientation._q = self.x[3:7]
-        self.orientation._normalize()
+        self.orientation.w = self.x[3]
+        self.orientation.x = self.x[4]
+        self.orientation.y = self.x[5]
+        self.orientation.z = self.x[6]
+        self.orientation.normalize()
         self.velocity_linear.x = self.x[7]
         self.velocity_linear.y = self.x[8]
         self.velocity_linear.z = self.x[9]
@@ -365,7 +370,6 @@ class RigidBody6DOF(DynamicSystem):
         return f" Rigid Body object with state: {self.x}"
 
     def _dynamics(self, x: np.ndarray, u: np.ndarray, t: float) -> np.ndarray:
-
         # Initialize state perturbation:
         x_dot = np.zeros(shape=[13])
 

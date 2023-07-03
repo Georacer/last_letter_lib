@@ -4,55 +4,89 @@
 using Eigen::Quaterniond;
 using Eigen::Vector3d;
 
+using last_letter_lib::math_utils::rad_to_deg;
+
 namespace last_letter_lib
 {
 	namespace uav_utils
 	{
 
+		SimState_t::SimState_t(Vector3d position,
+							   UnitQuaternion orientation,
+							   Vector3d velocity_linear,
+							   Vector3d velocity_angular,
+							   std::vector<double> thrusters_velocity)
+		{
+			pose.position = position;
+			pose.orientation = orientation;
+			velocity.linear = velocity_linear;
+			velocity.angular = velocity_angular;
+			rotorspeed = thrusters_velocity;
+		}
+		SimState_t::SimState_t(Vector3 position,
+							   UnitQuaternion orientation,
+							   Vector3 velocity_linear,
+							   Vector3 velocity_angular,
+							   std::vector<double> thrusters_velocity)
+			: SimState_t(position.vector,
+						 orientation,
+						 velocity_linear.vector,
+						 velocity_angular.vector,
+						 thrusters_velocity)
+		{
+		}
+		SimState_t::SimState_t(const VectorXd v)
+		{
+			pose.position = Vector3d(v(0), v(1), v(2));
+			pose.orientation = UnitQuaternion(v(3), v(4), v(5), v(6));
+			velocity.linear = Vector3d(v(7), v(8), v(9));
+			velocity.angular = Vector3d(v(10), v(11), v(12));
+			if (v.size() > 13)
+			{
+				int num_rotors = v.size() - 13;
+				rotorspeed = std::vector<double>(num_rotors);
+				for (int idx; idx < num_rotors; idx++)
+				{
+					rotorspeed[idx] = v(13 + idx);
+				}
+			}
+			else
+			{
+				rotorspeed = std::vector<double>();
+			}
+		}
+		VectorXd SimState_t::to_array()
+		{
+			VectorXd res(13 + rotorspeed.size());
+			res << pose.position,
+				Vector4d(pose.orientation.w(), pose.orientation.x(), pose.orientation.y(), pose.orientation.z()),
+				velocity.linear,
+				velocity.angular,
+				VectorXd::Map(&rotorspeed[0],
+							  rotorspeed.size());
+			return res;
+		}
+		SimState_t SimState_t::strip_thrusters()
+		{
+			auto res = SimState_t(*this);
+			res.rotorspeed = std::vector<double>(0);
+			return res;
+		}
+
 		//////////////////////////
 		// Define Airdata class
 		//////////////////////////
 
-		//Class Constructor
-		Airdata::Airdata()
+		void Airdata::init_from_velocity(Vector3d velBody, Vector3d velWind)
 		{
-			relWind = Vector3d::Zero();
-			airspeed = 0;
-			alpha = 0;
-			beta = 0;
-		}
 
-		//Class Destructor
-		Airdata::~Airdata()
-		{
-		}
+			Vector3d relWind = velBody - velWind;
+			double u = relWind.x();
+			double v = relWind.y();
+			double w = relWind.z();
 
-		//Caclulate airspeed and aerodynamics angles
-		void Airdata::calcAirData(Vector3d velBody, Vector3d velWind)
-		{
-			// Calculate relative airspeed
-			// geometry_msgs::Vector3 rel_velocity = parentObj->states.velocity.linear - parentObj->environment.wind;
-			// u_r = rel_velocity.x;
-			// v_r = rel_velocity.y;
-			// w_r = rel_velocity.z;
-			relWind = velBody - velWind;
-			Vector3d airdata = getAirData(relWind);
-			airspeed = airdata.x();
-			alpha = airdata.y();
-			beta = airdata.z();
-		}
-
-		/////////////////////////////////////////
-		// Aerodynamc angles/ airspeed calculation
-		Vector3d getAirData(Vector3d speeds)
-		{
-			double u = speeds.x();
-			double v = speeds.y();
-			double w = speeds.z();
-
-			double airspeed = sqrt(pow(u, 2) + pow(v, 2) + pow(w, 2));
-			double alpha = atan2(w, u);
-			double beta = 0;
+			airspeed = sqrt(pow(u, 2) + pow(v, 2) + pow(w, 2));
+			alpha = atan2(w, fabs(u));
 			if (u == 0)
 			{
 				if (v == 0)
@@ -68,23 +102,56 @@ namespace last_letter_lib
 			{
 				beta = atan2(v, u);
 			}
+		}
 
-			Vector3d result = Vector3d(airspeed, alpha, beta);
+		// Wind is in Inertial Frame.
+		void Airdata::init_from_state_wind(SimState_t state, Vector3d wind)
+		{
+			Vector3d u_b = state.velocity.linear;
+			Quaterniond q_eb{state.pose.orientation.conjugate()};
+			Vector3d u_w = q_eb * wind;
+			init_from_velocity(u_b, u_w);
+		}
 
-			return result;
+		Eigen::Matrix3d Airdata::S_bw()
+		{
+			Eigen::Matrix3d S;
+			double sa{sin(alpha)};
+			double ca{cos(alpha)};
+			double sb{sin(beta)};
+			double cb{cos(beta)};
+
+			S << ca * cb, sb, sa * cb, -ca * sb, cb, -sa * sb, -sa, 0, ca;
+			return S;
+		}
+
+		Eigen::Matrix3d Airdata::S_wb()
+		{
+			return S_bw().transpose();
 		}
 
 		// Convert airdata to body-frame velocities
-		Vector3d getVelocityFromAirdata(Vector3d airdata)
+		Vector3d Airdata::to_velocity()
 		{
 			double u, v, w;
-			double Va = airdata.x();
-			double alpha = airdata.y();
-			double beta = airdata.z();
-			u = Va * cos(alpha) * cos(beta);
-			v = Va * sin(beta);
-			w = Va * sin(alpha) * cos(beta);
+			u = airspeed * cos(alpha) * cos(beta);
+			v = airspeed * sin(beta);
+			w = airspeed * sin(alpha) * cos(beta);
 			return Vector3d(u, v, w);
+		}
+
+		std::string Airdata::str()
+		{
+			std::ostringstream oss;
+			oss << std::setprecision(3)
+				<< "Airdata(Va="
+				<< airspeed
+				<< ", AoA[deg]="
+				<< rad_to_deg(alpha)
+				<< ", AoS[deg]="
+				<< rad_to_deg(beta)
+				<< ")";
+			return oss.str();
 		}
 
 		////////////////////////////
@@ -128,7 +195,7 @@ namespace last_letter_lib
 		// Define PID class
 		///////////////////
 
-		//Constructor
+		// Constructor
 		PID::PID(double Pi, double Ii, double Di, double satUi = std::numeric_limits<double>::max(), double satLi = std::numeric_limits<double>::min(), double trimi = 0.0,
 				 double Tsi = 1.0 / 100, double Taui = 0.1)
 		{
@@ -224,7 +291,7 @@ namespace last_letter_lib
 			return output;
 		}
 
-		//Destructor
+		// Destructor
 		PID::~PID()
 		{
 		}
@@ -233,7 +300,7 @@ namespace last_letter_lib
 		// Define APID class
 		///////////////////
 
-		//Constructor
+		// Constructor
 		APID::APID(double Pi, double Ii, double Di, double satUi = std::numeric_limits<double>::max(), double satLi = std::numeric_limits<double>::min(), double trimi = 0.0,
 				   double Tsi = 1.0 / 100, double Taui = 0.1)
 		{
@@ -326,7 +393,7 @@ namespace last_letter_lib
 			return output;
 		}
 
-		//Destructor
+		// Destructor
 		APID::~APID()
 		{
 		}

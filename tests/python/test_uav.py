@@ -79,11 +79,11 @@ class TestUavState:
     def test_from_array(self):
         state = UavState.from_array([1, 2, 3, 1, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11])
         tests = []
-        tests.append(state.position == Vector3(1, 2, 3))
-        tests.append(state.attitude == UnitQuaternion(1, [0, 0, 0]))
-        tests.append(state.velocity_linear == Vector3(4, 5, 6))
-        tests.append(state.velocity_angular == Vector3(7, 8, 9))
-        tests.append(state.thrusters_velocity == [10, 11])
+        tests.append(np.all(state.position == [1, 2, 3]))
+        tests.append(state.attitude == UnitQuaternion(1, 0, 0, 0))
+        tests.append(np.all(state.velocity_linear == [4, 5, 6]))
+        tests.append(np.all(state.velocity_angular == [7, 8, 9]))
+        tests.append(np.all(state.thrusters_velocity == [10, 11]))
         assert np.all(tests)
 
 
@@ -92,13 +92,14 @@ def test_calc_airdata_at_link():
     Test the correct way to calculate the position error of an airdata boom.
     """
     probe_pose = Pose(
-        position=Vector3(0, 1, 0),
+        position=Vector3(0, 1, 0).to_array(),
         orientation=EulerAngles(0, 45, 0, in_degrees=True).to_quaternion(),
     )
-    body_airdata = Airdata(10, 0, 0)
+    body_airdata = Airdata()
+    body_airdata.airspeed = 10
     body_vel_ang = Vector3(1, 0, 0)
     probe_airdata = uav.calc_airdata_at_link(body_airdata, body_vel_ang, probe_pose)
-    probe_wind = probe_airdata.to_u().to_array()
+    probe_wind = probe_airdata.to_u()
     probe_wind_des = np.array([5 * np.sqrt(2), 0, 5 * np.sqrt(2) + 1])
     assert np.allclose(probe_wind, probe_wind_des)
 
@@ -113,20 +114,25 @@ class TestAerodynamicTriplet:
 
     def test_aoa_q4(self):
         """Motion towards front and down."""
-        airdata = Airdata.from_u(v_b=[1, 0, 1])
+        # airdata = Airdata().init_from_velocity(vel_body=np.array([1, 0, 1]))
+        airdata = Airdata()
+        airdata.init_from_velocity(vel_body=np.array([1, 0, 1]))
         assert airdata.alpha > 0 and airdata.alpha < np.pi
 
     def test_aoa_q1(self):
         """Motion towards front and up."""
-        airdata = Airdata.from_u(v_b=[1, 0, -1])
+        airdata = Airdata()
+        airdata.init_from_velocity(vel_body=np.array([1, 0, -1]))
         assert airdata.alpha < 0 and airdata.alpha > -np.pi
 
     def test_aoa_q2(self):
         """Motion towards back and up."""
-        airdata = Airdata.from_u(v_b=[-1, 0, -1])
+        airdata = Airdata()
+        airdata.init_from_velocity(vel_body=np.array([-1, 0, -1]))
         assert airdata.alpha < 0 and airdata.alpha > -np.pi
 
     def test_aoa_q3(self):
         """Motion towards back and down."""
-        airdata = Airdata.from_u(v_b=[-1, 0, 1])
+        airdata = Airdata()
+        airdata.init_from_velocity(vel_body=np.array([-1, 0, 1]))
         assert airdata.alpha > 0 and airdata.alpha < np.pi

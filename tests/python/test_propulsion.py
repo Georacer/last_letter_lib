@@ -268,12 +268,12 @@ class TestPropellerStandard:
         """
         wrench = build_propeller_standard_wrench
         tests = []
-        tests.append(wrench.force.x > 0)
-        tests.append(wrench.force.y == 0)
-        tests.append(wrench.force.z == 0)
-        tests.append(wrench.torque.x > 0)
-        tests.append(wrench.torque.y == 0)
-        tests.append(wrench.torque.z == 0)
+        tests.append(wrench.force[0] > 0)
+        tests.append(wrench.force[1] == 0)
+        tests.append(wrench.force[2] == 0)
+        tests.append(wrench.torque[0] > 0)
+        tests.append(wrench.torque[1] == 0)
+        tests.append(wrench.torque[2] == 0)
         assert np.all(tests)
 
     @pytest.mark.parametrize("V, n", [(10, 0.001)])
@@ -282,7 +282,7 @@ class TestPropellerStandard:
         Verify propeller produces negative thrust when free-wheeling
         """
         wrench = build_propeller_standard_wrench
-        assert wrench.force.x < 0
+        assert wrench.force[0] < 0
 
     def test_propeller_factory(self, build_desc_propeller):
         propeller = propulsion.build_propeller(build_desc_propeller)
@@ -499,12 +499,12 @@ class TestThruster:
 
         tests = []
         tests.append(
-            wrench.force.x
+            wrench.force[0]
             == delta_t * (thruster.params.thrust_max - thruster.params.thrust_min)
             + thruster.params.thrust_min
         )
         tests.append(
-            wrench.torque.x
+            wrench.torque[0]
             == delta_t * (thruster.params.torque_max - thruster.params.torque_min)
             + thruster.params.torque_min
         )
@@ -531,7 +531,7 @@ class TestThruster:
 
         x, t = thruster.rk4(u, dt)
         wrench = thruster.wrench
-        assert wrench.torque.x < 0
+        assert wrench.torque[0] < 0
 
     # Test ThrusterBeard class
     def test_thruster_beard_constructor(self, build_desc_thruster_beard):
@@ -554,8 +554,8 @@ class TestThruster:
         wrench = thruster.wrench
 
         tests = []
-        tests.append(wrench.force.x > 0)
-        tests.append(wrench.torque.x > 0)
+        tests.append(wrench.force[0] > 0)
+        tests.append(wrench.torque[0] > 0)
         assert np.all(tests)
 
     def test_thruster_beard_overspeed(self, build_thruster_beard):
@@ -570,8 +570,8 @@ class TestThruster:
         wrench = thruster.wrench
 
         tests = []
-        tests.append(wrench.force.x < 0)
-        tests.append(wrench.torque.x > 0)
+        tests.append(wrench.force[0] < 0)
+        tests.append(wrench.torque[0] > 0)
         assert np.all(tests)
 
     # Test ThrusterElectric class
@@ -667,8 +667,8 @@ class TestThruster:
         wrench = thruster.wrench
 
         tests = []
-        tests.append(wrench.force.x == 0)
-        tests.append(wrench.torque.x == 0)
+        tests.append(wrench.force[0] == 0)
+        tests.append(wrench.torque[0] == 0)
 
         assert np.all(tests)
 
@@ -704,9 +704,9 @@ class TestThruster:
         wrench = thruster.wrench
 
         tests = []
-        tests.append(wrench.force.x > 0)
-        tests.append(wrench.force.x < 100)
-        tests.append(wrench.torque.x > 0)
-        tests.append(wrench.torque.x < 10)
+        tests.append(wrench.force[0] > 0)
+        tests.append(wrench.force[0] < 100)
+        tests.append(wrench.torque[0] > 0)
+        tests.append(wrench.torque[0] < 10)
 
         assert np.all(tests)
