@@ -36,12 +36,6 @@ namespace last_letter_lib
 		const UnitQuaternion q_bg_ba{Quaterniond{Eigen::AngleAxis<double>(M_PI, Vector3d::UnitX())}};
 		const UnitQuaternion q_ba_bg = q_bg_ba.conjugate();
 
-		struct Inertial
-		{
-			double mass{0};
-			Matrix3d tensor{Matrix3d::Zero()};
-		};
-
 		struct Twist
 		{
 			Twist() : linear(Vector3d::Zero()), angular(Vector3d::Zero()) {}
@@ -216,12 +210,6 @@ namespace last_letter_lib
 		{
 			InputPwm_t() : value(12, 1000) {}
 			std::vector<uint16_t> value; // PWM microseconds, 1000-2000 typical range
-		};
-
-		struct Inertial_t
-		{
-			double mass;
-			Eigen::Matrix<double, 3, 3, Eigen::RowMajor> J, Jinv;
 		};
 
 		// Air data class declaration

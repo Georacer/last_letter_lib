@@ -66,6 +66,7 @@ namespace last_letter_lib
 		void multi_mtxT_mtx_3X3(double *a, double *b, double *res);
 		void multi_mtxT_mtx_3Xn(double *a, double *b, double *res, int n);
 		int is_pos_def(double *R); // Check if 3x3 matrix is positive definite
+		int is_pos_def(Eigen::Matrix3d R);
 
 		template <typename T>
 		const T &constrain(const T &x, const T &a, const T &b);
@@ -302,6 +303,15 @@ namespace last_letter_lib
 
 			// main step
 			double step(double input);
+		};
+
+		class Inertial
+		{
+		public:
+			Inertial(double mass = 0.0);							 // Constructor with mass only.
+			Inertial(double /*mass*/, std::vector<double> /*j_***/); // Constructor with either a 9-vector or a 3-vector.
+			double mass;
+			Eigen::Matrix3d tensor;
 		};
 
 		void WGS84_NM(double lat, double *NE, double *ME);

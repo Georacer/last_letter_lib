@@ -1,11 +1,13 @@
 #include <Eigen/Eigen>
 
+#include <last_letter_lib/math_utils.hpp>
 #include <last_letter_lib/prog_utils.hpp>
 #include <last_letter_lib/uav_utils.hpp>
 
 using Eigen::Quaterniond;
 using Eigen::Vector3d;
 
+using namespace last_letter_lib::math_utils;
 using namespace last_letter_lib::programming_utils;
 using namespace last_letter_lib::uav_utils;
 

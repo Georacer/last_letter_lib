@@ -115,7 +115,7 @@ namespace last_letter_lib
 	}
 
 	// Calculate the forces and torques for each Wrench_t source
-	LinkWrenchMap_t Dynamics::calcWrench(LinkStateMap_t states, Inertial_t inertial, Environment_t environment)
+	LinkWrenchMap_t Dynamics::calcWrench(LinkStateMap_t states, Inertial inertial, Environment_t environment)
 	{
 		LinkWrenchMap_t linkWrenches;
 

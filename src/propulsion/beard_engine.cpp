@@ -27,14 +27,14 @@ void EngBeard::readParametersProp(ParameterManager config)
 }
 
 // Update motor rotational speed and other states for each timestep
-void EngBeard::updateRadPS(SimState_t /* states */, Inertial_t /* inertial */, Environment_t /*environment*/)
+void EngBeard::updateRadPS(SimState_t /* states */, Inertial /* inertial */, Environment_t /*environment*/)
 {
 	omega = rotationDir * inputMotor * k_omega;
 	// parentObj->states.rotorspeed[0]=std::fabs(omega); // Write engine speed to states message
 }
 
 // Calculate propulsion forces
-void EngBeard::getForce(SimState_t /* states */, Inertial_t /* inertial */, Environment_t environment)
+void EngBeard::getForce(SimState_t /* states */, Inertial /* inertial */, Environment_t environment)
 {
 	rho = environment.density;
 	double x, y, z;
@@ -59,7 +59,7 @@ void EngBeard::getForce(SimState_t /* states */, Inertial_t /* inertial */, Envi
 }
 
 // Calculate propulsion torques
-void EngBeard::getTorque(SimState_t /* states */, Inertial_t /* inertial */, Environment_t /* environment */)
+void EngBeard::getTorque(SimState_t /* states */, Inertial /* inertial */, Environment_t /* environment */)
 {
 	double x, y, z;
 	x = -rotationDir * k_t_p * pow(omega, 2);

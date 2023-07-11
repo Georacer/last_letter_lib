@@ -47,7 +47,7 @@ void ElectricEng::readParametersProp(ParameterManager config)
 }
 
 // Update motor rotational speed and calculate thrust
-void ElectricEng::updateRadPS(SimState_t /* states */, Inertial_t inertial, Environment_t environment)
+void ElectricEng::updateRadPS(SimState_t /* states */, Inertial inertial, Environment_t environment)
 {
 	rho = environment.density;
 
@@ -91,7 +91,7 @@ void ElectricEng::updateRadPS(SimState_t /* states */, Inertial_t inertial, Envi
 	// parentObj->states.rotorspeed[0]=std::fabs(omega); // Write engine speed to states message
 }
 
-void ElectricEng::getForce(SimState_t /* states */, Inertial_t /* inertial */, Environment_t /* environment */)
+void ElectricEng::getForce(SimState_t /* states */, Inertial /* inertial */, Environment_t /* environment */)
 {
 	if (!wrenchProp.force.allFinite())
 	{
@@ -99,7 +99,7 @@ void ElectricEng::getForce(SimState_t /* states */, Inertial_t /* inertial */, E
 	}
 }
 
-void ElectricEng::getTorque(SimState_t /* states */, Inertial_t /* inertial */, Environment_t /* environment */)
+void ElectricEng::getTorque(SimState_t /* states */, Inertial /* inertial */, Environment_t /* environment */)
 {
 	if (!wrenchProp.torque.allFinite())
 	{
@@ -153,7 +153,7 @@ void ElectricEng2::readParametersProp(ParameterManager config)
 }
 
 // Update motor rotational speed and calculate thrust
-void ElectricEng2::updateRadPS(SimState_t /* states */, Inertial_t inertial, Environment_t environment)
+void ElectricEng2::updateRadPS(SimState_t /* states */, Inertial inertial, Environment_t environment)
 {
 	rho = environment.density;
 
@@ -209,7 +209,7 @@ void ElectricEng2::updateRadPS(SimState_t /* states */, Inertial_t inertial, Env
 																					// "\nomega: " << omega << std::endl;
 }
 
-void ElectricEng2::getForce(SimState_t /* states */, Inertial_t /* inertial */, Environment_t /* environment */)
+void ElectricEng2::getForce(SimState_t /* states */, Inertial /* inertial */, Environment_t /* environment */)
 {
 	if (!wrenchProp.force.allFinite())
 	{
@@ -217,7 +217,7 @@ void ElectricEng2::getForce(SimState_t /* states */, Inertial_t /* inertial */, 
 	}
 }
 
-void ElectricEng2::getTorque(SimState_t /* states */, Inertial_t /* inertial */, Environment_t /* environment */)
+void ElectricEng2::getTorque(SimState_t /* states */, Inertial /* inertial */, Environment_t /* environment */)
 {
 	if (!wrenchProp.torque.allFinite())
 	{

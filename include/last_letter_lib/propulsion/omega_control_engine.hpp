@@ -18,7 +18,7 @@ public:
 	~EngOmegaControl();
 	void readParametersProp(ParameterManager config);
 
-	void updateRadPS(SimState_t states, Inertial_t inertial, Environment_t environment); //Step the angular speed
-	void getForce(SimState_t states, Inertial_t inertial, Environment_t environment);
-	void getTorque(SimState_t states, Inertial_t inertial, Environment_t environment);
+	void updateRadPS(SimState_t states, Inertial inertial, Environment_t environment); //Step the angular speed
+	void getForce(SimState_t states, Inertial inertial, Environment_t environment);
+	void getTorque(SimState_t states, Inertial inertial, Environment_t environment);
 };

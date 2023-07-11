@@ -12,6 +12,7 @@
 
 using Eigen::Vector3d;
 
+using namespace last_letter_lib::math_utils;
 using namespace last_letter_lib::uav_utils;
 using last_letter_lib::programming_utils::buildPolynomial;
 using last_letter_lib::programming_utils::ParameterManager;
@@ -42,7 +43,7 @@ namespace last_letter_lib
         virtual ~Aerodynamics();
         void setInput(Input_t input);
         void setInputPwm(InputPwm_t input);
-        void stepDynamics(const SimState_t states, const Inertial_t inertial, const Environment_t environment); // perform one step in the aerodynamics
+        void stepDynamics(const SimState_t states, const Inertial inertial, const Environment_t environment); // perform one step in the aerodynamics
         virtual void readParametersAerodynamics(ParameterManager config);
         virtual void getForce(Environment_t environmet) = 0;
         virtual void getTorque(Environment_t environment) = 0;
@@ -80,9 +81,9 @@ namespace last_letter_lib
         virtual void readParametersAerodynamics(ParameterManager config);
         void getForce(Environment_t environment);
         void getTorque(Environment_t environment);
-        //Calculate lift coefficient from alpha
+        // Calculate lift coefficient from alpha
         virtual double liftCoeff(double);
-        //Calculate drag coefficient from alpha
+        // Calculate drag coefficient from alpha
         virtual double dragCoeff(double);
     };
 

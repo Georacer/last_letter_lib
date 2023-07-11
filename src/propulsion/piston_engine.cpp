@@ -43,7 +43,7 @@ void PistonEng::readParametersProp(ParameterManager config)
 }
 
 // Update motor rotational speed and calculate thrust
-void PistonEng::updateRadPS(SimState_t /* states */, Inertial_t inertial, Environment_t environment)
+void PistonEng::updateRadPS(SimState_t /* states */, Inertial inertial, Environment_t environment)
 {
 	rho = environment.density; // Read current air density
 
@@ -87,12 +87,12 @@ void PistonEng::updateRadPS(SimState_t /* states */, Inertial_t inertial, Enviro
 
 }
 
-void PistonEng::getForce(SimState_t /* states */, Inertial_t /* inertial */, Environment_t /* environment */)
+void PistonEng::getForce(SimState_t /* states */, Inertial /* inertial */, Environment_t /* environment */)
 {
 	if (!wrenchProp.force.allFinite()) {throw runtime_error("propulsion.cpp: State NaN in wrenchProp.force");}
 }
 
-void PistonEng::getTorque(SimState_t /* states */, Inertial_t /* inertial */, Environment_t /* environment */)
+void PistonEng::getTorque(SimState_t /* states */, Inertial /* inertial */, Environment_t /* environment */)
 {
 	if (!wrenchProp.torque.allFinite()) {throw runtime_error("propulsion.cpp: State NaN in wrenchProp.torque");}
 }

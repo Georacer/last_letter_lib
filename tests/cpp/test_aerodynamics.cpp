@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 
 #include "yaml-cpp/yaml.h"
+#include "last_letter_lib/math_utils.hpp"
 #include "last_letter_lib/prog_utils.hpp"
 #include "last_letter_lib/uav_utils.hpp"
 #include "last_letter_lib/aerodynamics.hpp"
@@ -12,6 +13,7 @@ using namespace std;
 using namespace Eigen;
 
 using namespace last_letter_lib::programming_utils;
+using namespace last_letter_lib::math_utils;
 using namespace last_letter_lib;
 
 TEST(TestAerodynamics, TestAerodynamics1)
@@ -19,16 +21,17 @@ TEST(TestAerodynamics, TestAerodynamics1)
     auto config = load_config_aircraft("skywalker_2013");
     SimState_t state = build_aircraft_state_from_config(config);
 
-    Inertial_t inertial;
-    inertial.mass = config.filter("inertial").get<double>("m");
+    double mass = config.filter("inertial").get<double>("m");
     double j_x, j_y, j_z, j_xz;
     j_x = config.filter("inertial").get<double>("j_x");
     j_y = config.filter("inertial").get<double>("j_y");
     j_z = config.filter("inertial").get<double>("j_z");
     j_xz = config.filter("inertial").get<double>("j_xz");
-    inertial.J << j_x, 0, -j_xz,
+    std::vector<double> J = {
+        j_x, 0, -j_xz,
         0, j_y, 0,
-        -j_xz, 0, j_x;
+        -j_xz, 0, j_z};
+    Inertial inertial(mass, J);
 
     EnvironmentModel environmentModel = EnvironmentModel(config.filter("env"), config.filter("world"));
     environmentModel.calcEnvironment(state);

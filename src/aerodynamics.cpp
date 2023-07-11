@@ -102,7 +102,7 @@ namespace last_letter_lib
 	}
 
 	// One step in the physics engine
-	void Aerodynamics::stepDynamics(const SimState_t states, const Inertial_t /*inertial*/, const Environment_t environment)
+	void Aerodynamics::stepDynamics(const SimState_t states, const Inertial /*inertial*/, const Environment_t environment)
 	{
 		p = states.velocity.angular(0);
 		q = states.velocity.angular(1);
