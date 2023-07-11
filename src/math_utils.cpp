@@ -1,4 +1,5 @@
 #include "iostream"
+#include <stdexcept>
 
 #include "last_letter_lib/math_utils.hpp"
 
@@ -1040,6 +1041,35 @@ namespace last_letter_lib
             return sum;
         }
 
+        //////////////////////
+        // Inertial methods //
+        //////////////////////
+
+        Inertial::Inertial(double mass_p)
+        {
+            mass = mass_p;
+            tensor.setIdentity();
+        }
+
+        Inertial::Inertial(double mass_p, std::vector<double> j_vec)
+        { // Constructor with either a 9-vector or a 3-vector.
+            mass = mass_p;
+
+            if (j_vec.size() == 9)
+            {
+                tensor = Eigen::Map<Eigen::Matrix3d>(&j_vec[0], 3, 3);
+            }
+            else if (j_vec.size() == 3)
+            {
+                auto v = Eigen::Map<Eigen::Vector3d>(&j_vec[0], 3);
+                tensor = v.asDiagonal();
+            }
+            else
+            {
+                throw std::runtime_error("Cannot initialize inertia tensor with " + std::to_string(j_vec.size()) + " elements");
+            }
+        }
+
         /////////////////////////////////////////
         // Check for NaN in various structures //
         /////////////////////////////////////////
@@ -1141,6 +1171,35 @@ namespace last_letter_lib
 
             // Matrix is positive definite
             return 0;
+        } // TODO: This would better return positive on success.
+
+        int is_pos_def(Eigen::Matrix3d R)
+        {
+            // Calculate determinant
+            double det =
+                R(0, 0) * R(1, 1) * R(2, 2) - R(0, 0) * R(1, 2) * R(2, 1) - R(0, 1) * R(1, 0) * R(2, 2) + R(0, 1) * R(1, 2) * R(2, 0) + R(0, 2) * R(1, 0) * R(2, 1) - R(0, 2) * R(1, 1) * R(2, 0);
+            if (det == 0)
+            {
+                return -1; // Matrix is singular
+            }
+
+            // Matrix is not positive definite
+            if (R(0, 0) < 0)
+            {
+                return -2;
+            }
+            if ((R(0, 0) * R(1, 1) - R(0, 1) * R(1, 0)) < 0)
+            {
+                return -2;
+            }
+            if (det < 0)
+            {
+                return -2;
+            }
+
+            // Matrix is positive definite
+            return 0;
         }
+
     } // namespace math_utils
 } // namespace last_letter_lib

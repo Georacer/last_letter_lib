@@ -30,7 +30,7 @@ void EngOmegaControl::readParametersProp(ParameterManager config)
 }
 
 // Update motor rotational speed and other states for each timestep
-void EngOmegaControl::updateRadPS(SimState_t /* states */, Inertial_t /* inertial */, Environment_t environment)
+void EngOmegaControl::updateRadPS(SimState_t /* states */, Inertial /* inertial */, Environment_t environment)
 {
 	omega = inputMotor*omega_max; // Direct omega setting from user
 	rho = environment.density;
@@ -42,7 +42,7 @@ void EngOmegaControl::updateRadPS(SimState_t /* states */, Inertial_t /* inertia
 }
 
 // Calculate propulsion forces
-void EngOmegaControl::getForce(SimState_t /* states */, Inertial_t /* inertial */, Environment_t /* environment */)
+void EngOmegaControl::getForce(SimState_t /* states */, Inertial /* inertial */, Environment_t /* environment */)
 {
 	double x, y, z;
 	x = thrust;
@@ -53,7 +53,7 @@ void EngOmegaControl::getForce(SimState_t /* states */, Inertial_t /* inertial *
 }
 
 // Calculate propulsion torques
-void EngOmegaControl::getTorque(SimState_t /* states */, Inertial_t /* inertial */, Environment_t /* environment */)
+void EngOmegaControl::getTorque(SimState_t /* states */, Inertial /* inertial */, Environment_t /* environment */)
 {
 	double x, y, z;
 	x = -rotationDir * torque;

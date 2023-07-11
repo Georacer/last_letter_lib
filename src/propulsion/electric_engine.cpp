@@ -47,7 +47,7 @@ void ElectricEng::readParametersProp(ParameterManager config)
 }
 
 // Update motor rotational speed and calculate thrust
-void ElectricEng::updateRadPS(SimState_t /* states */, Inertial_t inertial, Environment_t environment)
+void ElectricEng::updateRadPS(SimState_t /* states */, Inertial inertial, Environment_t environment)
 {
 	rho = environment.density;
 
@@ -92,12 +92,12 @@ void ElectricEng::updateRadPS(SimState_t /* states */, Inertial_t inertial, Envi
 
 }
 
-void ElectricEng::getForce(SimState_t /* states */, Inertial_t /* inertial */, Environment_t /* environment */)
+void ElectricEng::getForce(SimState_t /* states */, Inertial /* inertial */, Environment_t /* environment */)
 {
 	if (!wrenchProp.force.allFinite()) {throw runtime_error("propulsion.cpp: State NaN in wrenchProp.force");}
 }
 
-void ElectricEng::getTorque(SimState_t /* states */, Inertial_t /* inertial */, Environment_t /* environment */)
+void ElectricEng::getTorque(SimState_t /* states */, Inertial /* inertial */, Environment_t /* environment */)
 {
 	if (!wrenchProp.torque.allFinite()) {throw runtime_error("propulsion.cpp: State NaN in wrenchProp.torque");}
 }
@@ -149,7 +149,7 @@ void ElectricEng2::readParametersProp(ParameterManager config)
 }
 
 // Update motor rotational speed and calculate thrust
-void ElectricEng2::updateRadPS(SimState_t /* states */, Inertial_t inertial, Environment_t environment)
+void ElectricEng2::updateRadPS(SimState_t /* states */, Inertial inertial, Environment_t environment)
 {
 	rho = environment.density;
 
@@ -204,12 +204,12 @@ void ElectricEng2::updateRadPS(SimState_t /* states */, Inertial_t inertial, Env
 	// "\nomega: " << omega << std::endl;
 }
 
-void ElectricEng2::getForce(SimState_t /* states */, Inertial_t /* inertial */, Environment_t /* environment */)
+void ElectricEng2::getForce(SimState_t /* states */, Inertial /* inertial */, Environment_t /* environment */)
 {
 	if (!wrenchProp.force.allFinite()) {throw runtime_error("propulsion.cpp: State NaN in wrenchProp.force");}
 }
 
-void ElectricEng2::getTorque(SimState_t /* states */, Inertial_t /* inertial */, Environment_t /* environment */)
+void ElectricEng2::getTorque(SimState_t /* states */, Inertial /* inertial */, Environment_t /* environment */)
 {
 	if (!wrenchProp.torque.allFinite()) {throw runtime_error("propulsion.cpp: State NaN in wrenchProp.torque");}
 }

@@ -8,7 +8,7 @@ namespace last_letter_lib
 	//////////////////////////
 
 	///////////////////
-	//Class Constructor
+	// Class Constructor
 	Kinematics::Kinematics(ParameterManager inertialConfig, ParameterManager worldConfig)
 	{
 		readParametersInertial(inertialConfig);
@@ -19,7 +19,7 @@ namespace last_letter_lib
 	}
 
 	//////////////////
-	//Class Destructor
+	// Class Destructor
 	Kinematics::~Kinematics()
 	{
 		delete integrator;
@@ -37,17 +37,20 @@ namespace last_letter_lib
 	void Kinematics::readParametersInertial(ParameterManager inertialConfig)
 	{
 		// Calculate inertia matrix...
-		inertial.mass = inertialConfig.get<double>("m");
+
+		double mass = inertialConfig.get<double>("m");
 		double j_x, j_y, j_z, j_xz;
 		j_x = inertialConfig.get<double>("j_x");
 		j_y = inertialConfig.get<double>("j_y");
 		j_z = inertialConfig.get<double>("j_z");
 		j_xz = inertialConfig.get<double>("j_xz");
-		inertial.J << j_x, 0, -j_xz,
-			0, j_y, 0,
-			-j_xz, 0, j_z;
+		std::vector<double> J = {
+			j_x, 0.0, -j_xz,
+			0.0, j_y, 0.0,
+			-j_xz, 0.0, j_z};
+		Inertial inertial(mass, J);
 
-		int res = math_utils::is_pos_def(inertial.J.data());
+		int res = math_utils::is_pos_def(inertial.tensor);
 		if (!(res == 0))
 		{
 			switch (res)
@@ -62,13 +65,10 @@ namespace last_letter_lib
 				break;
 			}
 		}
-
-		// ... and its inverse
-		inertial.Jinv = inertial.J.inverse();
 	}
 
 	///////////////////////////////
-	//State derivatives calculation
+	// State derivatives calculation
 	void Kinematics::calcDerivatives(SimState_t states, Wrench_t inpWrench)
 	{
 		// variable declaration
@@ -106,7 +106,7 @@ namespace last_letter_lib
 		}
 
 		// create angular rate derivatives from torque
-		stateDot.rateDot = inertial.Jinv * (inpWrench.torque - states.velocity.angular.cross(inertial.J * states.velocity.angular));
+		stateDot.rateDot = inertial.tensor.inverse() * (inpWrench.torque - states.velocity.angular.cross(inertial.tensor * states.velocity.angular));
 		if (!stateDot.rateDot.allFinite())
 		{
 			throw runtime_error("NaN member in angular velocity derivative vector");
@@ -142,12 +142,12 @@ namespace last_letter_lib
 	// Define ForwardEuler class
 	//////////////////////////
 
-	//Class Constructor
+	// Class Constructor
 	ForwardEuler::ForwardEuler(ParameterManager worldConfig) : Integrator(worldConfig)
 	{
 	}
 
-	//Propagation of the states
+	// Propagation of the states
 	SimState_t ForwardEuler::propagation(SimState_t states, Derivatives_t derivatives)
 	{
 		SimState_t newStates;
@@ -188,7 +188,7 @@ namespace last_letter_lib
 		// Set angular acceleration from the angular rate derivatives
 		newStates.acceleration.angular = derivatives.rateDot;
 
-		//Update Geoid stuff using the NED coordinates
+		// Update Geoid stuff using the NED coordinates
 		newStates.geoid.latitude = states.geoid.latitude + derivatives.coordDot.x() * dt;
 		newStates.geoid.longitude = states.geoid.longitude + derivatives.coordDot.y() * dt;
 		newStates.geoid.altitude = states.geoid.altitude + derivatives.coordDot.z() * dt;
@@ -199,7 +199,7 @@ namespace last_letter_lib
 		return newStates;
 	}
 
-	//Build integrator model
+	// Build integrator model
 	Integrator *buildIntegrator(ParameterManager worldConfig)
 	{
 		int integratorType;

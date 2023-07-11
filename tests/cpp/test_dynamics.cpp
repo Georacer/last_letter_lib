@@ -24,16 +24,17 @@ TEST(TestDynamics, TestDynamics1)
     // Create input data
     std::vector<double> tempVec;
 
-    Inertial_t inertial;
-    inertial.mass = config.filter("inertial").get<double>("m");
+    double mass = config.filter("inertial").get<double>("m");
     double j_x, j_y, j_z, j_xz;
     j_x = config.filter("inertial").get<double>("j_x");
     j_y = config.filter("inertial").get<double>("j_y");
     j_z = config.filter("inertial").get<double>("j_z");
     j_xz = config.filter("inertial").get<double>("j_xz");
-    inertial.J << j_x, 0, -j_xz,
+    std::vector<double> J = {
+        j_x, 0, -j_xz,
         0, j_y, 0,
-        -j_xz, 0, j_z;
+        -j_xz, 0, j_z};
+    Inertial inertial(mass, J);
 
     Input_t input;
     input.value[0] = 0.1;

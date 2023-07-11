@@ -16,6 +16,7 @@
 
 using Eigen::Vector3d;
 using namespace last_letter_lib::uav_utils;
+using last_letter_lib::math_utils::Inertial;
 using last_letter_lib::math_utils::Polynomial;
 using last_letter_lib::programming_utils::buildPolynomial;
 using last_letter_lib::programming_utils::ParameterManager;
@@ -29,7 +30,7 @@ namespace last_letter_lib
 		{
 		public:
 			///////////
-			//Variables
+			// Variables
 			double dt;		   // Simulation time step
 			double inputMotor; // control input (0-1)
 			int chanMotor;
@@ -41,19 +42,19 @@ namespace last_letter_lib
 			Wrench_t wrenchProp;
 
 			///////////
-			//Functions
+			// Functions
 			Propulsion(ParameterManager propConfig, ParameterManager worldConfig);
 			virtual ~Propulsion();
 			virtual void readParametersProp(ParameterManager config);
 			virtual void readParametersWorld(ParameterManager config);
 
-			void setInput(Input_t input);																	 // store control input
-			void setInputPwm(InputPwm_t input);																 // store PWM control input
-			void stepEngine(SimState_t states, Inertial_t inertial, Environment_t environment);				 // engine physics step, container for the generic class
-			virtual void updateRadPS(SimState_t states, Inertial_t inertial, Environment_t environment) = 0; // Step the angular speed
-			void rotateProp();																				 // Update the propeller angle
-			virtual void getForce(SimState_t states, Inertial_t inertial, Environment_t environment) = 0;	 // Calculate Forces
-			virtual void getTorque(SimState_t states, Inertial_t inertial, Environment_t environment) = 0;	 //Calculate Torques
+			void setInput(Input_t input);																   // store control input
+			void setInputPwm(InputPwm_t input);															   // store PWM control input
+			void stepEngine(SimState_t states, Inertial inertial, Environment_t environment);			   // engine physics step, container for the generic class
+			virtual void updateRadPS(SimState_t states, Inertial inertial, Environment_t environment) = 0; // Step the angular speed
+			void rotateProp();																			   // Update the propeller angle
+			virtual void getForce(SimState_t states, Inertial inertial, Environment_t environment) = 0;	   // Calculate Forces
+			virtual void getTorque(SimState_t states, Inertial inertial, Environment_t environment) = 0;   // Calculate Torques
 		};
 
 #include "no_engine.hpp"

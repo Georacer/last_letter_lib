@@ -76,7 +76,7 @@ namespace last_letter_lib
 		}
 
 		// Engine physics step, container for the generic class
-		void Propulsion::stepEngine(SimState_t states, Inertial_t inertial, Environment_t environment)
+		void Propulsion::stepEngine(SimState_t states, Inertial inertial, Environment_t environment)
 		{
 			// std::cout << "received states and wind: \n"
 			// 		  << states.velocity.linear << "\n"

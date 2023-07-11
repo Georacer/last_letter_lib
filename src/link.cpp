@@ -104,7 +104,7 @@ namespace last_letter_lib
     }
 
     // Convert the resulting force from the gimbal axes to the body axes
-    void Link::rotateWrench(Inertial_t /*inertial*/)
+    void Link::rotateWrench(Inertial /*inertial*/)
     {
         Vector3d forceLink = wrenchLinkFrame.force;
         Vector3d torqueLink = wrenchLinkFrame.torque;
@@ -129,7 +129,7 @@ namespace last_letter_lib
         // wrenchWorldFrame.torque = torque + CGOffset_.cross(wrenchWorldFrame.force);
     }
 
-    void Link::step(SimState_t state, Inertial_t inertial, Environment_t environment)
+    void Link::step(SimState_t state, Inertial inertial, Environment_t environment)
     {
         // std::cout << "NED link velocities for link: " << this->name << "\n"
         //           << state.velocity.linear << "\n"
@@ -186,7 +186,7 @@ namespace last_letter_lib
         aerodynamics->setInputPwm(input);
     }
 
-    void LinkAerodynamic::stepModelDynamics(SimState_t state, Inertial_t inertial, Environment_t environment)
+    void LinkAerodynamic::stepModelDynamics(SimState_t state, Inertial inertial, Environment_t environment)
     {
         aerodynamics->stepDynamics(state, inertial, environment);
     }
@@ -233,7 +233,7 @@ namespace last_letter_lib
         propulsion->setInputPwm(input);
     }
 
-    void LinkPropulsion::stepModelDynamics(SimState_t state, Inertial_t inertial, Environment_t environment)
+    void LinkPropulsion::stepModelDynamics(SimState_t state, Inertial inertial, Environment_t environment)
     {
         propulsion->stepEngine(state, inertial, environment);
         // updatePropTF();
@@ -287,7 +287,7 @@ namespace last_letter_lib
         groundReaction_->setInputPwm(input);
     }
 
-    void LinkGroundReaction::stepModelDynamics(SimState_t, Inertial_t, Environment_t)
+    void LinkGroundReaction::stepModelDynamics(SimState_t, Inertial, Environment_t)
     {
         throw runtime_error("Do not use this interface. Use stepModelDynamics(state, wrenchSum) instead.");
     }

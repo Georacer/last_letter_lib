@@ -22,6 +22,7 @@ from scipy.optimize import root
 
 # from last_letter_lib import cpp_last_letter_lib
 from ..cpp_last_letter_lib.cpp_math_utils import EulerAngles
+from ..cpp_last_letter_lib.cpp_math_utils import Inertial
 from ..cpp_last_letter_lib.cpp_math_utils import UnitQuaternion
 from ..cpp_last_letter_lib.cpp_math_utils import Vector3
 from ..cpp_last_letter_lib.cpp_uav_utils import Pose as cpp_Pose
@@ -69,14 +70,14 @@ def build_vector3_from_array(arr):
     return Vector3(x, y, z)
 
 
-@dataclass
-class Inertial:
-    mass: float  # The object mass, in kg
-    tensor: Optional[np.array]  # The object inertia tensor, a numpy 9x9 array
+# @dataclass
+# class Inertial:
+#     mass: float  # The object mass, in kg
+#     tensor: Optional[np.array]  # The object inertia tensor, a numpy 9x9 array
 
-    @classmethod
-    def simple(cls, mass, i_xx, i_yy, i_zz):
-        return cls(mass, np.array([[i_xx, 0, 0], [0, i_yy, 0], [0, 0, i_zz]]))
+#     @classmethod
+#     def simple(cls, mass, i_xx, i_yy, i_zz):
+#         return cls(mass, np.array([[i_xx, 0, 0], [0, i_yy, 0], [0, 0, i_zz]]))
 
 
 # class EulerAngles:

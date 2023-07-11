@@ -11,6 +11,7 @@ using namespace std;
 using Eigen::Quaterniond;
 using Eigen::Vector3d;
 using namespace last_letter_lib::uav_utils;
+using last_letter_lib::math_utils::Inertial;
 using namespace last_letter_lib::programming_utils;
 
 namespace last_letter_lib
@@ -56,7 +57,7 @@ namespace last_letter_lib
 
 		double dt;
 		Derivatives_t stateDot;
-		Inertial_t inertial;
+		Inertial inertial;
 		void calcDerivatives(SimState_t states, Wrench_t inpWrench);	  // Do not use this method (private)
 		SimState_t propagateState(SimState_t states, Wrench_t inpWrench); // Use this method to calculate state integral
 		void readParametersWorld(ParameterManager worldConfig);

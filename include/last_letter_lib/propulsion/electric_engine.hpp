@@ -30,9 +30,9 @@ public:
 	~ElectricEng();
 	void readParametersProp(ParameterManager config);
 
-	void updateRadPS(SimState_t states, Inertial_t inertial, Environment_t environment);
-	void getForce(SimState_t states, Inertial_t inertial, Environment_t environment);
-	void getTorque(SimState_t states, Inertial_t inertial, Environment_t environment);
+	void updateRadPS(SimState_t states, Inertial inertial, Environment_t environment);
+	void getForce(SimState_t states, Inertial inertial, Environment_t environment);
+	void getTorque(SimState_t states, Inertial inertial, Environment_t environment);
 };
 
 class ElectricEng2 : public Propulsion
@@ -65,7 +65,7 @@ public:
 	~ElectricEng2();
 	void readParametersProp(ParameterManager config);
 
-	void updateRadPS(SimState_t states, Inertial_t inertial, Environment_t environment);
-	void getForce(SimState_t states, Inertial_t inertial, Environment_t environment);
-	void getTorque(SimState_t states, Inertial_t inertial, Environment_t environment);
+	void updateRadPS(SimState_t states, Inertial inertial, Environment_t environment);
+	void getForce(SimState_t states, Inertial inertial, Environment_t environment);
+	void getTorque(SimState_t states, Inertial inertial, Environment_t environment);
 };

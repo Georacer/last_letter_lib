@@ -21,6 +21,7 @@ using Eigen::Vector3d;
 
 using last_letter_lib::Environment_t;
 using last_letter_lib::math_utils::EulerAngles;
+using last_letter_lib::math_utils::Inertial;
 using last_letter_lib::math_utils::UnitQuaternion;
 using last_letter_lib::math_utils::Vector3;
 using last_letter_lib::programming_utils::Parametrized;
@@ -63,6 +64,11 @@ EulerAngles euler_angles_from_unit_quaternion(UnitQuaternion q) { return EulerAn
 EulerAngles euler_angles_from_rotmat(Matrix3d R) { return EulerAngles(R); }
 SimState_t simstate_from_array(const VectorXd &v) { return SimState_t(v); }
 SimState_t simstate_from_simstate(const SimState_t &s) { return SimState_t(s); }
+Inertial inertial_simple(const double mass, const double j_xx, const double j_yy, const double j_zz)
+{
+    std::vector<double> v = {j_xx, j_yy, j_zz};
+    return Inertial(mass, v);
+}
 
 PYBIND11_MODULE(cpp_last_letter_lib, m)
 {
@@ -161,6 +167,12 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def("R_ib", &EulerAngles::R_ib)
         .def("T_eb", &EulerAngles::T_eb)
         .def("T_be", &EulerAngles::T_be);
+    py::class_<Inertial>(m_math_utils, "Inertial")
+        .def(py::init<double>(), py::arg("mass") = 0)
+        .def(py::init<double, std::vector<double>>(), py::arg("mass"), py::arg("tensor"))
+        .def_readwrite("mass", &Inertial::mass)
+        .def_readwrite("tensor", &Inertial::tensor)
+        .def_static("simple", inertial_simple);
 
     auto m_uav_utils = m.def_submodule("cpp_uav_utils", "last_letter_lib uav_utils submodule");
     py::class_<Pose>(m_uav_utils, "Pose")
@@ -177,10 +189,6 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def_readwrite("force", &Wrench_t::force)
         .def_readwrite("torque", &Wrench_t::torque)
         .def("to_array", &Wrench_t::to_array);
-    py::class_<Inertial>(m_uav_utils, "Inertial")
-        .def(py::init())
-        .def_readwrite("mass", &Inertial::mass)
-        .def_readwrite("tensor", &Inertial::tensor);
     py::class_<Airdata>(m_uav_utils, "Airdata")
         .def(py::init<double, double, double>(), py::arg("airspeed") = 0, py::arg("alpha") = 0, py::arg("beta") = 0)
         .def("init_from_velocity", &Airdata::init_from_velocity, py::arg("vel_body"), py::arg("vel_wind") = Vector3d())
