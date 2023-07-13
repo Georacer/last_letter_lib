@@ -57,7 +57,7 @@ int main(int /* argc */, char *argv[])
     uavModel.updateConfigAll();
 
     // Set input
-    Input_t input;
+    Input input;
     input.value[0] = 0.1;
     input.value[1] = 0.1;
     input.value[2] = 0.5;

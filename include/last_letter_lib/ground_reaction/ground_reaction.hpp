@@ -29,7 +29,7 @@ namespace last_letter_lib
 			double inputSteer, inputBrake;
 			double steerAngle_max;
 			int chanSteer, chanBrake;
-			void setInput(Input_t input);
+			void setInput(Input input);
 			void setInputPwm(InputPwm_t input);
 			virtual Vector3d getForce(const SimState_t states, const WrenchSum_t wrenchSum) = 0;
 			virtual Vector3d getTorque(const SimState_t states, const WrenchSum_t wrenchSum) = 0;

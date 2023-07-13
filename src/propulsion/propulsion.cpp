@@ -55,7 +55,7 @@ namespace last_letter_lib
 			}
 		}
 
-		void Propulsion::setInput(Input_t input)
+		void Propulsion::setInput(Input input)
 		{
 			// TODO: I shouldn't check this all the time, since it is an optional parameter
 			if (chanMotor > -1)
@@ -66,7 +66,7 @@ namespace last_letter_lib
 
 		void Propulsion::setInputPwm(InputPwm_t p_input)
 		{
-			Input_t input;
+			Input input;
 			if (chanMotor > -1)
 			{
 				input.value[chanMotor] = PwmToHalfRange(p_input.value[chanMotor]);

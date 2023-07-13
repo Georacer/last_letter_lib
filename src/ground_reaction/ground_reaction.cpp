@@ -40,7 +40,7 @@ namespace last_letter_lib
 		}
 
 		// Store the steering and brake control inputs
-		void GroundReaction::setInput(Input_t input)
+		void GroundReaction::setInput(Input input)
 		{
 			if (chanSteer > -1)
 			{
@@ -55,7 +55,7 @@ namespace last_letter_lib
 		// Store the steering and brake control inputs
 		void GroundReaction::setInputPwm(InputPwm_t p_input)
 		{
-			Input_t input;
+			Input input;
 			if (chanSteer > -1)
 			{
 				input.value[chanSteer] = PwmToFullRange(p_input.value[chanSteer]);

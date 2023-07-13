@@ -48,7 +48,7 @@ namespace last_letter_lib
 			virtual void readParametersProp(ParameterManager config);
 			virtual void readParametersWorld(ParameterManager config);
 
-			void setInput(Input_t input);																   // store control input
+			void setInput(Input input);																   // store control input
 			void setInputPwm(InputPwm_t input);															   // store PWM control input
 			void stepEngine(SimState_t states, Inertial inertial, Environment_t environment);			   // engine physics step, container for the generic class
 			virtual void updateRadPS(SimState_t states, Inertial inertial, Environment_t environment) = 0; // Step the angular speed

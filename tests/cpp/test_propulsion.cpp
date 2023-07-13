@@ -35,7 +35,7 @@ TEST(TestPropulsion, TestPropulsion1)
         -j_xz, 0, j_z};
     Inertial inertial(mass, J);
 
-    Input_t input;
+    Input input;
     input.value[2] = 0.5;
 
     EnvironmentModel environmentModel = EnvironmentModel(config.filter("env"), config.filter("world"));

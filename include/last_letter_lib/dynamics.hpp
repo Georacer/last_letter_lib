@@ -37,7 +37,7 @@ namespace last_letter_lib
 		int nMotors; // number of motors mounted on the aircraft
 		LinkPropulsion **propulsionLinks;
 		// LinkGroundReaction *groundReactionLink;
-		void setInput(Input_t input);																	   // store and convert new input values
+		void setInput(Input input);																	   // store and convert new input values
 		void setInputPwm(InputPwm_t input);																   // store and convert new PWM input values
 		LinkWrenchMap_t calcWrench(LinkStateMap_t states, Inertial inertial, Environment_t environment); // Calculate the forces and torques for each Wrench_t source
 																										   // Vector3d getForce();																		   // Access class members and gather resulting forces
