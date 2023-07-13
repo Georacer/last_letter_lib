@@ -73,6 +73,56 @@ namespace last_letter_lib
 			return res;
 		}
 
+		Input::Input(double delta_a, double delta_e, double delta_r, std::vector<double> delta_t) : value(12, 0)
+		{
+			set_da(delta_a);
+			set_de(delta_e);
+			set_dr(delta_r);
+			set_dt(delta_t);
+		}
+		void Input::set_dt(const std::vector<double> v)
+		{
+			num_thrusters = v.size();
+			if (num_thrusters > 0)
+			{
+				value.at(2) = v.at(0);
+				if (num_thrusters > 1)
+				{
+					for (int idx = 1; idx < num_thrusters; idx++)
+					{
+						value.at(idx + 3) = v.at(idx);
+					}
+				}
+			}
+		}
+		std::vector<double> Input::get_dt()
+		{
+			if (num_thrusters == 0)
+			{
+				return std::vector<double>();
+			}
+			else
+			{
+				std::vector<double> v(num_thrusters, 0);
+				v.at(0) = value.at(2);
+				if (num_thrusters > 1)
+				{
+					for (int idx = 1; idx < num_thrusters; idx++)
+					{
+						v.at(idx) = value.at(idx + 3);
+					}
+				}
+				return v;
+			}
+		}
+		std::vector<double> Input::to_python_array()
+		{
+			std::vector<double> v = {get_da(), get_de(), get_dr()};
+			auto thrusters = get_dt();
+			v.insert(v.end(), thrusters.begin(), thrusters.end());
+			return v;
+		}
+
 		//////////////////////////
 		// Define Airdata class
 		//////////////////////////

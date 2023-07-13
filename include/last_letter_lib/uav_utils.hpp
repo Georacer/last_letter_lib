@@ -200,10 +200,24 @@ namespace last_letter_lib
 
 		typedef std::unordered_map<std::string, SimState_t> LinkStateMap_t;
 
-		struct Input_t
+		class Input
 		{
-			Input_t() : value(12, 0) {}
+		public:
+			Input() : value(12, 0) {}
+			Input(double delta_a, double delta_e, double delta_r, std::vector<double> delta_t);
 			std::vector<double> value; // -1 - 1 (or 0 - 1) ranged
+			double get_da() { return value.at(0); }
+			void set_da(const double v) { value.at(0) = v; }
+			double get_de() { return value.at(1); }
+			void set_de(const double v) { value.at(1) = v; }
+			double get_dr() { return value.at(3); }
+			void set_dr(const double v) { value.at(3) = v; }
+			std::vector<double> get_dt();
+			void set_dt(const std::vector<double> v);
+			std::vector<double> to_python_array();
+			int num_thrusters{0};
+
+		private:
 		};
 
 		struct InputPwm_t

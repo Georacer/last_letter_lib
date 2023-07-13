@@ -103,7 +103,7 @@ namespace last_letter_lib
         }
 
         // Calculate the optimization error cost, based on the optimized input and the corresponding derivative
-        double TrimmerState::calcCost(const SimState_t state, const Derivatives_t stateDer, const Input_t input)
+        double TrimmerState::calcCost(const SimState_t state, const Derivatives_t stateDer, const Input input)
         {
             // State derivative weights
             double derSpeedWeight = 100;
@@ -178,9 +178,9 @@ namespace last_letter_lib
             return state;
         }
 
-        Input_t TrimmerState::buildInputFromArgs(const vector<double> optim_arg)
+        Input TrimmerState::buildInputFromArgs(const vector<double> optim_arg)
         {
-            Input_t input;
+            Input input;
             // Setup model input
             input.value[0] = optim_arg[TRAJ_IDX_DELTAA];
             input.value[1] = optim_arg[TRAJ_IDX_DELTAE];
@@ -197,7 +197,7 @@ namespace last_letter_lib
 
             // Setup model state
             SimState_t state = buildStateFromArgs(optim_arg);
-            Input_t input = buildInputFromArgs(optim_arg);
+            Input input = buildInputFromArgs(optim_arg);
 
             // Simulate the optimization arguments
             uav->setState(state);
@@ -441,7 +441,7 @@ namespace last_letter_lib
         {
             ++funCallCount;
 
-            Input_t input = convertInput4ll(u);
+            Input input = convertInput4ll(u);
             SimState_t state = convertState4ll(trimState.trimState);
 
             // If your motors have state as well (RPM) you need to set it here again
@@ -565,10 +565,10 @@ namespace last_letter_lib
             return state;
         }
 
-        // Convert vector input to Input_t for passing to UavModel
-        Input_t convertInput4ll(const vector<double> &u)
+        // Convert vector input to Input for passing to UavModel
+        Input convertInput4ll(const vector<double> &u)
         {
-            Input_t input;
+            Input input;
             input.value[0] = u[0];
             input.value[1] = u[1];
             input.value[2] = u[2];

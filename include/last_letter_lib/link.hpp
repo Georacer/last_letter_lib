@@ -25,9 +25,9 @@ namespace last_letter_lib
         virtual void passWorldParametersToModel(ParameterManager config) = 0;                     // Update internal model world parameters
         virtual void buildDynamicModel(ParameterManager modelConfig, ParameterManager worldConfig) = 0; // Capture dynamic model parameters and build model
         // Input hanlding methods
-        void setInput(Input_t input);
+        void setInput(Input input);
         void setInputPwm(InputPwm_t input);
-        virtual void setModelInput(Input_t input) = 0;
+        virtual void setModelInput(Input input) = 0;
         virtual void setModelInputPwm(InputPwm_t input) = 0;
         // Rotations-handling methods
         void rotateState(SimState_t states);
@@ -65,7 +65,7 @@ namespace last_letter_lib
         void buildDynamicModel(ParameterManager modelConfig, ParameterManager worldConfig);
         void passModelParametersToModel(ParameterManager config); // Update internal model parameters
         void passWorldParametersToModel(ParameterManager config); // Update internal model world parameters
-        void setModelInput(Input_t input);
+        void setModelInput(Input input);
         void setModelInputPwm(InputPwm_t input);
         virtual void stepModelDynamics(SimState_t, Inertial, Environment_t);
         Wrench_t getWrench(Environment_t);
@@ -82,7 +82,7 @@ namespace last_letter_lib
         void buildDynamicModel(ParameterManager prop_config, ParameterManager world_config);
         void passModelParametersToModel(ParameterManager config); // Update internal model parameters
         void passWorldParametersToModel(ParameterManager config); // Update internal model world parameters
-        void setModelInput(Input_t input);
+        void setModelInput(Input input);
         void setModelInputPwm(InputPwm_t input);
         virtual void stepModelDynamics(SimState_t, Inertial, Environment_t);
         Wrench_t getWrench(Environment_t);
@@ -101,7 +101,7 @@ namespace last_letter_lib
         void buildDynamicModel(ParameterManager modelConfig, ParameterManager worldConfig);
         void passModelParametersToModel(ParameterManager config); // Update internal model parameters
         void passWorldParametersToModel(ParameterManager config); // Update internal model world parameters
-        void setModelInput(Input_t input);
+        void setModelInput(Input input);
         void setModelInputPwm(InputPwm_t input);
         void stepModelDynamics(SimState_t, Inertial, Environment_t);
         void stepModelDynamics(SimState_t, WrenchSum_t);

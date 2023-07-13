@@ -270,7 +270,7 @@ namespace last_letter_lib
 
 	/////////////////////////////////////////////////
 	// Pass control inputs to sub-models
-	void UavModel::setInput(const Input_t p_input)
+	void UavModel::setInput(const Input p_input)
 	{
 		input.value = p_input.value;
 		dynamics.setInput(input);

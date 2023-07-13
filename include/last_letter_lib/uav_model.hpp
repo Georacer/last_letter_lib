@@ -27,7 +27,7 @@ namespace last_letter_lib
 		ParameterManager configs;
 		// SimState_t state;	 // main simulation states
 		LinkWrenchMap_t linkWrenches;
-		Input_t input;		 // Normalized input to the model
+		Input input;		 // Normalized input to the model
 		InputPwm_t PwmInput; // PWM input to the model
 		double dt;			 // simulation timestep in s
 		int chanReset;
@@ -44,7 +44,7 @@ namespace last_letter_lib
 		Vector3d initPosition_, initVelLinear_, initVelAngular_, initCoordinates_;
 		Quaterniond initOrientation_;
 		int initChanReset_;
-		Input_t initCtrlInput_;
+		Input initCtrlInput_;
 		// Link state storage
 		LinkStateMap_t linkStates_;
 
@@ -62,7 +62,7 @@ namespace last_letter_lib
 
 		void setLinkStates(LinkStateMap_t linkStates);			  // Set simulation state
 		SimState_t getState() { return linkStates_["body_frd"]; } // Return the state of the Body Frame
-		void setInput(Input_t inputMsg);
+		void setInput(Input inputMsg);
 		void setInputPwm(InputPwm_t inputMsg);
 		bool set_parameter(programming_utils::ParamType_t paramType, std::string name, double value);
 		void update_model();

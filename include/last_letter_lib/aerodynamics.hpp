@@ -41,7 +41,7 @@ namespace last_letter_lib
     public:
         Aerodynamics(ParameterManager config);
         virtual ~Aerodynamics();
-        void setInput(Input_t input);
+        void setInput(Input input);
         void setInputPwm(InputPwm_t input);
         void stepDynamics(const SimState_t states, const Inertial inertial, const Environment_t environment); // perform one step in the aerodynamics
         virtual void readParametersAerodynamics(ParameterManager config);

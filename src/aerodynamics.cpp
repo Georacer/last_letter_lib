@@ -63,7 +63,7 @@ namespace last_letter_lib
 		inputRudder = 0.0;
 	}
 
-	void Aerodynamics::setInput(Input_t input)
+	void Aerodynamics::setInput(Input input)
 	{
 		// Convert -1 - 1 input range to radians
 		if (chanAileron > -1)
@@ -83,7 +83,7 @@ namespace last_letter_lib
 	void Aerodynamics::setInputPwm(InputPwm_t p_input)
 	{
 		// Convert PPM to -1 - 1 range
-		Input_t input;
+		Input input;
 		if (chanAileron > -1)
 		{
 			input.value[chanAileron] = PwmToFullRange(p_input.value[chanAileron]);

@@ -52,7 +52,7 @@ namespace last_letter_lib
     }
 
     // Input hanlding methods
-    void Link::setInput(Input_t input)
+    void Link::setInput(Input input)
     {
         // if (chanGimbal_ > -1)
         // {
@@ -63,7 +63,7 @@ namespace last_letter_lib
 
     void Link::setInputPwm(InputPwm_t p_input)
     {
-        Input_t input;
+        Input input;
         // if (chanGimbal_ > -1)
         // {
         //     input.value[chanGimbal_] = PwmToFullRange(p_input.value[chanGimbal_]);
@@ -176,7 +176,7 @@ namespace last_letter_lib
     {
     }
 
-    void LinkAerodynamic::setModelInput(Input_t input)
+    void LinkAerodynamic::setModelInput(Input input)
     {
         aerodynamics->setInput(input);
     }
@@ -223,7 +223,7 @@ namespace last_letter_lib
         propulsion->readParametersWorld(config);
     }
 
-    void LinkPropulsion::setModelInput(Input_t input)
+    void LinkPropulsion::setModelInput(Input input)
     {
         propulsion->setInput(input);
     }
@@ -278,7 +278,7 @@ namespace last_letter_lib
         groundReaction_->readParametersWorld(config);
     }
 
-    void LinkGroundReaction::setModelInput(Input_t input)
+    void LinkGroundReaction::setModelInput(Input input)
     {
         groundReaction_->setInput(input);
     }

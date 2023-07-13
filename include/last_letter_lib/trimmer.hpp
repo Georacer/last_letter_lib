@@ -81,7 +81,7 @@ namespace last_letter_lib
             vector<double> initState;
 
             SimState_t trimState;
-            Input_t trimInput;
+            Input trimInput;
 
             TrimTrajectoryParameters_t targetTrajectory;
 
@@ -89,9 +89,9 @@ namespace last_letter_lib
             ~TrimmerState();
             void setInitState(vector<double>);
             void resetFunCallCount();
-            double calcCost(const SimState_t state, const Derivatives_t stateDer, const Input_t input);
+            double calcCost(const SimState_t state, const Derivatives_t stateDer, const Input input);
             SimState_t buildStateFromArgs(const vector<double> optim_arg);
-            Input_t buildInputFromArgs(const vector<double> optim_arg);
+            Input buildInputFromArgs(const vector<double> optim_arg);
             double costWrapper(const vector<double> &u, vector<double> &grad);
             static double objFunWrapper(const vector<double> &u, vector<double> &grad, void *trimmerObjPtr);
             OptimResult_t findTrimState(const TrimTrajectoryParameters_t);
@@ -124,7 +124,7 @@ namespace last_letter_lib
         };
 
         SimState_t convertState4ll(const State_t p_state);
-        Input_t convertInput4ll(const vector<double> &u);
+        Input convertInput4ll(const vector<double> &u);
     } // namespace uav_utils
 } // namespace last_letter_lib
 

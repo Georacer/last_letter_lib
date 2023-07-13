@@ -36,7 +36,7 @@ TEST(TestAerodynamics, TestAerodynamics1)
     EnvironmentModel environmentModel = EnvironmentModel(config.filter("env"), config.filter("world"));
     environmentModel.calcEnvironment(state);
 
-    Input_t input;
+    Input input;
     input.value[0] = 0.1;
     input.value[1] = 0.1;
     input.value[2] = 0.5;

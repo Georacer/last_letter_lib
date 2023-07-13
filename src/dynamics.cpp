@@ -87,7 +87,7 @@ namespace last_letter_lib
 	}
 
 	// Order subsystems to store control input
-	void Dynamics::setInput(Input_t input)
+	void Dynamics::setInput(Input input)
 	{
 		for (int i = 0; i < nMotors; i++)
 		{
