@@ -77,12 +77,8 @@ namespace last_letter_lib
 
     private:
         void update_sensor_(); // Interface class for running individual sensor code
-        // Hardcoded Avy coordinates
-        // const float home_lat_deg_{52.3936579};
-        // const float home_lon_deg_{4.8284891};
-        // Hardcoded Meppel coordinates
-        const float home_lat_deg_{52.659718558443924};
-        const float home_lon_deg_{6.176887526101012};
+        float home_lat_deg_{0};
+        float home_lon_deg_{0};
     };
 
     // class Ahrs : public Sensor
@@ -161,12 +157,8 @@ namespace last_letter_lib
         void read_parameters(ParameterManager);
 
     private:
-        // Hardcoded Avy coordinates
-        // const float home_lat_deg_{52.3936579};
-        // const float home_lon_deg_{4.8284891};
-        // Hardcoded Meppel coordinates
-        const float home_lat_deg_{52.659718558443924};
-        const float home_lon_deg_{6.176887526101012};
+        float home_lat_deg_{0};
+        float home_lon_deg_{0};
 
         ////////////
         // Functions
@@ -205,12 +197,8 @@ namespace last_letter_lib
         MavlinkHilStateQuaternion();
         virtual ~MavlinkHilStateQuaternion();
         void read_parameters(ParameterManager);
-        // Hardcoded Avy coordinates
-        // const float home_lat_deg_{52.3936579};
-        // const float home_lon_deg_{4.8284891};
-        // Hardcoded Meppel coordinates
-        const float home_lat_deg_{52.659718558443924};
-        const float home_lon_deg_{6.176887526101012};
+        float home_lat_deg_{0};
+        float home_lon_deg_{0};
 
     private:
         void update_sensor_(); // Interface class for running individual sensor code

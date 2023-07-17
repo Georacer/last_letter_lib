@@ -436,6 +436,10 @@ class Aircraft:
         full_filename = os.path.join(model_folder, "init.yaml")
         self.dump_yaml(default_params.default_initialization_params, full_filename)
 
+    def set_home_coordinates(self, home_lat, home_lon):
+        default_params.default_initialization_params["coordinates"][0] = home_lat
+        default_params.default_initialization_params["coordinates"][1] = home_lon
+
     def create_ground_reaction_params(self, model_folder):
         full_filename = os.path.join(model_folder, "ground.yaml")
         self.dump_yaml(default_params.default_ground_reaction_params, full_filename)
