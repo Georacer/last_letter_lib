@@ -335,7 +335,7 @@ namespace last_letter_lib
             {
                 // std::cout << "selecting 1D polynomial" << std::endl;
                 uint polyNo;
-                polyNo = param_mng.get<uint>("PolyNo");
+                polyNo = param_mng.get<uint>("polyNo");
                 std::vector<double> coeffVect;
                 coeffVect = param_mng.get<std::vector<double>>("coeffs");
                 if (coeffVect.size() != (polyNo + 1))
