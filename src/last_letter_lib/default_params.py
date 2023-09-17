@@ -5,7 +5,7 @@ default_environment_params = {
     "groundTemp": 25,  # in Celsius
     "groundPres": 1013.25,  # in mBar
     # Parameters for the wind model
-    "windRef": 5.0,  # in m/s
+    "windRef": 10.0,  # in m/s
     "windRefAlt": 60.0,  # in m
     "windDir": 90.0,  # in degrees
     "surfSmooth": 0.28,  # rural environment
@@ -140,7 +140,7 @@ default_initialization_params = {
         23.731863,
         0.0,
     ],  # latitude, longitude, altitude coordinates. Altitude for now should be ground elevation
-    "position": [0.0, 0.0, -10.0],  # NED frame
+    "position": [0.0, 0.0, -0.3],  # NED frame
     "orientation": [
         -0.0000,
         0.0039,

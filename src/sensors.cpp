@@ -74,8 +74,12 @@ namespace last_letter_lib
 	{
 	}
 
-	void Imu::read_parameters(ParameterManager)
+	void Imu::read_parameters(ParameterManager config)
 	{
+		ParameterManager initConfig = config.filter("init");
+		auto coordinates = initConfig.get<std::vector<double>>("coordinates");
+		home_lat_deg_ = coordinates.at(0);
+		home_lon_deg_ = coordinates.at(1);
 	}
 
 	void Imu::update_sensor_()
@@ -198,8 +202,12 @@ namespace last_letter_lib
 	{
 	}
 
-	void Gnss::read_parameters(ParameterManager)
+	void Gnss::read_parameters(ParameterManager config)
 	{
+		ParameterManager initConfig = config.filter("init");
+		auto coordinates = initConfig.get<std::vector<double>>("coordinates");
+		home_lat_deg_ = coordinates.at(0);
+		home_lon_deg_ = coordinates.at(1);
 	}
 
 	void Gnss::update_sensor_()
@@ -237,8 +245,12 @@ namespace last_letter_lib
 	{
 	}
 
-	void MavlinkHilStateQuaternion::read_parameters(ParameterManager)
+	void MavlinkHilStateQuaternion::read_parameters(ParameterManager config)
 	{
+		ParameterManager initConfig = config.filter("init");
+		auto coordinates = initConfig.get<std::vector<double>>("coordinates");
+		home_lat_deg_ = coordinates.at(0);
+		home_lon_deg_ = coordinates.at(1);
 	}
 
 	void MavlinkHilStateQuaternion::update_sensor_()

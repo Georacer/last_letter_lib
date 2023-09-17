@@ -37,7 +37,7 @@ namespace last_letter_lib
 		sensors.push_back(std::make_shared<MavlinkHilStateQuaternion>());
 		for (auto sensor_ptr : sensors)
 		{
-			sensor_ptr->init(p_configs.filter("world"));
+			sensor_ptr->init(p_configs);
 		}
 
 		init();
