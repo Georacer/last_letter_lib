@@ -11,12 +11,6 @@
 #include <last_letter_lib/prog_utils.hpp>
 #include <last_letter_lib/uav_utils.hpp>
 
-#define E2_EARTH Geoid::WGS84_e2
-#define RP_EARTH Geoid::WGS84_Ra * (1.0 - E2_EARTH)
-
-#define grav_const 3.986004418e14
-#define grav_temp (2.0 / Geoid::WGS84_Ra) * (1.0 + Geoid::EARTH_flattening + (Geoid::EARTH_Omega * Geoid::EARTH_Omega) * (Geoid::WGS84_Ra * Geoid::WGS84_Ra) * RP_EARTH / grav_const)
-
 #define Rd 287.05307 // Gas constant for dry air, J/kg K
 #define L0 -6.5		 // Temperature lapse rate, at sea level deg K/km
 
@@ -37,7 +31,6 @@ namespace last_letter_lib
 		double density{1.225};	   // in kg/m^3
 		double pressure{1013};	   // in mBar
 		double temperature{273};   // in Kelvin
-		double gravity{9.81};	   // in m/s^2
 	};
 
 	/////////
@@ -76,8 +69,6 @@ namespace last_letter_lib
 		void calcPres();
 
 		void calcTemp();
-
-		void calcGrav();
 
 		void readParametersWorld(ParameterManager worldConfig);
 

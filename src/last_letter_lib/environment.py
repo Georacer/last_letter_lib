@@ -10,7 +10,7 @@ usage:
 __authors__ = ["George Zogopoulos"]
 __credits__ = []
 __date__ = "Thu 20 2022"
-__copyright__ = "Copyright 2022, Avy B.V."
+__copyright__ = "Copyright 2022, George Zogopoulos"
 
 from abc import ABC
 from abc import abstractmethod
@@ -56,33 +56,33 @@ class EnvironmentSimple(EnvironmentModel):
         pass
 
 
-class GravityModel(ABC):
-    @abstractmethod
-    def _calc_acceleration(self, position: Vector3) -> Vector3:
-        """
-        Implement the gravity model here.
+# class GravityModel(ABC):
+#     @abstractmethod
+#     def _calc_acceleration(self, position: Vector3) -> Vector3:
+#         """
+#         Implement the gravity model here.
 
-        OUTPUTS:
-            The gravity acceleration vector, in the inertial NED frame.
-        """
-        pass
+#         OUTPUTS:
+#             The gravity acceleration vector, in the inertial NED frame.
+#         """
+#         pass
 
-    def g(self, position: Vector3) -> Vector3:
-        """
-        Return the gravity acceleration in the inertial NED frame.
+#     def g(self, position: Vector3) -> Vector3:
+#         """
+#         Return the gravity acceleration in the inertial NED frame.
 
-        INPUTS:
-            position: A Vector3 object with components
-                x: geoid latitude
-                y: geoid longitude
-                z: geoid altitude
-        """
-        return self._calc_acceleration(position)
+#         INPUTS:
+#             position: A Vector3 object with components
+#                 x: geoid latitude
+#                 y: geoid longitude
+#                 z: geoid altitude
+#         """
+#         return self._calc_acceleration(position)
 
 
-class GravitySimple(GravityModel):
-    def __init__(self, g):
-        self.__g = Vector3(0, 0, g)
+# class GravitySimple(GravityModel):
+#     def __init__(self, g):
+#         self.__g = Vector3(0, 0, g)
 
-    def _calc_acceleration(self, position):
-        return self.__g
+#     def _calc_acceleration(self, position):
+#         return self.__g

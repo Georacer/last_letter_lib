@@ -28,7 +28,6 @@ TEST(TestEnvironment, TestEnvironment1)
 
     EXPECT_NEAR(environment_obj.environment.wind.norm(), 5, 1e-2);
     EXPECT_NEAR(environment_obj.environment.density, 1.225, 1e-2);
-    EXPECT_NEAR(environment_obj.environment.gravity, 9.81, 1e-1);
     EXPECT_NEAR(environment_obj.environment.temperature, 300, 1);
     EXPECT_NEAR(environment_obj.environment.pressure, 1012, 1);
 }

@@ -10,6 +10,7 @@
 #include "last_letter_lib/math_utils.hpp"
 #include "last_letter_lib/uav_utils.hpp"
 #include "last_letter_lib/prog_utils.hpp"
+#include "last_letter_lib/gravity.hpp"
 #include "last_letter_lib/environment.hpp"
 #include "last_letter_lib/systems.hpp"
 
@@ -19,6 +20,8 @@ using Eigen::Matrix3d;
 using Eigen::Quaterniond;
 using Eigen::Vector3d;
 
+using last_letter_lib::GravitySimple;
+using last_letter_lib::GravityClassic;
 using last_letter_lib::Environment_t;
 using last_letter_lib::math_utils::EulerAngles;
 using last_letter_lib::math_utils::Inertial;
@@ -258,12 +261,23 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def_readwrite("pose", &Component::pose)
         .def_readwrite("inertial", &Component::inertial);
 
+    auto m_gravity = m.def_submodule("cpp_gravity", "last_letter_lib gravity submodule");
+    py::class_<GravitySimple>(m_gravity, "GravitySimple")
+        .def(py::init())
+        .def("calc_gravity", &GravitySimple::calcGravity)
+        .def("get_force", &GravitySimple::getForce)
+        .def("get_torque", &GravitySimple::getTorque);
+    py::class_<GravityClassic>(m_gravity, "GravityClassic")
+        .def(py::init())
+        .def("calc_gravity", &GravityClassic::calcGravity)
+        .def("get_force", &GravityClassic::getForce)
+        .def("get_torque", &GravityClassic::getTorque);
+
     auto m_environment = m.def_submodule("cpp_environment", "last_letter_lib environment submodule");
     py::class_<Environment_t>(m_environment, "EnvironmentData")
         .def(py::init())
         .def_readwrite("wind", &Environment_t::wind)
         .def_readwrite("rho", &Environment_t::density)
         .def_readwrite("pressure", &Environment_t::pressure)
-        .def_readwrite("temperature", &Environment_t::temperature)
-        .def_readwrite("gravity", &Environment_t::gravity);
+        .def_readwrite("temperature", &Environment_t::temperature);
 }

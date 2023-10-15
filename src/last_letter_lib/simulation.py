@@ -8,7 +8,7 @@ usage:
 __authors__ = ["George Zogopoulos", "Peter Seres"]
 __credits__ = []
 __date__ = "Fri 21 Jan 2022"
-__copyright__ = "Copyright 2022, Avy B.V."
+__copyright__ = "Copyright 2022, George Zogopoulos"
 
 
 from dataclasses import dataclass
@@ -25,10 +25,11 @@ import last_letter_lib.propulsion as prop
 import last_letter_lib.systems as llsys
 from last_letter_lib.environment import EnvironmentModel
 from last_letter_lib.environment import EnvironmentSimple
-from last_letter_lib.environment import GravityModel
-from last_letter_lib.environment import GravitySimple
+from last_letter_lib.gravity import GravityClassic
+from last_letter_lib.gravity import GravitySimple
 from last_letter_lib.systems import RigidBody6DOF
 from last_letter_lib.utils.math import EulerAngles
+from last_letter_lib.utils.math import Inertial
 from last_letter_lib.utils.math import Pose
 from last_letter_lib.utils.math import UnitQuaternion
 from last_letter_lib.utils.math import Vector3
@@ -118,7 +119,7 @@ class Aircraft:
     rigid_body: RigidBody6DOF
     components: list
     environment: EnvironmentModel
-    gravity: GravityModel
+    gravity: Union[GravitySimple, GravityClassic]
     wrench_aero: List[Wrench]
     wrench_propulsion: List[Wrench]
 
@@ -138,7 +139,7 @@ class Aircraft:
         # Instantiate environment model
         self.environment = EnvironmentSimple()
         # Instantiate gravity model
-        self.gravity = GravitySimple(9.81)
+        self.gravity = GravitySimple()
 
     def calc_mass(self) -> float:
         """
@@ -354,11 +355,18 @@ class Aircraft:
         total_wrench += self.wrench_aero
 
         # Calculate gravity forces
-        gravity_force_i = (
-            self.rigid_body.mass * self.gravity.g(self.state.position).to_array()
+        inertial = Inertial()
+        inertial.mass = self.rigid_body.mass
+        self.gravity.calc_gravity(self.state, inertial)
+        # self.gravity
+        # gravity_force_i = (
+        #     self.rigid_body.mass * self.gravity.g(self.state.position).to_array()
+        # )
+        # gravity_force_b = self.rigid_body.orientation.R_ib() @ gravity_force_i
+        total_wrench += Wrench(
+            self.gravity.get_force(self.state, inertial),
+            self.gravity.get_torque(self.state, inertial),
         )
-        gravity_force_b = self.rigid_body.orientation.R_ib() @ gravity_force_i
-        total_wrench += Wrench(gravity_force_b, np.zeros((3, 1)))
 
         # Step 6DOF model
         self.rigid_body.rk4(total_wrench.to_array(), dt)
