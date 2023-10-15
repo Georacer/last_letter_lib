@@ -23,7 +23,7 @@ using last_letter_lib::Environment_t;
 using last_letter_lib::math_utils::EulerAngles;
 using last_letter_lib::math_utils::Inertial;
 using last_letter_lib::math_utils::UnitQuaternion;
-using last_letter_lib::math_utils::Vector3;
+using Vector3_ll = last_letter_lib::math_utils::Vector3;
 using last_letter_lib::programming_utils::Parametrized;
 using last_letter_lib::systems::Component;
 using last_letter_lib::uav_utils::Airdata;
@@ -77,7 +77,7 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
     m.doc() = "The last_letter_lib python bindings.";
 
     auto m_math_utils = m.def_submodule("cpp_math_utils", "last_letter_lib math_utils submodule");
-    py::class_<Vector3>(m_math_utils, "Vector3")
+    py::class_<Vector3_ll>(m_math_utils, "Vector3")
         .def(py::init<double, double, double>(), py::arg("x") = 0, py::arg("y") = 0, py::arg("z") = 0)
         .def(py::self + py::self)
         .def(py::self += py::self)
@@ -88,23 +88,23 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def(py::self *= double())
         .def(-py::self)
         .def(py::self == py::self)
-        .def_property("x", &Vector3::get_x, &Vector3::set_x)
-        .def_property("y", &Vector3::get_y, &Vector3::set_y)
-        .def_property("z", &Vector3::get_z, &Vector3::set_z)
-        .def_property_readonly("norm", &Vector3::norm)
-        .def("to_array", &Vector3::to_array)
+        .def_property("x", &Vector3_ll::get_x, &Vector3_ll::set_x)
+        .def_property("y", &Vector3_ll::get_y, &Vector3_ll::set_y)
+        .def_property("z", &Vector3_ll::get_z, &Vector3_ll::set_z)
+        .def_property_readonly("norm", &Vector3_ll::norm)
+        .def("to_array", &Vector3_ll::to_array)
         .def(
             "__getitem__",
-            [](const Vector3 &v, const size_t idx)
+            [](const Vector3_ll &v, const size_t idx)
             { return v[idx]; })
-        .def("__str__", &Vector3::to_str)
-        .def("__repr__", &Vector3::repr)
+        .def("__str__", &Vector3_ll::to_str)
+        .def("__repr__", &Vector3_ll::repr)
         .def(py::pickle(
-            [](const Vector3 &v)
+            [](const Vector3_ll &v)
             { return v.to_array(); },
             [](Vector3d v)
             {
-                return Vector3(v.x(), v.y(), v.z());
+                return Vector3_ll(v.x(), v.y(), v.z());
             }));
     py::class_<UnitQuaternion>(m_math_utils, "UnitQuaternion")
         .def(py::init<double, double, double, double>(), py::arg("w") = 1, py::arg("x") = 0, py::arg("y") = 0, py::arg("z") = 0)
@@ -136,7 +136,7 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
             { return q * v; },
             py::is_operator())
         .def(
-            "__mul__", [](const UnitQuaternion q, const Vector3 v)
+            "__mul__", [](const UnitQuaternion q, const Vector3_ll v)
             { return q * v; },
             py::is_operator())
         .def_static("from_euler", unit_quaternion_from_euler_angles)
@@ -209,11 +209,11 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
              py::arg("velocity_linear") = Vector3d(),
              py::arg("velocity_angular") = Vector3d(),
              py::arg("thrusters_velocity") = std::vector<double>(0))
-        .def(py::init<Vector3, UnitQuaternion, Vector3, Vector3, std::vector<double>>(),
-             py::arg("position") = Vector3(),
+        .def(py::init<Vector3_ll, UnitQuaternion, Vector3_ll, Vector3_ll, std::vector<double>>(),
+             py::arg("position") = Vector3_ll(),
              py::arg("orientation") = UnitQuaternion(),
-             py::arg("velocity_linear") = Vector3(),
-             py::arg("velocity_angular") = Vector3(),
+             py::arg("velocity_linear") = Vector3_ll(),
+             py::arg("velocity_angular") = Vector3_ll(),
              py::arg("thrusters_velocity") = std::vector<double>(0))
         .def_static("from_array", simstate_from_array)
         .def_static("from_uavstate", simstate_from_simstate)
