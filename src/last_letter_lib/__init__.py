@@ -2,6 +2,7 @@
 
 from . import aerodynamics
 from . import environment
+from . import gravity
 from . import model_creator
 from . import propulsion
 from . import simulation
@@ -12,6 +13,7 @@ from .utils import uav
 
 
 __all__ = [
+    "gravity",
     "environment",
     "systems",
     "aerodynamics",
