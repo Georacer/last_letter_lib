@@ -10,7 +10,7 @@ usage:
 __authors__ = ["George Zogopoulos", "Peter Seres"]
 __credits__ = []
 __date__ = "Fri 22 Oct 2021"
-__copyright__ = "Copyright 2021, Avy B.V."
+__copyright__ = "Copyright 2021, George Zogopoulos"
 
 from dataclasses import dataclass
 from typing import Optional

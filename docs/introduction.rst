@@ -4,7 +4,7 @@ Introduction
 
 .. *last_letter_lib* is a Python package meant to serve two purposes:
 
-.. 1. Be the *source of truth* for all Avy aircarft in terms of:
+.. 1. Be the *source of truth* for all aircarft in terms of:
 
 ..   * mass and mass distribution
 ..   * aerodynamic parameters
