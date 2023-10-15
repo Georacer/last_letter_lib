@@ -13,7 +13,7 @@ from last_letter_lib import systems
 
 project = "last_letter_lib"
 author = "George Zogopoulos"
-copyright = f"{datetime.now().year}, Avy B.V."
+copyright = f"{datetime.now().year}, George Zogopoulos"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",

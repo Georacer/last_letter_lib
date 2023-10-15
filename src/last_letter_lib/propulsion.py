@@ -10,7 +10,7 @@ usage:
 __authors__ = ["George Zogopoulos", "Johanna Windh"]
 __credits__ = []
 __date__ = "Fri 10 Sep 2021"
-__copyright__ = "Copyright 2021, Avy B.V."
+__copyright__ = "Copyright 2021, George Zogopoulos"
 
 from abc import ABC
 from abc import ABCMeta

@@ -8,7 +8,7 @@ usage:
 __authors__ = ["George Zogopoulos"]
 __credits__ = []
 __date__ = "Sat 29 Jan 2022"
-__copyright__ = "Copyright 2022, Avy B.V."
+__copyright__ = "Copyright 2022, George Zogopoulos"
 
 import numpy as np
 import pytest

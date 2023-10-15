@@ -8,7 +8,7 @@ usage:
 __authors__ = ["George Zogopoulos", "Peter Seres"]
 __credits__ = []
 __date__ = "Thu 20 Jan 2022"
-__copyright__ = "Copyright 2022, Avy B.V."
+__copyright__ = "Copyright 2022, George Zogopoulos"
 
 import os
 from abc import ABC
