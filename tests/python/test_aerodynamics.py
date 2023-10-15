@@ -309,7 +309,7 @@ class TestAerodynamic:
         airfoil = build_airfoil_simple
         state = build_uav_state
         new_velocity = np.array([20, 0, 0])
-        new_velocity[0] = 5  # Aircraft is going forward with 0 pitch.
+        new_velocity[0] = 6  # Aircraft is going forward with 0 pitch.
         new_velocity[2] = 5  # Aircraft is descending with 0 pitch.
         state.velocity_linear = new_velocity
         airdata = Airdata()
@@ -320,7 +320,7 @@ class TestAerodynamic:
         )
         assert w_1.force[0] < 0
 
-        new_velocity[0] = 5  # Aircraft is going forward with 0 pitch.
+        new_velocity[0] = 6  # Aircraft is going forward with 0 pitch.
         new_velocity[2] = -5  # Aircraft is ascending with 0 pitch.
         state.velocity_linear = new_velocity
         airdata = Airdata()
@@ -331,7 +331,7 @@ class TestAerodynamic:
         )
         assert w_2.force[0] < 0
 
-        new_velocity[0] = -5  # Aircraft is going backwards with 0 pitch.
+        new_velocity[0] = -6  # Aircraft is going backwards with 0 pitch.
         new_velocity[2] = 5  # Aircraft is descending with 0 pitch.
         state.velocity_linear = new_velocity
         airdata = Airdata()
@@ -342,7 +342,7 @@ class TestAerodynamic:
         )
         assert w_3.force[0] > 0
 
-        new_velocity[0] = -5  # Aircraft is going bachwards with 0 pitch.
+        new_velocity[0] = -6  # Aircraft is going bachwards with 0 pitch.
         new_velocity[2] = -5  # Aircraft is ascending with 0 pitch.
         state.velocity_linear = new_velocity
         airdata = Airdata()
