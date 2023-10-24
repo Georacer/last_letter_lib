@@ -33,7 +33,8 @@ TEST(TestAerodynamics, TestAerodynamics1)
         -j_xz, 0, j_z};
     Inertial inertial(mass, J);
 
-    EnvironmentModel environmentModel = EnvironmentModel(config.filter("env"), config.filter("world"));
+    EnvironmentModel environmentModel = EnvironmentModel();
+    environmentModel.initialize(config.filter("env"));
     environmentModel.calcEnvironment(state);
 
     Input input;

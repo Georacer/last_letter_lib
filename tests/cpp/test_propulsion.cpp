@@ -38,7 +38,8 @@ TEST(TestPropulsion, TestPropulsion1)
     Input input;
     input.value[2] = 0.5;
 
-    EnvironmentModel environmentModel = EnvironmentModel(config.filter("env"), config.filter("world"));
+    EnvironmentModel environmentModel = EnvironmentModel();
+    environmentModel.initialize(config.filter("env"));
     environmentModel.calcEnvironment(states);
 
     motor1->setInput(input);

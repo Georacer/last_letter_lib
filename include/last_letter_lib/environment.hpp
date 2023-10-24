@@ -37,7 +37,7 @@ namespace last_letter_lib
 	// Classes
 	/////////
 
-	class EnvironmentModel
+	class EnvironmentModel : virtual public Parametrized
 	{
 	public:
 		Environment_t environment;
@@ -49,7 +49,7 @@ namespace last_letter_lib
 		double T0;	  // Temperature at sea level, degrees K
 		double P0;	  // Pressure at sea level, in HG
 		double Rho0;  // Density at sea level, kg/m**3
-		double grav0; // Surface earth gravity
+		double grav0{uav_utils::Geoid::EARTH_grav}; // Surface earth gravity
 		double windRef, windRefAlt, windDir, surfSmooth, kwind;
 		Vector3d wind;
 		double Lu, Lw, sigmau, sigmaw;
@@ -58,7 +58,31 @@ namespace last_letter_lib
 
 		/////////////
 		// Constructor
-		EnvironmentModel(ParameterManager envConfig, ParameterManager worldConfig);
+		// EnvironmentModel(ParameterManager envConfig, ParameterManager worldConfig);
+		EnvironmentModel() : Parametrized("environment") {};
+
+		void initialize_parameters() override
+		{
+			set_param<double>("deltaT", 0.01, false);
+			set_param<bool>("Dryden/use", false, false);
+			// initialize atmosphere stuff
+			set_param<double>("groundTemp", 25, false);
+			set_param<double>("groundPres", 1013, false);
+			set_param<double>("rho", 1.112, false);
+			// Initialize bias wind engine
+			set_param<double>("windRef", 0, false);
+			set_param<double>("windRefAlt", 10, false);
+			set_param<double>("windDir", 0, false);
+			set_param<double>("surfSmooth", 0.28, false);
+			// Initialize turbulence engine
+			set_param<double>("Dryden/Lu", 533, false);
+			set_param<double>("Dryden/Lw", 533, false);
+			set_param<double>("Dryden/sigmau", 155, 0);
+			set_param<double>("Dryden/sigmaw", 78, false);
+			set_param<bool>("Dryden/randomizeSeed", false, false);
+		}
+
+		void update_parameters() override;
 
 		void calcEnvironment(const SimState_t InpStates);
 
@@ -69,10 +93,6 @@ namespace last_letter_lib
 		void calcPres();
 
 		void calcTemp();
-
-		void readParametersWorld(ParameterManager worldConfig);
-
-		void readParametersEnvironment(ParameterManager envConfig);
 	};
 } // namespace last_letter_lib
 
