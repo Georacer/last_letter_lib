@@ -17,7 +17,8 @@ TEST(TestEnvironment, TestEnvironment1)
 {
     ParameterManager config = load_config_aircraft("skywalker_2013");
 
-    EnvironmentModel environment_obj = EnvironmentModel(config.filter("env"), config.filter("world"));
+    EnvironmentModel environment_obj = EnvironmentModel();
+    environment_obj.initialize(config.filter("env"));
     SimState_t states;
     states.pose.position = Eigen::Vector3d(0, 0, -10);
     states.geoid.altitude = -states.pose.position.z();

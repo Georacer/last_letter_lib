@@ -22,9 +22,14 @@ namespace last_letter_lib
 													 dynamics(p_configs.filter("world"),
 															  p_configs.filter("aero"),
 															  p_configs.filter("prop"),
-															  p_configs.filter("ground")),
-													 environmentModel(p_configs.filter("env"), p_configs.filter("world"))
+															  p_configs.filter("ground"))
 	{
+
+		// Copy over simulation step.
+		auto dt = p_configs.get<double>("world/deltaT");
+		auto env_params = p_configs.filter("env");
+		env_params.set("dt", dt, false);
+		environmentModel.initialize(env_params);
 
 		readParametersWorld(configs.filter("world"));
 		readParametersInit(configs.filter("init"));
@@ -84,12 +89,15 @@ namespace last_letter_lib
 		readParametersWorld(configs.filter("world"));
 		kinematics.readParametersWorld(configs.filter("world"));
 		dynamics.readParametersWorld(configs.filter("world"));
-		environmentModel.readParametersWorld(configs.filter("world"));
 	}
 
 	void UavModel::updateConfigEnvironment()
 	{
-		environmentModel.readParametersEnvironment(configs.filter("env"));
+		// Copy over simulation step.
+		auto dt = configs.get<double>("world/deltaT");
+		auto env_params = configs.filter("env");
+		env_params.set("dt", dt, false);
+		environmentModel.initialize(env_params);
 	}
 
 	void UavModel::updateConfigInit()

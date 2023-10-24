@@ -42,7 +42,8 @@ TEST(TestDynamics, TestDynamics1)
     input.value[2] = 0.5;
     input.value[3] = 0.0;
 
-    EnvironmentModel environmentModel = EnvironmentModel(config.filter("env"), config.filter("world"));
+    EnvironmentModel environmentModel = EnvironmentModel();
+    environmentModel.initialize(config.filter("env"));
     environmentModel.calcEnvironment(state);
     Environment_t environment = environmentModel.environment;
 

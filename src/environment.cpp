@@ -19,59 +19,47 @@ namespace last_letter_lib
 
 	ostringstream oss;
 
-	/////////////
-	// Constructor
-	EnvironmentModel::EnvironmentModel(ParameterManager envConfig, ParameterManager worldConfig)
+	void EnvironmentModel::update_parameters()
 	{
-		grav0 = uav_utils::Geoid::EARTH_grav;
-		readParametersWorld(worldConfig);
-		readParametersEnvironment(envConfig);
-	}
 
-	//////////////////////////////////////
-	// Read world configuration parameters
-	void EnvironmentModel::readParametersWorld(ParameterManager worldConfig)
-	{
-		dt = worldConfig.get<double>("deltaT");
-	}
+		// Set world parameters
+		dt = get_param<double>("deltaT");
 
-	/////////////////////////////////////////////
-	// Read environment configuration parameters
-	void EnvironmentModel::readParametersEnvironment(ParameterManager envConfig)
-	{
-		allowTurbulence = envConfig.get<bool>("Dryden/use");
+		// Set environment parameters
+
+		allowTurbulence = get_param<bool>("Dryden/use");
 
 		// initialize atmosphere stuff
-		T0 = envConfig.get<double>("groundTemp");
-		T0 += 274.15;
-		P0 = envConfig.get<double>("groundPres");
-		Rho0 = envConfig.get<double>("rho");
+		T0 = get_param<double>("groundTemp") + 274.15;
+		P0 = get_param<double>("groundPres");
+		Rho0 = get_param<double>("rho");
 
 		// Initialize bias wind engine
-		windRef = envConfig.get<double>("windRef");
-		windRefAlt = envConfig.get<double>("windRefAlt");
-		windDir = envConfig.get<double>("windDir");
-		surfSmooth = envConfig.get<double>("surfSmooth");
-		windDir = windDir * M_PI / 180; // convert to rad
+		windRef = get_param<double>("windRef");
+		windRefAlt = get_param<double>("windRefAlt");
+		windDir = get_param<double>("windDir") * M_PI / 180;
+		surfSmooth = get_param<double>("surfSmooth");
+
 		kwind = windRef / pow(windRefAlt, surfSmooth);
+
 		// Initialize turbulence engine
-		Lu = envConfig.get<double>("Dryden/Lu");
-		Lw = envConfig.get<double>("Dryden/Lw");
-		sigmau = envConfig.get<double>("Dryden/sigmau");
-		sigmaw = envConfig.get<double>("Dryden/sigmaw");
+		Lu = get_param<double>("Dryden/Lu");
+		Lw = get_param<double>("Dryden/Lw");
+		sigmau = get_param<double>("Dryden/sigmau");
+		sigmaw = get_param<double>("Dryden/sigmaw");
 		windDistU = 0;
 		for (int i = 0; i < 2; i++)
 		{
 			windDistV[i] = 0;
 			windDistW[i] = 0;
 		}
-		bool randomize_seed;
-		randomize_seed = envConfig.get<bool>("Dryden/randomizeSeed");
+		bool randomize_seed = get_param<bool>("Dryden/randomizeSeed");
 		if (randomize_seed)
 		{
-			srand(time(NULL)); // Initialize the random number generator, if needed
+			srand(time(NULL)); // Initialize the random number generator, if needed.
 		}
 	}
+
 
 	////////////////////////////////////////////////
 	// Read input states and publish environment data
