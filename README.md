@@ -18,6 +18,10 @@ Software libraries for UAV simulation.
 
 - poetry build && poetry install
 
+### To run the Python tests
+
+- poetry run pytest tests/python
+
 ### Build and run C++ tests
 
 - cmake -S . -B build && cmake --build build && ./build/all_tests

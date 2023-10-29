@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from last_letter_lib.utils.math import Vector3
 
 from .cpp_last_letter_lib.cpp_environment import EnvironmentData
+from .cpp_last_letter_lib.cpp_environment import EnvironmentModel
 
 
 # @dataclass
@@ -30,30 +31,30 @@ from .cpp_last_letter_lib.cpp_environment import EnvironmentData
 #     gravity: float = 9.81  # Gravity acceleration, in m/s^2
 
 
-class EnvironmentModel(ABC):
-    data: EnvironmentData
+# class EnvironmentModel(ABC):
+#     data: EnvironmentData
 
-    @property
-    @abstractmethod
-    def update(self, position: Vector3):
-        """
-        Update the environment model given the UAV position.
+#     @property
+#     @abstractmethod
+#     def update(self, position: Vector3):
+#         """
+#         Update the environment model given the UAV position.
 
-        INPUTS:
-            position: UAV inertial position in the NED frame.
-        """
+#         INPUTS:
+#             position: UAV inertial position in the NED frame.
+#         """
 
 
-class EnvironmentSimple(EnvironmentModel):
-    """
-    A constant environment model, independent of the aircraft state.
-    """
+# class EnvironmentSimple(EnvironmentModel):
+#     """
+#     A constant environment model, independent of the aircraft state.
+#     """
 
-    def __init__(self):
-        self.data = EnvironmentData()
+#     def __init__(self):
+#         self.data = EnvironmentData()
 
-    def update(self, position):
-        pass
+#     def update(self, position):
+#         pass
 
 
 # class GravityModel(ABC):

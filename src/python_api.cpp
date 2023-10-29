@@ -23,6 +23,7 @@ using Eigen::Vector3d;
 using last_letter_lib::GravitySimple;
 using last_letter_lib::GravityClassic;
 using last_letter_lib::Environment_t;
+using last_letter_lib::EnvironmentModel;
 using last_letter_lib::math_utils::EulerAngles;
 using last_letter_lib::math_utils::Inertial;
 using last_letter_lib::math_utils::UnitQuaternion;
@@ -280,4 +281,9 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def_readwrite("rho", &Environment_t::density)
         .def_readwrite("pressure", &Environment_t::pressure)
         .def_readwrite("temperature", &Environment_t::temperature);
+    py::class_<EnvironmentModel, Parametrized>(m_environment, "EnvironmentModel", py::multiple_inheritance()) // Declaring as multiple_inheritance, because Parametrized is a virtual base of Component.
+        .def(py::init())
+        .def("update_parameters", &EnvironmentModel::update_parameters)
+        .def("calc_environment", &EnvironmentModel::calcEnvironment)
+        .def_readonly("data", &EnvironmentModel::environment);
 }
