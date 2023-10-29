@@ -27,6 +27,10 @@ To build the code so that you can import the Python code in editable mode do
 - uv venv [--python 3.10]
 - uv pip install --editable . [--force-reinstall]
 
+### To run the Python tests
+
+- poetry run pytest tests/python
+
 ### Build and run C++ tests
 
 - cmake -S . -B build && cmake --build build && ./build/all_tests

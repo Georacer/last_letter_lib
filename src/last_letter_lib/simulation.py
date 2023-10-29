@@ -24,7 +24,6 @@ import last_letter_lib.aerodynamics as aero
 import last_letter_lib.propulsion as prop
 import last_letter_lib.systems as llsys
 from last_letter_lib.environment import EnvironmentModel
-from last_letter_lib.environment import EnvironmentSimple
 from last_letter_lib.gravity import GravityClassic
 from last_letter_lib.gravity import GravitySimple
 from last_letter_lib.systems import RigidBody6DOF
@@ -137,7 +136,9 @@ class Aircraft:
         # Initialize internal, lumped rigid body dynamics
         self.rigid_body = RigidBody6DOF(mass=self.calc_mass(), inertia_matrix=inertia)
         # Instantiate environment model
-        self.environment = EnvironmentSimple()
+        self.environment = EnvironmentModel()
+        yaml_desc = yaml.load(params.json(), Loader=yaml.SafeLoader)
+        self.environment.initialize(yaml.dump(yaml_desc))
         # Instantiate gravity model
         self.gravity = GravitySimple()
 
@@ -302,7 +303,7 @@ class Aircraft:
             inputs: A uav.Inputs object. Thruster list order is the same as in its description
         """
         # Update environment
-        self.environment.update(self.rigid_body.position)
+        self.environment.calc_environment(self.state)
         state = self.state  # Capture the state before stepping components
 
         # Step the thruster models
