@@ -37,33 +37,21 @@ find_package(pybind11 PATHS ${Python3_SITELIB}/pybind11/share/cmake/pybind11 CON
 # Path where libyaml-cpp.so will be built
 set(YAML_CPP_SO_PATH ${CMAKE_BINARY_DIR}/ext-yaml-cpp-prefix/src/ext-yaml-cpp-build/libyaml-cpp.so)
 
-# Declare and compile the yaml-cpp project
-include(ExternalProject)
-ExternalProject_Add(ext-yaml-cpp
-  SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/yaml-cpp
-  CMAKE_ARGS "-DYAML_CPP_BUILD_TESTS=OFF"
-  "-DYAML_CPP_BUILD_TOOLS=OFF"
-  "-DBUILD_SHARED_LIBS=ON"
-  INSTALL_COMMAND "" # Do not install in system, library needed only locally
-  USES_TERMINAL_BUILD true
-  BUILD_BYPRODUCTS ${YAML_CPP_SO_PATH}
+# Import yaml-cpp
+include(FetchContent)
+
+FetchContent_Declare(
+  yaml_cpp
+  GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+  GIT_TAG        0.8.0
 )
 
-# Construct include directories path
-ExternalProject_Get_Property(ext-yaml-cpp SOURCE_DIR) # Access the source directory
-set(YAML_CPP_INCLUDE_DIR ${SOURCE_DIR}/include) # Aggregate headers to variable
-message(STATUS "YAML_CPP_INCLUDE_DIR set to ${YAML_CPP_INCLUDE_DIR}")
+# Set options before the library is added
+set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 
-# Expose built library
-add_library(yaml-cpp SHARED IMPORTED) # Declare the shared library
-ExternalProject_Get_Property(ext-yaml-cpp BINARY_DIR) # Access the binaries location
-set_target_properties(yaml-cpp PROPERTIES
-  IMPORTED_LOCATION ${BINARY_DIR}/libyaml-cpp.so # Attach the .so file to the library
-  INTERFACE_INCLUDE_DIRECTORIES ${YAML_CPP_INCLUDE_DIR}
-)
-add_dependencies(yaml-cpp ext-yaml-cpp) # Declare a dependency on the 3rd party project, just in case
-set(YAML_CPP_LIBRARIES yaml-cpp) # Aggregate all libraries to variable
-message(STATUS "yaml-cpp library (YAML_CPP_LIBRARIES) found at ${BINARY_DIR}")
+FetchContent_MakeAvailable(yaml_cpp)
 
 include_directories(
   include
@@ -72,7 +60,7 @@ include_directories(
   ${NLOPT_INCLUDE_DIRS}
 
   # "/usr/local/include" # Used to include nlopt
-  ${YAML_CPP_INCLUDE_DIR}
+  # ${YAML_CPP_INCLUDE_DIR}
 )
 
 # Declare the project library
@@ -96,7 +84,7 @@ add_library(last_letter_lib SHARED
 target_link_libraries(last_letter_lib
   Eigen3::Eigen
   ${LAPACK_LIBRARIES}
-  ${YAML_CPP_LIBRARIES}
+  yaml-cpp
 )
 
 # add_library(lib_trimmer src/trimmer.cpp)
@@ -163,7 +151,7 @@ target_include_directories(all_tests PUBLIC
 )
 target_link_libraries(all_tests
   GTest::gtest_main
-  ${YAML_CPP_LIBRARIES}
+  yaml-cpp
   last_letter_lib
 )
 
