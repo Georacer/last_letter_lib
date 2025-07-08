@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
-project(last_letter_lib VERSION 2.1.0)
+project(last_letter_lib VERSION 2.1.0 LANGUAGES CXX)
+
+message(STATUS "Building ${SKBUILD_PROJECT_NAME}")
 
 # Set compiler standards
 # Default to C99
@@ -27,9 +29,13 @@ find_package(LAPACK REQUIRED)
 # find_package(NLopt REQUIRED) # Will enable later with trimmer
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 message(STATUS "Current Python site-packages dir: ${Python3_SITELIB}")
+set(PYBIND11_FINDPYTHON ON)
 find_package(pybind11 PATHS ${Python3_SITELIB}/pybind11/share/cmake/pybind11 CONFIG REQUIRED)
 
 # add_subdirectory(external/pybind11)
+
+# Path where libyaml-cpp.so will be built
+set(YAML_CPP_SO_PATH ${CMAKE_BINARY_DIR}/ext-yaml-cpp-prefix/src/ext-yaml-cpp-build/libyaml-cpp.so)
 
 # Declare and compile the yaml-cpp project
 include(ExternalProject)
@@ -40,6 +46,7 @@ ExternalProject_Add(ext-yaml-cpp
   "-DBUILD_SHARED_LIBS=ON"
   INSTALL_COMMAND "" # Do not install in system, library needed only locally
   USES_TERMINAL_BUILD true
+  BUILD_BYPRODUCTS ${YAML_CPP_SO_PATH}
 )
 
 # Construct include directories path
@@ -56,7 +63,7 @@ set_target_properties(yaml-cpp PROPERTIES
 )
 add_dependencies(yaml-cpp ext-yaml-cpp) # Declare a dependency on the 3rd party project, just in case
 set(YAML_CPP_LIBRARIES yaml-cpp) # Aggregate all libraries to variable
-message(STATUS "yaml-cpp library (YAML_CPP_LIBRARIES) found at ${YAML_CPP_LIBRARIES}")
+message(STATUS "yaml-cpp library (YAML_CPP_LIBRARIES) found at ${BINARY_DIR}")
 
 include_directories(
   include

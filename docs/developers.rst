@@ -11,7 +11,7 @@ Package purpose
 The *last_letter_lib* package is meant to be a definitive data storage for aircraft recipes.
 It is not meant to host simulation models.
 
-However, since the model parameters are tighly dependent on the underlying mathematical
+However, since the model parameters are tightly dependent on the underlying mathematical
 models, it is desirable to provide ample documentation when submitting a new model
 type and its corresponding attributes.
 

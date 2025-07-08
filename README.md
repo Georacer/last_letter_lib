@@ -6,6 +6,8 @@ Software libraries for UAV simulation.
 
 ### To build the C++ code
 
+Run the following under the `uv` venv (`uv run`).
+
 - pip3 install tools/requirements.txt
 - pre-commit install
 - mkdir build && cd build

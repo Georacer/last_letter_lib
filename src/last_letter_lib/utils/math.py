@@ -17,7 +17,8 @@ from typing import Optional
 
 import numpy as np
 from numba import jit
-from pytransform3d import rotations as pt3d_rot
+
+# from pytransform3d import rotations as pt3d_rot
 from scipy.optimize import root
 
 # from last_letter_lib import cpp_last_letter_lib
