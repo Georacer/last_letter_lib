@@ -12,12 +12,14 @@ dependencies = [
     "numpy>=2.2.6",
     "pybind11>=2.13.6",
     "pydantic>=2.11.7",
+    "pyyaml>=6.0.2",
     "scipy>=1.15.3",
 ]
 
 [tool.scikit-build]
 minimum-version = "build-system.requires"
 build-dir = "build/{wheel_tag}"
+wheel.packages = ["src/last_letter_lib"]
 
 [build-system]
 requires = ["scikit-build-core>=0.10", "pybind11"]

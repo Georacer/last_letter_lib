@@ -52,6 +52,14 @@ set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(yaml_cpp)
+# Ensure the yaml-cpp library (and other files) will get installed before they get cleaned.
+install(TARGETS yaml-cpp
+        EXPORT yamlcppTargets
+        LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME}
+        ARCHIVE DESTINATION ${SKBUILD_PROJECT_NAME}
+        RUNTIME DESTINATION ${SKBUILD_PROJECT_NAME}
+)
+
 
 include_directories(
   include
@@ -95,7 +103,12 @@ list(APPEND pybind11_sources
   src/python_api.cpp
 )
 pybind11_add_module(cpp_last_letter_lib ${pybind11_sources})
+set_target_properties(cpp_last_letter_lib PROPERTIES
+    INSTALL_RPATH "$ORIGIN"
+    BUILD_RPATH "$ORIGIN"
+)
 target_link_libraries(cpp_last_letter_lib PRIVATE last_letter_lib)
+install(TARGETS cpp_last_letter_lib DESTINATION ${SKBUILD_PROJECT_NAME})
 
 # Copy data files to home folder
 # file(COPY last_letter_models DESTINATION $ENV{HOME}) # Deprecated, using new models folder
@@ -178,12 +191,13 @@ list(APPEND exported_libs
 )
 install(
   TARGETS ${exported_libs}
-  LIBRARY DESTINATION lib
+  LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME}
   ARCHIVE DESTINATION lib
   RUNTIME DESTINATION bin
   INCLUDES DESTINATION include
   EXPORT last_letter_lib_targets
 )
+
 
 # install(
 # TARGETS last_letter_lib
