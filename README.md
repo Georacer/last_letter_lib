@@ -18,7 +18,14 @@ Run the following under the `uv` venv (`uv run`).
 
 <!-- Build the C++/Python bindings with Pybind11 -->
 
-- poetry build && poetry install
+To build the Python wheels do
+
+- uv build
+
+To build the code so that you can import the Python code in editable mode do
+
+- uv venv [--python 3.10]
+- uv pip install --editable . [--force-reinstall]
 
 ### Build and run C++ tests
 
@@ -26,4 +33,6 @@ Run the following under the `uv` venv (`uv run`).
 
 or straight after compiling the Python package:
 
-- ./build/temp.linux-x86_64-cpython-310/last_letter_lib.cpp_last_letter_lib/all_tests
+- ./build/cp310-cp310-linux_x86_64//all_tests
+
+## Testing instructions
