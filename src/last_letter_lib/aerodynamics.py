@@ -219,11 +219,11 @@ class AerodynamicParameters(ComponentParameters):
     """Maximum rudder deflection, in radians."""
 
     def _validate_zero_offset_polynomial(cls, name, value):
-        if not (v[-1] == 0):
+        if not (value[-1] == 0):
             raise ValueError(
                 f"Polynomial {name} must have the zero-order coefficient equal to 0."
             )
-        return v
+        return value
 
     def __post__init__(self):
         zero_order_polys = [
@@ -322,6 +322,12 @@ class Aerodynamic(Component):
         """
         alpha = self.airdata.alpha
         beta = self.airdata.beta
+        if (
+            np.abs(beta) > np.pi / 2
+        ):  # The airflow is coming from behind, we need to invert the drag coefficient.
+            flying_backwards_sign = -1  # TODO: Apply this to the C++ code as well.
+        else:
+            flying_backwards_sign = 1
         # If AoS is >90deg, revert it so that its effect diminishes as it approaches 180deg
         if beta > np.pi / 2:
             beta = np.pi - beta
@@ -337,7 +343,7 @@ class Aerodynamic(Component):
             + np.polyval(self.params.c_D_qn, qn)
             + np.polyval(self.params.c_D_deltae, deltae)
         )
-        return drag_coeff
+        return drag_coeff * flying_backwards_sign
 
     def sideforce_coeff(self, af_state, environment, u):
         V_a = self.airdata.airspeed
@@ -433,7 +439,7 @@ class Aerodynamic(Component):
         self, af_state: UavState, environment: EnvironmentData, u: np.array
     ) -> Vector3:
         """
-        Calculate the aerodynamic forces in the airfoil frame.
+        Calculate the aerodynamic forces in the wind frame.
 
         INPUTS:
             uav_state: a UavState dataclass
@@ -457,7 +463,7 @@ class Aerodynamic(Component):
         self, af_state: UavState, environment: EnvironmentData, u: np.array
     ):
         """
-        Calculate the aerodynamic moments in the airfoil frame.
+        Calculate the aerodynamic moments in the wind frame.
 
         INPUTS:
             uav_state: a UavState dataclass
