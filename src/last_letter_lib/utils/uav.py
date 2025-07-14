@@ -325,6 +325,6 @@ def calc_psi_dot_from_trajectory(trajectory: np.array):
 
 def calc_radius_from_psi_dot(V, gamma, psi_dot):
     if psi_dot == 0:
-        return np.infty
+        return np.inf
     else:
         return V * np.cos(gamma) / psi_dot

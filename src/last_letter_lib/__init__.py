@@ -2,7 +2,8 @@
 
 from . import aerodynamics
 from . import environment
-from . import model_creator
+
+# from . import model_creator
 from . import propulsion
 from . import simulation
 from . import systems
@@ -17,7 +18,7 @@ __all__ = [
     "aerodynamics",
     "propulsion",
     "simulation",
-    "model_creator",
+    # "model_creator",
     "programming",
     "math",
     "uav",

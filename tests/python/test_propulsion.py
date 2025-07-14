@@ -179,8 +179,8 @@ class TestPropellerStandard:
         tests = []
         tests.append(build_propeller_standard.calc_advance_ratio(V, n) == J)
         tests.append(build_propeller_standard.calc_advance_ratio(0, n) == 0)
-        tests.append(build_propeller_standard.calc_advance_ratio(V, 0) == np.infty)
-        tests.append(build_propeller_standard.calc_advance_ratio(-V, 0) == -np.infty)
+        tests.append(build_propeller_standard.calc_advance_ratio(V, 0) == np.inf)
+        tests.append(build_propeller_standard.calc_advance_ratio(-V, 0) == -np.inf)
         tests.append(build_propeller_standard.calc_advance_ratio(0, 0) == 0)
         assert np.all(tests)
 

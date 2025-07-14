@@ -21,7 +21,7 @@ from typing import Tuple
 import numpy as np
 from pydantic import BaseModel
 from pydantic import FilePath
-from pydantic import validator
+from pydantic import field_validator
 
 import last_letter_lib.utils.math as llmath
 from last_letter_lib.utils.math import UnitQuaternion
@@ -71,7 +71,7 @@ class InertialParameters(BaseModel):
     """The mass of the component"""
     inertia: Optional[
         Tuple[float, float, float, float, float, float, float, float, float]
-    ]
+    ] = None
     """ Matrix of inertia, specified row-wise."""
 
     def flatten(self) -> dict:
@@ -118,7 +118,7 @@ class MeshParameters(BaseModel):
     into SI units.
     """
 
-    @validator("filepath")
+    @field_validator("filepath")
     def file_must_exist(cls, filepath):
         filepath = os.path.expanduser(filepath)
         if os.path.isabs(filepath):
@@ -144,9 +144,9 @@ class ComponentParameters(BaseModel, extra="forbid"):
     """An identifier name for this component."""
     pose: PoseParameters
     """The pose of this component relative to the aircraft frame."""
-    inertial: Optional[InertialParameters]
+    inertial: Optional[InertialParameters] = None
     """The inertial characteristics of this component."""
-    mesh: Optional[MeshParameters]
+    mesh: Optional[MeshParameters] = None
     """The appearance of this component."""
 
 

@@ -10,6 +10,8 @@ __credits__ = []
 __date__ = "Tue 18 Jan 2022"
 __copyright__ = "Copyright 2022, Avy B.V."
 
+import math
+
 import numpy as np
 import pytest
 
@@ -18,6 +20,7 @@ from last_letter_lib import systems
 from last_letter_lib.environment import EnvironmentData
 from last_letter_lib.utils.math import Pose
 from last_letter_lib.utils.math import UnitQuaternion
+from last_letter_lib.utils.math import EulerAngles
 from last_letter_lib.utils.math import Vector3
 from last_letter_lib.utils.math import Wrench
 from last_letter_lib.utils.uav import Airdata
@@ -157,12 +160,12 @@ def test_calc_bank_from_radius():
     g = 9.81
     tests = []
     # Test straight and level flight
-    tests.append(aerodynamics.calc_bank_from_radius(np.infty, 23, 0, g) == 0)
+    tests.append(aerodynamics.calc_bank_from_radius(np.inf, 23, 0, g) == 0)
     tests.append(
-        aerodynamics.calc_bank_from_radius(np.infty, 23, np.deg2rad(10), g) == 0
+        aerodynamics.calc_bank_from_radius(np.inf, 23, np.deg2rad(10), g) == 0
     )  # Test straight climb
     tests.append(
-        aerodynamics.calc_bank_from_radius(np.infty, 23, np.deg2rad(-10), g) == 0
+        aerodynamics.calc_bank_from_radius(np.inf, 23, np.deg2rad(-10), g) == 0
     )  # Test straight descend
     tests.append(
         aerodynamics.calc_bank_from_radius(100, 10, 0, g)
@@ -284,7 +287,7 @@ class TestAerodynamic:
         airdata.init_from_state_wind(state, build_environment_data.wind)
         airfoil._store_airdata(airdata)
         c_d_3 = airfoil.drag_coeff(state, build_environment_data, build_aero_inputs)
-        assert c_d_3 > 0
+        assert c_d_3 < 0
 
         new_velocity[0] = -5  # Aircraft is going bachwards with 0 pitch.
         new_velocity[2] = -5  # Aircraft is ascending with 0 pitch.
@@ -293,7 +296,7 @@ class TestAerodynamic:
         airdata.init_from_state_wind(state, build_environment_data.wind)
         airfoil._store_airdata(airdata)
         c_d_4 = airfoil.drag_coeff(state, build_environment_data, build_aero_inputs)
-        assert c_d_4 > 0
+        assert c_d_4 < 0
 
     def test_drag_stall(
         self,
@@ -308,9 +311,12 @@ class TestAerodynamic:
         """
         airfoil = build_airfoil_simple
         state = build_uav_state
-        new_velocity = np.array([20, 0, 0])
-        new_velocity[0] = 5  # Aircraft is going forward with 0 pitch.
-        new_velocity[2] = 5  # Aircraft is descending with 0 pitch.
+        state.attitude = UnitQuaternion.from_euler(
+            EulerAngles(0, math.pi / 4, 0)
+        )  # Pitch to 45 deg.
+        new_velocity = np.array([0, 0, 0])
+        new_velocity[0] = 5  # Aircraft is going forward.
+        new_velocity[2] = 5  # Aircraft is going forward.
         state.velocity_linear = new_velocity
         airdata = Airdata()
         airdata.init_from_state_wind(state, build_environment_data.wind)
@@ -318,10 +324,14 @@ class TestAerodynamic:
         w_1 = airfoil.get_wrench_airfoil(
             state, build_environment_data, build_uav_inputs
         )
-        assert w_1.force[0] < 0
+        assert np.abs(w_1.force[0]) < EPS  # No drag in the body frame.
+        assert w_1.force[2] < 0  # Positive lift.
 
-        new_velocity[0] = 5  # Aircraft is going forward with 0 pitch.
-        new_velocity[2] = -5  # Aircraft is ascending with 0 pitch.
+        state.attitude = UnitQuaternion.from_euler(
+            EulerAngles(0, -math.pi / 4, 0)
+        )  # Pitch to -45 deg.
+        new_velocity[0] = 5  # Aircraft is going forward.
+        new_velocity[2] = -5  # Aircraft is going forward.
         state.velocity_linear = new_velocity
         airdata = Airdata()
         airdata.init_from_state_wind(state, build_environment_data.wind)
@@ -329,10 +339,14 @@ class TestAerodynamic:
         w_2 = airfoil.get_wrench_airfoil(
             state, build_environment_data, build_uav_inputs
         )
-        assert w_2.force[0] < 0
+        assert np.abs(w_2.force[0]) < EPS  # No drag in the body frame.
+        assert w_2.force[2] > 0  # Negative lift.
 
-        new_velocity[0] = -5  # Aircraft is going backwards with 0 pitch.
-        new_velocity[2] = 5  # Aircraft is descending with 0 pitch.
+        state.attitude = UnitQuaternion.from_euler(
+            EulerAngles(0, math.pi / 4, 0)
+        )  # Pitch to 45 deg.
+        new_velocity[0] = -5  # Aircraft is going backwards.
+        new_velocity[2] = -5  # Aircraft is going backwards.
         state.velocity_linear = new_velocity
         airdata = Airdata()
         airdata.init_from_state_wind(state, build_environment_data.wind)
@@ -340,10 +354,14 @@ class TestAerodynamic:
         w_3 = airfoil.get_wrench_airfoil(
             state, build_environment_data, build_uav_inputs
         )
-        assert w_3.force[0] > 0
+        assert np.abs(w_3.force[0]) < EPS  # No drag in the body frame.
+        assert w_3.force[2] > 0  # Negative lift.
 
-        new_velocity[0] = -5  # Aircraft is going bachwards with 0 pitch.
-        new_velocity[2] = -5  # Aircraft is ascending with 0 pitch.
+        state.attitude = UnitQuaternion.from_euler(
+            EulerAngles(0, -math.pi / 4, 0)
+        )  # Pitch to -45 deg.
+        new_velocity[0] = -5  # Aircraft is going backwards.
+        new_velocity[2] = 5  # Aircraft is going backwards.
         state.velocity_linear = new_velocity
         airdata = Airdata()
         airdata.init_from_state_wind(state, build_environment_data.wind)
@@ -351,7 +369,8 @@ class TestAerodynamic:
         w_4 = airfoil.get_wrench_airfoil(
             state, build_environment_data, build_uav_inputs
         )
-        assert w_4.force[0] > 0
+        assert np.abs(w_4.force[0]) < EPS  # No drag in the body frame.
+        assert w_4.force[2] < 0  # Positive lift.
 
     def test_sideforce_coeff(
         self,

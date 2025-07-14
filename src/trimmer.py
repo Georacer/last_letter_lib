@@ -159,7 +159,7 @@ if __name__ == "__main__":
     # trimmer.set_model_parameter(5, 'motor1/k_motor', 0) # Zero-out motor output
     # trimmer.update_model()
 
-    trim_states = np.array([10, np.deg2rad(-15), np.infty])
+    trim_states = np.array([10, np.deg2rad(-15), np.inf])
     # Va, gamma, R
     print("Obtaining trim input: 1000 repetitions")
     t_start = time.time()

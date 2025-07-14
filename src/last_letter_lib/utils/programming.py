@@ -17,7 +17,8 @@ import logging
 from typing import List
 
 import matplotlib.pyplot as plt
-from pkg_resources import resource_filename
+
+# from pkg_resources import resource_filename
 from pydantic import BaseModel
 
 
@@ -43,17 +44,17 @@ def isfloat(string):
 
 
 # Probably needs removing
-def get_artifacts_path():
-    """Return the path to the artifacts directory. This directory is ignored by git."""
-    return resource_filename("last_letter_lib", "output_artifacts")
+# def get_artifacts_path():
+#     """Return the path to the artifacts directory. This directory is ignored by git."""
+#     return resource_filename("last_letter_lib", "output_artifacts")
 
 
 # Probably needs removing
-def get_data_path():
-    """Return the path to the data directory."""
-    return resource_filename(
-        "last_letter_lib", "data"
-    )  # Set name of the directory to access data.
+# def get_data_path():
+#     """Return the path to the data directory."""
+#     return resource_filename(
+#         "last_letter_lib", "data"
+#     )  # Set name of the directory to access data.
 
 
 def build_colorlist(num_plots, colormap="viridis"):

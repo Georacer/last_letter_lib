@@ -60,9 +60,9 @@ class AircraftParameters(BaseModel):
         ]
     ]
     """A list containing Thruster components or names of existing Thruster definitions."""
-    batteries: Optional[List[prop.BatteryParameters]]
+    batteries: Optional[List[prop.BatteryParameters]] = list()
     """A list containing Battery components."""
-    other_components: Optional[List[llsys.ComponentParameters]]
+    other_components: Optional[List[llsys.ComponentParameters]] = list()
     """A list containing miscellaneous components. Mainly used for specifying additional masses on the airframe."""
 
     ## These are implemented by the Aircraft class.

@@ -248,7 +248,7 @@ class Propeller(ABC):
         elif V == 0:
             return 0
         else:
-            return np.sign(V) * np.infty
+            return np.sign(V) * np.inf
 
     @abstractmethod
     def calc_coeff_thrust(self, ar):

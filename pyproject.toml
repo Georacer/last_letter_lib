@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.10,<3.12"
 dependencies = [
+    "matplotlib>=3.10.3",
     "numba>=0.61.2",
     "numpy>=2.2.6",
     "pybind11>=2.13.6",
@@ -28,4 +29,5 @@ build-backend = "scikit_build_core.build"
 [dependency-groups]
 dev = [
     "pre-commit>=4.2.0",
+    "pytest>=8.4.1",
 ]
