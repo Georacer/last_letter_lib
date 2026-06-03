@@ -3,7 +3,8 @@
 from . import aerodynamics
 from . import environment
 from . import gravity
-from . import model_creator
+
+# from . import model_creator
 from . import propulsion
 from . import simulation
 from . import systems
