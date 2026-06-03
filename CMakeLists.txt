@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.15)
 project(last_letter_lib VERSION 2.1.0 LANGUAGES CXX)
 
-message(STATUS "Building ${SKBUILD_PROJECT_NAME}")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # Generate compile_commands.json
+
+message(STATUS "Building ${PROJECT_NAME}")
 
 # Set compiler standards
 # Default to C99
@@ -55,9 +57,9 @@ FetchContent_MakeAvailable(yaml_cpp)
 # Ensure the yaml-cpp library (and other files) will get installed before they get cleaned.
 install(TARGETS yaml-cpp
         EXPORT yamlcppTargets
-        LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME}
-        ARCHIVE DESTINATION ${SKBUILD_PROJECT_NAME}
-        RUNTIME DESTINATION ${SKBUILD_PROJECT_NAME}
+        LIBRARY DESTINATION ${PROJECT_NAME}
+        ARCHIVE DESTINATION ${PROJECT_NAME}
+        RUNTIME DESTINATION ${PROJECT_NAME}
 )
 
 
@@ -108,7 +110,7 @@ set_target_properties(cpp_last_letter_lib PROPERTIES
     BUILD_RPATH "$ORIGIN"
 )
 target_link_libraries(cpp_last_letter_lib PRIVATE last_letter_lib)
-install(TARGETS cpp_last_letter_lib DESTINATION ${SKBUILD_PROJECT_NAME})
+install(TARGETS cpp_last_letter_lib LIBRARY DESTINATION ${PROJECT_NAME})
 
 # Copy data files to home folder
 # file(COPY last_letter_models DESTINATION $ENV{HOME}) # Deprecated, using new models folder
@@ -191,7 +193,7 @@ list(APPEND exported_libs
 )
 install(
   TARGETS ${exported_libs}
-  LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME}
+  LIBRARY DESTINATION ${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   RUNTIME DESTINATION bin
   INCLUDES DESTINATION include
