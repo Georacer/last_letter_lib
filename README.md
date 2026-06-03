@@ -33,6 +33,6 @@ To build the code so that you can import the Python code in editable mode do
 
 or straight after compiling the Python package:
 
-- ./build/cp310-cp310-linux_x86_64//all_tests
+- ./build/cp310-cp310-linux_x86_64/all_tests
 
 ## Testing instructions
