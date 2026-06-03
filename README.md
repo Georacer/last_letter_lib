@@ -27,9 +27,7 @@ To build the code so that you can import the Python code in editable mode do
 - uv venv [--python 3.10]
 - uv pip install --editable . [--force-reinstall]
 
-### To run the Python tests
-
-- poetry run pytest tests/python
+## Testing instructions
 
 ### Build and run C++ tests
 
@@ -39,4 +37,6 @@ or straight after compiling the Python package:
 
 - ./build/cp310-cp310-linux_x86_64/all_tests
 
-## Testing instructions
+### Run the Python tests
+
+- uv run pytest tests/python
