@@ -3,6 +3,7 @@
 ///////////////////////////////////////////
 
 #include <Eigen/Eigen>
+#include <string>
 #include "yaml-cpp/yaml.h"
 
 #include "last_letter_lib/environment.hpp"
@@ -26,35 +27,42 @@ namespace last_letter_lib
 	namespace propulsion
 	{
 
-		class Propulsion
+		class Propulsion : public Parametrized
 		{
 		public:
 			///////////
 			// Variables
-			double dt;		   // Simulation time step
-			double inputMotor; // control input (0-1)
+			double dt;          // Simulation time step
+			double inputMotor;  // control input (0-1)
 			int chanMotor;
-			double omega;		// motor angular speed in rad/s
+			double omega;       // motor angular speed in rad/s
 			double rotationDir; // motor direction of rotation
-			double theta;		// propeller angle in rads
-			double normalWind;	// scalar wind normal to propeller disc
+			double theta;       // propeller angle in rads
+			double normalWind;  // scalar wind normal to propeller disc
 			Vector3d relativeWind;
 			Wrench_t wrenchProp;
 
 			///////////
 			// Functions
-			Propulsion(ParameterManager propConfig, ParameterManager worldConfig);
+			Propulsion(string name);
 			virtual ~Propulsion();
-			virtual void readParametersProp(ParameterManager config);
-			virtual void readParametersWorld(ParameterManager config);
 
-			void setInput(Input input);																   // store control input
-			void setInputPwm(InputPwm_t input);															   // store PWM control input
-			void stepEngine(SimState_t states, Inertial inertial, Environment_t environment);			   // engine physics step, container for the generic class
-			virtual void updateRadPS(SimState_t states, Inertial inertial, Environment_t environment) = 0; // Step the angular speed
-			void rotateProp();																			   // Update the propeller angle
-			virtual void getForce(SimState_t states, Inertial inertial, Environment_t environment) = 0;	   // Calculate Forces
-			virtual void getTorque(SimState_t states, Inertial inertial, Environment_t environment) = 0;   // Calculate Torques
+            void initialize_parameters() override
+            {
+                set_param<double>("deltaT", 0.0025, false);
+                set_param<double>("rotationDir", 0, false);
+                set_param<int>("chanMotor", 0, false);
+                set_param<int>("motorType", 0, false);
+            }
+            void update_parameters() override;
+
+			void setInput(Input input);                                                                     // store control input
+			void setInputPwm(InputPwm_t input);                                                             // store PWM control input
+			void stepEngine(SimState_t states, Inertial inertial, Environment_t environment);               // engine physics step, container for the generic class
+			virtual void updateRadPS(SimState_t states, Inertial inertial, Environment_t environment) = 0;  // Step the angular speed
+			void rotateProp();                                                                              // Update the propeller angle
+			virtual void getForce(SimState_t states, Inertial inertial, Environment_t environment) = 0;     // Calculate Forces
+			virtual void getTorque(SimState_t states, Inertial inertial, Environment_t environment) = 0;    // Calculate Torques
 		};
 
 #include "no_engine.hpp"
@@ -67,6 +75,6 @@ namespace last_letter_lib
 
 #include "omega_control_engine.hpp"
 
-		Propulsion *buildPropulsion(ParameterManager propConfig, ParameterManager worldConfig);
+		Propulsion *buildPropulsion(ParameterManager propConfig);
 	} // namespace propulsion
 } // namespace last_letter_lib

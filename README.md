@@ -14,6 +14,8 @@ Run the following under the `uv` venv (`uv run`).
 - cmake ..
 - make
 
+A nix-shell pure configuration has been provided which can be optionally used.
+
 ### To build the Python code
 
 <!-- Build the C++/Python bindings with Pybind11 -->

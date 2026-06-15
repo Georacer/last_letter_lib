@@ -16,7 +16,7 @@ namespace last_letter_lib
     namespace systems
     {
 
-        class Component : virtual public Parametrized
+        class Component : public Parametrized
         {
         public:
             Component(string name) : Parametrized(name)

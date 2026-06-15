@@ -5,9 +5,8 @@
 using namespace std;
 
 // Constructor
-ElectricEng::ElectricEng(ParameterManager propConfig, ParameterManager worldConfig) : Propulsion(propConfig, worldConfig)
+ElectricEng::ElectricEng(string name) : Propulsion(name)
 {
-	readParametersProp(propConfig);
 	// TODO: Make sure to add this to the ROS wrapper
 	// sprintf(paramMsg, "propulsion%i", id);
 	// ros::NodeHandle n;
@@ -22,27 +21,27 @@ ElectricEng::~ElectricEng()
 	delete propPowerPoly;
 }
 
-void ElectricEng::readParametersProp(ParameterManager config)
+void ElectricEng::update_parameters()
 {
-	Propulsion::readParametersProp(config);
+	Propulsion::update_parameters();
 
 	vector<double> doubleVect;
-	propDiam = config.get<double>("propDiam");
-	engInertia = config.get<double>("engInertia");
-	Kv = config.get<double>("Kv");
-	Rm = config.get<double>("Rm");
-	Rs = config.get<double>("Rs");
-	Cells = config.get<double>("Cells");
-	I0 = config.get<double>("I0");
-	doubleVect = config.get<vector<double>>("RadPSLimits");
+	propDiam = get_param<double>("propDiam");
+	engInertia = get_param<double>("engInertia");
+	Kv = get_param<double>("Kv");
+	Rm = get_param<double>("Rm");
+	Rs = get_param<double>("Rs");
+	Cells = get_param<double>("Cells");
+	I0 = get_param<double>("I0");
+	doubleVect = get_param<vector<double>>("RadPSLimits");
 	omegaMin = doubleVect[0];
 	omegaMax = doubleVect[1];
 
 	// Create propeller efficiency polynomial
-	ParameterManager nCoeffPolyConfig = config.filter("nCoeffPoly/");
+	ParameterManager nCoeffPolyConfig = params_.filter("nCoeffPoly/");
 	npPoly = buildPolynomial(nCoeffPolyConfig);
 	// Create propeller power polynomial
-	ParameterManager propPowerPolyConfig = config.filter("propPowerPoly/");
+	ParameterManager propPowerPolyConfig = params_.filter("propPowerPoly/");
 	propPowerPoly = buildPolynomial(propPowerPolyConfig);
 }
 
@@ -108,9 +107,8 @@ void ElectricEng::getTorque(SimState_t /* states */, Inertial /* inertial */, En
 }
 
 // Constructor
-ElectricEng2::ElectricEng2(ParameterManager propConfig, ParameterManager worldConfig) : Propulsion(propConfig, worldConfig)
+ElectricEng2::ElectricEng2(string name) : Propulsion(name)
 {
-	readParametersProp(propConfig);
 	// TODO: Make sure to add this to the ROS wrapper
 	// sprintf(paramMsg, "propulsion%i", id);
 	// ros::NodeHandle n;
@@ -125,30 +123,30 @@ ElectricEng2::~ElectricEng2()
 	delete propPowerPoly;
 }
 
-void ElectricEng2::readParametersProp(ParameterManager config)
+void ElectricEng2::update_parameters()
 {
-	Propulsion::readParametersProp(config);
+	Propulsion::update_parameters();
 
 	vector<double> doubleVect;
-	propDiam = config.get<double>("propDiam");
-	engInertia = config.get<double>("engInertia");
-	Kv = config.get<double>("Kv");
-	Rm = config.get<double>("Rm");
-	Rs = config.get<double>("Rs");
-	Cells = config.get<double>("Cells");
-	I0 = config.get<double>("I0");
-	doubleVect = config.get<vector<double>>("RadPSLimits");
-	momentumDragCoeff = config.get<double>("momentumDragCoeff");
-	propThrustMultiplier = config.get<double>("propThrustMultiplier");
+	propDiam = get_param<double>("propDiam");
+	engInertia = get_param<double>("engInertia");
+	Kv = get_param<double>("Kv");
+	Rm = get_param<double>("Rm");
+	Rs = get_param<double>("Rs");
+	Cells = get_param<double>("Cells");
+	I0 = get_param<double>("I0");
+	doubleVect = get_param<vector<double>>("RadPSLimits");
+	momentumDragCoeff = get_param<double>("momentumDragCoeff");
+	propThrustMultiplier = get_param<double>("propThrustMultiplier");
 
 	omegaMin = doubleVect[0];
 	omegaMax = doubleVect[1];
 
 	// Create propeller efficiency polynomial
-	ParameterManager thrustCoeffPolyConfig = config.filter("propThrustPoly/");
+	ParameterManager thrustCoeffPolyConfig = params_.filter("propThrustPoly/");
 	propThrustPoly = buildPolynomial(thrustCoeffPolyConfig);
 	// Create propeller power polynomial
-	ParameterManager propPowerPolyConfig = config.filter("propPowerPoly/");
+	ParameterManager propPowerPolyConfig = params_.filter("propPowerPoly/");
 	propPowerPoly = buildPolynomial(propPowerPolyConfig);
 }
 

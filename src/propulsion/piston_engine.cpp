@@ -1,13 +1,13 @@
-///////////////////////////////////////////////////
-// Piston engine model (based upon Zanzoterra 305i)
-///////////////////////////////////////////////////
+/////////////////////////
+// Piston engine model //
+/////////////////////////
 
 using namespace std;
 
 // Constructor
-PistonEng::PistonEng(ParameterManager propConfig, ParameterManager worldConfig):Propulsion(propConfig, worldConfig)
+PistonEng::PistonEng(string name)
+    :Propulsion(name)
 {
-	readParametersProp(propConfig);
 	omega = omegaMin; // Initialize engine rotational speed
 }
 
@@ -19,27 +19,27 @@ PistonEng::~PistonEng()
 	delete propPowerPoly;
 }
 
-void PistonEng::readParametersProp(ParameterManager config)
+void PistonEng::update_parameters()
 {
-	Propulsion::readParametersProp(config);
+	Propulsion::update_parameters();
 
-	propDiam = config.get<double>("propDiam");
-	engInertia = config.get<double>("engInertia");
+	propDiam = get_param<double>("propDiam");
+	engInertia = get_param<double>("engInertia");
 	vector<double> doubleVect;
-	doubleVect = config.get<vector<double>>("RadPSLimits");
+	doubleVect = get_param<vector<double>>("RadPSLimits");
 	// // Initialize RadPS limits
 	omegaMin = doubleVect[0];
 	omegaMax = doubleVect[1];
 
 	// Create engine power polynomial
-	ParameterManager engPowerPolyConfig = config.filter("engPowerPoly");
-	engPowerPoly =  buildPolynomial(engPowerPolyConfig);
+	ParameterManager engPowerPolyConfig = params_.filter("engPowerPoly");
+	engPowerPoly = buildPolynomial(engPowerPolyConfig);
 	// Create propeller efficiency polynomial
-	ParameterManager engCoeffPolyConfig = config.filter("engCoeffPoly");
-	npPoly =  buildPolynomial(engCoeffPolyConfig);
+	ParameterManager engCoeffPolyConfig = params_.filter("engCoeffPoly");
+	npPoly = buildPolynomial(engCoeffPolyConfig);
 	// Create propeller power polynomial
-	ParameterManager propPowerPolyConfig = config.filter("propPowerPoly");
-	propPowerPoly =  buildPolynomial(propPowerPolyConfig);
+	ParameterManager propPowerPolyConfig = params_.filter("propPowerPoly");
+	propPowerPoly = buildPolynomial(propPowerPolyConfig);
 }
 
 // Update motor rotational speed and calculate thrust

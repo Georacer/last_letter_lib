@@ -15,13 +15,10 @@ namespace last_letter_lib
 		//////////////////////////////
 
 		// Constructor
-		Propulsion::Propulsion(ParameterManager propConfig, ParameterManager worldConfig)
+		Propulsion::Propulsion(string name)
+            : Parametrized(name)
 		{
-			readParametersWorld(worldConfig);
-			readParametersProp(propConfig);
-
 			theta = 0; // Initialize propeller angle
-
 			inputMotor = 0.0;
 		}
 
@@ -30,30 +27,12 @@ namespace last_letter_lib
 		{
 		}
 
-		void Propulsion::readParametersWorld(ParameterManager config)
-		{
-			dt = config.get<double>("deltaT");
-		}
-
-		void Propulsion::readParametersProp(ParameterManager config)
-		{
-			try
-			{
-				chanMotor = config.get<int>("chanMotor");
-			}
-			catch (const std::invalid_argument &)
-			{
-				chanMotor = -1;
-			}
-			try
-			{
-				rotationDir = config.get<double>("rotationDir");
-			}
-			catch (const std::invalid_argument &)
-			{
-				rotationDir = 1;
-			}
-		}
+        void Propulsion::update_parameters()
+        {
+            dt = get_param<double>("deltaT");
+            chanMotor = get_param<int>("chanMotor");
+            rotationDir = get_param<float>("rotationDir");
+        }
 
 		void Propulsion::setInput(Input input)
 		{
@@ -78,10 +57,6 @@ namespace last_letter_lib
 		// Engine physics step, container for the generic class
 		void Propulsion::stepEngine(SimState_t states, Inertial inertial, Environment_t environment)
 		{
-			// std::cout << "received states and wind: \n"
-			// 		  << states.velocity.linear << "\n"
-			// 		  << environment.wind << "\n"
-			// 		  << std::endl;
 			relativeWind = states.velocity.linear - environment.wind;
 			normalWind = relativeWind.x();
 			if (!std::isfinite(normalWind))
@@ -117,36 +92,47 @@ namespace last_letter_lib
 
 #include "omega_control_engine.cpp"
 
-		// Build engine model
-		Propulsion *buildPropulsion(ParameterManager propConfig, ParameterManager worldConfig)
-		{
+        // Build engine model
+        Propulsion *buildPropulsion(ParameterManager propConfig)
+        {
 			int motorType;
 			motorType = propConfig.get<double>("motorType");
+            string engineName = propConfig.get<string>("name");
 			std::cout << "building engine model: ";
+            Propulsion *engine;
 			switch (motorType)
 			{
 			case 0:
 				std::cout << "selecting no engine" << std::endl;
-				return new NoEngine(propConfig, worldConfig);
+				engine = new NoEngine(engineName);
+                break;
 			case 1:
 				std::cout << "selecting Beard engine" << std::endl;
-				return new EngBeard(propConfig, worldConfig);
+				engine = new EngBeard(engineName);
+                break;
 			case 2:
 				std::cout << "selecting piston engine" << std::endl;
-				return new PistonEng(propConfig, worldConfig);
+				engine = new PistonEng(engineName);
+                break;
 			case 3:
 				std::cout << "selecting electric engine" << std::endl;
-				return new ElectricEng(propConfig, worldConfig);
+				engine = new ElectricEng(engineName);
+                break;
 			case 4:
 				std::cout << "selecting omega-controlled engine" << std::endl;
-				return new EngOmegaControl(propConfig, worldConfig);
+				engine = new EngOmegaControl(engineName);
+                break;
 			case 5:
 				std::cout << "selecting electric engine 2" << std::endl;
-				return new ElectricEng2(propConfig, worldConfig);
+				engine = new ElectricEng2(engineName);
+                break;
 			default:
 				throw runtime_error("Error while constructing motor");
 				break;
 			}
+            std::cout << "Initializing engine" << std::endl;
+            engine->initialize(propConfig);
+            return engine;
 		}
 
 	} // namespace propulsion

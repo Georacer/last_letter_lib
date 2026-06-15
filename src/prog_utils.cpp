@@ -323,6 +323,24 @@ namespace last_letter_lib
             return path;
         }
 
+
+        ///////////////
+        // Parametrized
+//
+        void Parametrized::initialize(ParameterManager params_p)
+        {
+            initialize_parameters();
+            load_parameters(params_p);
+            update_parameters();
+        }
+
+        void Parametrized::initialize(const std::string yaml_str)
+        {
+            initialize_parameters();
+            params_.load_stream(yaml_str);
+            update_parameters();
+        }
+
         /////////////////////////////////////////////////////////////////
         // Build a new polynomial, reading from a configuration YAML Node
         math_utils::Polynomial *buildPolynomial(ParameterManager param_mng)

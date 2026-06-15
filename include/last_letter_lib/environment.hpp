@@ -37,7 +37,7 @@ namespace last_letter_lib
 	// Classes
 	/////////
 
-	class EnvironmentModel : virtual public Parametrized
+	class EnvironmentModel : public Parametrized
 	{
 	public:
 		Environment_t environment;

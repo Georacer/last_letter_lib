@@ -3,11 +3,10 @@
 ////////////////////////////////////////
 
 // Constructor
-EngOmegaControl::EngOmegaControl(ParameterManager propConfig, ParameterManager worldConfig):Propulsion(propConfig, worldConfig)
+EngOmegaControl::EngOmegaControl(string name):Propulsion(name)
 {
 	std::cout << "Building new Controlled-Omega Engine" << std::endl;;
 	omega = 0; // Initialize engine rotational speed
-	readParametersProp(propConfig);
 }
 
 // Destructor
@@ -15,17 +14,17 @@ EngOmegaControl::~EngOmegaControl()
 {
 }
 
-void EngOmegaControl::readParametersProp(ParameterManager config)
+void EngOmegaControl::update_parameters()
 {
-	Propulsion::readParametersProp(config);
+	Propulsion::update_parameters();
 
-	prop_diam = config.get<double>("propDiam");
-	omega_max = config.get<double>("omega_max");
+	prop_diam = get_param<double>("propDiam");
+	omega_max = get_param<double>("omega_max");
 	// Create propeller thrust polynomial
-	ParameterManager thrustPolyConfig = config.filter("thrust_poly/");
+	ParameterManager thrustPolyConfig = params_.filter("thrust_poly/");
 	thrust_poly =  buildPolynomial(thrustPolyConfig);
 	// Create propeller power polynomial
-	ParameterManager powerPolyConfig = config.filter("power_poly/");
+	ParameterManager powerPolyConfig = params_.filter("power_poly/");
 	power_poly =  buildPolynomial(powerPolyConfig);
 }
 

@@ -210,17 +210,19 @@ namespace last_letter_lib
 
     void LinkPropulsion::buildDynamicModel(ParameterManager modelConfig, ParameterManager worldConfig)
     {
-        propulsion = propulsion::buildPropulsion(modelConfig, worldConfig);
+        propulsion = propulsion::buildPropulsion(modelConfig);
     }
 
     void LinkPropulsion::passModelParametersToModel(ParameterManager config)
     {
-        propulsion->readParametersProp(config);
+        propulsion->load_parameters(config);
+        propulsion->update_parameters();
     }
 
     void LinkPropulsion::passWorldParametersToModel(ParameterManager config)
     {
-        propulsion->readParametersWorld(config);
+        propulsion->set_param("deltaT", config.get<double>("deltaT"));
+        propulsion->update_parameters();
     }
 
     void LinkPropulsion::setModelInput(Input input)

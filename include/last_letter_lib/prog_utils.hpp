@@ -197,7 +197,7 @@ namespace last_letter_lib
                     throw std::invalid_argument(string("Parameter ") + param_name + string(" does not exist."));
                 }
             }
-            // Get a parameter. Can accept nested names.
+            // Set a parameter. Can accept nested names.
             template <typename T>
             bool set(const string param_name, const T value, bool safe = true)
             {
@@ -232,6 +232,7 @@ namespace last_letter_lib
             void load_file(string filepath);
             // void load_stream(std::istream &yaml_str);
             void load_stream(const std::string yaml_str);
+            void load_parameters(ParameterManager params_p) {load_parameters_(params_p.parameters_);} // Load from a ParameterManager.
             void register_child_mngr(ParameterManager);
             bool exists(const string param_name);
             ParameterManager filter(const string prefix);
@@ -239,14 +240,14 @@ namespace last_letter_lib
             vector<string> keys() { return get_keys_(parameters_); }
             string str();
             string name;
+            YAML::Node parameters_{YAML::Node()}; // TODO: This needs to be private, but first we need an API to list all nested keys so that we can load them to another ParameterManager.
 
         private:
             // Methods
             YAML::Node find_parameter_(const YAML::Node node, const string param_name);
-            void load_parameters_(YAML::Node);
+            void load_parameters_(YAML::Node); // Load from a YAML node.
             vector<string> get_keys_(YAML::Node) const; // It's also a classmethod
             // Variables
-            YAML::Node parameters_{YAML::Node()};
         };
 
         ParameterManager loadModelConfig(string modelName);
@@ -259,35 +260,16 @@ namespace last_letter_lib
                 set_param("name", name_p, false);
                 name = name_p;
             };
+        // TODO: Create costructor that receives a Parameter manager and executes initialize too.
             // Create your class-specific parameters here, along with their defaults.
             virtual void initialize_parameters(){};
             // Assign values from the parameter dictionary to the local variables here.
             virtual void update_parameters() = 0;
             // Initialize parameters, read from custom values and set attribute values.
-            void initialize(ParameterManager params_p = ParameterManager("temp_node"))
-            {
-                initialize_parameters();
-                // TODO: Refactor this for-loop into the ParameterManager
-                for (string key : params_p.keys())
-                {
-                    try
-                    {
-                        set_param(key, params_p.get<double>(key));
-                    }
-                    catch (const std::exception &)
-                    {
-                        set_param(key, params_p.get<string>(key));
-                    }
-                }
-                update_parameters();
-            }
+            void initialize(ParameterManager params_p = ParameterManager("temp_node"));
             // Initializing object from YAML stream.
-            void initialize(const std::string yaml_str)
-            {
-                initialize_parameters();
-                params_.load_stream(yaml_str);
-                update_parameters();
-            }
+            void initialize(const std::string yaml_str);
+            void load_parameters(ParameterManager params_p) {params_.load_parameters(params_p);} // Load from a ParameterManager.
             // Register another Parametrized object as a child, in order to access and manage their parameters.
             void add_child(Parametrized &c) { params_.register_child_mngr(c.params_); }
             template <typename T>
@@ -295,14 +277,13 @@ namespace last_letter_lib
             template <typename T>
             T get_param(string param_name) { return params_.get<T>(param_name); }
 
-        private:
             ParameterManager params_;
+        private:
             string name;
         };
 
         // Build a new polynomial, reading from a configuration ParameterManager
-        math_utils::Polynomial *
-        buildPolynomial(ParameterManager config);
+        math_utils::Polynomial *buildPolynomial(ParameterManager config);
 
         // Generic logic
         ////////////////

@@ -5,7 +5,7 @@
 class NoEngine : public Propulsion
 {
 public:
-	NoEngine(ParameterManager propConfig, ParameterManager worldConfig);
+	NoEngine(string name);
 	~NoEngine();
 
 	void updateRadPS(SimState_t states, Inertial inertial, Environment_t environment);

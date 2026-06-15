@@ -3,7 +3,8 @@
 //////////////////
 
 // Constructor
-NoEngine::NoEngine(ParameterManager propConfig, ParameterManager worldConfig):Propulsion(propConfig, worldConfig)
+NoEngine::NoEngine(string name_p)
+    : Propulsion(name_p)
 {
 	omega = 0.0;
 }
