@@ -2,6 +2,13 @@
 // No Engine Model
 //////////////////
 
+#include "last_letter_lib/propulsion/propulsion.hpp"
+
+namespace last_letter_lib
+{
+namespace propulsion
+{
+
 // Constructor
 NoEngine::NoEngine(string name_p)
     : Propulsion(name_p)
@@ -27,3 +34,5 @@ void NoEngine::getForce(SimState_t /* states */, Inertial /* inertial */, Enviro
 void NoEngine::getTorque(SimState_t /* states */, Inertial /* inertial */, Environment_t /* environment */)
 {
 }
+} // namespace propulsion
+} // namespace last_letter_lib

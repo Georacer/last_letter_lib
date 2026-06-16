@@ -2,6 +2,13 @@
 // Electric engine model
 ////////////////////////
 
+#include "last_letter_lib/propulsion/propulsion.hpp"
+
+namespace last_letter_lib
+{
+namespace propulsion
+{
+
 using namespace std;
 
 // Constructor
@@ -222,3 +229,5 @@ void ElectricEng2::getTorque(SimState_t /* states */, Inertial /* inertial */, E
 		throw runtime_error("propulsion.cpp: State NaN in wrenchProp.torque");
 	}
 }
+} // namespace propulsion
+} // namespace last_letter_lib

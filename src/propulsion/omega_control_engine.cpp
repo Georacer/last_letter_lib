@@ -2,6 +2,13 @@
 // Engine model found in R. Beard's book
 ////////////////////////////////////////
 
+#include "last_letter_lib/propulsion/propulsion.hpp"
+
+namespace last_letter_lib
+{
+namespace propulsion
+{
+
 // Constructor
 EngOmegaControl::EngOmegaControl(string name):Propulsion(name)
 {
@@ -61,3 +68,5 @@ void EngOmegaControl::getTorque(SimState_t /* states */, Inertial /* inertial */
 	wrenchProp.torque = Vector3d(x, y, z);
 	if (!wrenchProp.torque.allFinite()) {throw runtime_error("propulsion.cpp/EngOmegaControl: State NaN in wrenchProp.torque");}
 }
+} // namespace propulsion
+} // namespace last_letter_lib

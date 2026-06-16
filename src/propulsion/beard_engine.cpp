@@ -2,6 +2,13 @@
 // Engine model found in R. Beard's book
 ////////////////////////////////////////
 
+#include "last_letter_lib/propulsion/propulsion.hpp"
+
+namespace last_letter_lib
+{
+namespace propulsion
+{
+
 // Constructor
 EngBeard::EngBeard(string name)
     : Propulsion(name)
@@ -62,3 +69,5 @@ void EngBeard::getTorque(SimState_t /* states */, Inertial /* inertial */, Envir
 		throw runtime_error("propulsion.cpp/EngBeard: State NaN in wrenchProp.torque");
 	}
 }
+} // namespace propulsion
+} // namespace last_letter_lib

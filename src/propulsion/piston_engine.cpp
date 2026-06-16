@@ -2,6 +2,13 @@
 // Piston engine model //
 /////////////////////////
 
+#include "last_letter_lib/propulsion/propulsion.hpp"
+
+namespace last_letter_lib
+{
+namespace propulsion
+{
+
 using namespace std;
 
 // Constructor
@@ -96,3 +103,6 @@ void PistonEng::getTorque(SimState_t /* states */, Inertial /* inertial */, Envi
 {
 	if (!wrenchProp.torque.allFinite()) {throw runtime_error("propulsion.cpp: State NaN in wrenchProp.torque");}
 }
+
+} // namespace propulsion
+} // namespace last_letter_lib

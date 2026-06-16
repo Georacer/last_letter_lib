@@ -84,6 +84,11 @@ add_library(last_letter_lib SHARED
   src/gravity.cpp
   src/aerodynamics.cpp
   src/propulsion/propulsion.cpp
+  src/propulsion/no_engine.cpp
+  src/propulsion/beard_engine.cpp
+  src/propulsion/piston_engine.cpp
+  src/propulsion/electric_engine.cpp
+  src/propulsion/omega_control_engine.cpp
   src/ground_reaction/ground_reaction.cpp
   src/link.cpp
   src/dynamics.cpp
