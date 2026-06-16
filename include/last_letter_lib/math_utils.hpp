@@ -60,6 +60,7 @@ namespace last_letter_lib
 		void quat_vector3_rotate(Quaterniond q, Vector3d v, Vector3d *res);
 		double wrap_to_360(const double angle);
 		double wrap_to_2pi(const double angle);
+		double sign(const double value);
 
 		void multi_mtx_mtx_3X3(double *a, double *b, double *res);
 		void multi_mtx_mtx_3Xn(double *a, double *b, double *res, int n);
@@ -207,6 +208,8 @@ namespace last_letter_lib
 		class Polynomial
 		{
 		public:
+			double *coeffs;
+
 			Polynomial();
 			virtual ~Polynomial();
 			virtual double evaluate() { return 0; }
@@ -218,7 +221,6 @@ namespace last_letter_lib
 		{
 		public:
 			double coeffNo;
-			double *coeffs;
 
 			Polynomial1D(int maxOrder, double *coeffArray);
 			~Polynomial1D();
@@ -229,7 +231,6 @@ namespace last_letter_lib
 		{
 		public:
 			double coeffNo1, coeffNo2;
-			double *coeffs;
 
 			Polynomial2D(int maxOrder1, int maxOrder2, double *coeffArray);
 			~Polynomial2D();
@@ -243,7 +244,7 @@ namespace last_letter_lib
 		{
 		public:
 			int breaksNo;
-			double *breaks, *coeffs;
+			double *breaks;
 
 			Spline3(int breaksNoIn, double *breaksIn, double *coeffsIn);
 			~Spline3();

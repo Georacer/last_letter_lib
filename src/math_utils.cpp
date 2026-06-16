@@ -203,6 +203,15 @@ namespace last_letter_lib
             return a;
         }
 
+        double sign(const double value)
+        {
+            if (value >= 0) {
+                return 1;
+            } else {
+                return -1;
+            }
+        }
+
         void multi_mtx_mtx_3X3(double *a, double *b, double *res)
         {
             int iii, jjj, kkk;
