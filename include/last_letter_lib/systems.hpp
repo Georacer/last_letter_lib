@@ -1,3 +1,5 @@
+#pragma once
+
 #include <Eigen/Eigen>
 
 #include <last_letter_lib/math_utils.hpp>

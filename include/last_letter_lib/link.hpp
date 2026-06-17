@@ -71,7 +71,7 @@ namespace last_letter_lib
         Wrench_t getWrench(Environment_t);
 
     private:
-        Aerodynamics *aerodynamics;
+    aerodynamics::Aerodynamics *aerodynamics;
     };
 
     class LinkPropulsion : public Link

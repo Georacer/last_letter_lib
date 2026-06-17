@@ -164,12 +164,13 @@ namespace last_letter_lib
 
     void LinkAerodynamic::buildDynamicModel(ParameterManager modelConfig, ParameterManager /*worldConfig*/)
     {
-        aerodynamics = buildAerodynamics(modelConfig);
+        aerodynamics = aerodynamics::buildAerodynamics(modelConfig);
     }
 
     void LinkAerodynamic::passModelParametersToModel(ParameterManager config)
     {
-        aerodynamics->readParametersAerodynamics(config);
+        aerodynamics->load_parameters(config);
+        aerodynamics->update_parameters();
     }
 
     void LinkAerodynamic::passWorldParametersToModel(ParameterManager /*config*/)

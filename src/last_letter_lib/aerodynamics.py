@@ -37,16 +37,16 @@ from last_letter_lib.utils.uav import Inputs
 from last_letter_lib.utils.uav import UavState
 
 
-def calc_dynamic_pressure(rho, v_a):
-    """
-    Calculate dynamic pressure.
-    INPUTS:
-    rho: air density, kg/m^3
-    v_a: airspeed, m/s
-    OUTPUTS:
-    dynamic pressure, Pa
-    """
-    return 0.5 * rho * v_a**2
+# def calc_dynamic_pressure(rho, v_a):
+#     """
+#     Calculate dynamic pressure.
+#     INPUTS:
+#     rho: air density, kg/m^3
+#     v_a: airspeed, m/s
+#     OUTPUTS:
+#     dynamic pressure, Pa
+#     """
+#     return 0.5 * rho * v_a**2
 
 
 def calc_max_l_d(Cl_coeffs, Cd_coeffs, xtol=0.0001):
@@ -87,20 +87,20 @@ def calc_max_l_d(Cl_coeffs, Cd_coeffs, xtol=0.0001):
     return (-optim_res.fun, optim_res.x)
 
 
-def calc_bank_from_radius(R, v, gamma, g):
-    """
-    Calculate the required bank angle to sustain a turn.
-    Source: Beard, R. W., & McLain, T. W. (2012). Small Unmanned Aircraft: Theory and Practice. Eq. 5.16.
-
-    INPUTS:
-        R       The turn radius, m
-        v       The ground speed, m/s
-        gamma   The flight path angle, rad
-        g       Gravity acceleration, m/s^2
-
-    Assumes a coordinated turn.
-    """
-    return np.arctan2(v**2 * np.cos(gamma), R * g)
+# def calc_bank_from_radius(R, v, gamma, g):
+#     """
+#     Calculate the required bank angle to sustain a turn.
+#     Source: Beard, R. W., & McLain, T. W. (2012). Small Unmanned Aircraft: Theory and Practice. Eq. 5.16.
+#
+#     INPUTS:
+#         R       The turn radius, m
+#         v       The ground speed, m/s
+#         gamma   The flight path angle, rad
+#         g       Gravity acceleration, m/s^2
+#
+#     Assumes a coordinated turn.
+#     """
+#     return np.arctan2(v**2 * np.cos(gamma), R * g)
 
 
 class AerodynamicParameters(ComponentParameters):

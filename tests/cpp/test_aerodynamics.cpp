@@ -14,6 +14,7 @@ using namespace Eigen;
 
 using namespace last_letter_lib::programming_utils;
 using namespace last_letter_lib::math_utils;
+using namespace last_letter_lib::aerodynamics;
 using namespace last_letter_lib;
 
 TEST(TestAerodynamics, TestAerodynamics1)

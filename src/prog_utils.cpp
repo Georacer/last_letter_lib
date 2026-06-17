@@ -326,7 +326,13 @@ namespace last_letter_lib
 
         ///////////////
         // Parametrized
-//
+
+        Parametrized::Parametrized(string name_p) : params_(name_p)
+        {
+            set_param("name", name_p, false);
+            name = name_p;
+        };
+
         void Parametrized::initialize(ParameterManager params_p)
         {
             initialize_parameters();

@@ -255,20 +255,15 @@ namespace last_letter_lib
         class Parametrized
         {
         public:
-            Parametrized(string name_p) : params_(name_p)
-            {
-                set_param("name", name_p, false);
-                name = name_p;
-            };
-        // TODO: Create costructor that receives a Parameter manager and executes initialize too.
-            // Create your class-specific parameters here, along with their defaults.
-            virtual void initialize_parameters(){};
-            // Assign values from the parameter dictionary to the local variables here.
-            virtual void update_parameters() = 0;
+            Parametrized(string name_p);
             // Initialize parameters, read from custom values and set attribute values.
             void initialize(ParameterManager params_p = ParameterManager("temp_node"));
             // Initializing object from YAML stream.
             void initialize(const std::string yaml_str);
+            // Create your class-specific parameters here, along with their defaults.
+            virtual void initialize_parameters(){};
+            // Assign values from the parameter dictionary to the local variables here.
+            virtual void update_parameters() = 0;
             void load_parameters(ParameterManager params_p) {params_.load_parameters(params_p);} // Load from a ParameterManager.
             // Register another Parametrized object as a child, in order to access and manage their parameters.
             void add_child(Parametrized &c) { params_.register_child_mngr(c.params_); }
