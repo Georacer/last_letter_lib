@@ -92,7 +92,6 @@ void Aerodynamics::stepDynamics(const SimState_t states, const Inertial /*inerti
     q = states.velocity.angular(1);
     r = states.velocity.angular(2);
 
-    Airdata airdata;
     // std::cout << "received states and wind: \n"
     // 		  << states.velocity.linear << "\n"
     // 		  << environment.wind << "\n"
@@ -100,14 +99,14 @@ void Aerodynamics::stepDynamics(const SimState_t states, const Inertial /*inerti
 
     airdata.init_from_velocity(states.velocity.linear, environment.wind);
     // Calculate the new, relative air data
-    airspeed_ = airdata.airspeed;
-    alpha_ = airdata.alpha;
-    beta_ = airdata.beta;
+    airdata.airspeed = airdata.airspeed;
+    airdata.alpha = airdata.alpha;
+    airdata.beta = airdata.beta;
 
     // std::cout << "Calculated airdata: \n"
-    // 		  << airspeed_ << "\n"
-    // 		  << alpha_ << "\n"
-    // 		  << beta_ << "\n"
+    // 		  << airdata.airspeed << "\n"
+    // 		  << airdata.alpha << "\n"
+    // 		  << airdata.beta << "\n"
     // 		  << std::endl;
 
     getForce(environment);
@@ -226,23 +225,21 @@ void StdLinearAero::getForce(Environment_t environment)
     rho = environment.density;
 
     // request lift and drag alpha-coefficients from the corresponding functions
-    double c_lift_a = liftCoeff(alpha_);
-    double c_drag_a = dragCoeff(alpha_);
+    double c_lift_a = liftCoeff(airdata.alpha);
+    double c_drag_a = dragCoeff(airdata.alpha, airdata.beta);
 
-    // std::cout << "drag_coeff: " << alpha_ << ", " << c_drag_a << std::endl;
-
-    // convert coefficients to the body frame
-    double c_x_a = -c_drag_a * cos(alpha_) + c_lift_a * sin(alpha_);
-    double c_x_q = -c_drag_q * cos(alpha_) + c_lift_q * sin(alpha_);
-    double c_z_a = -c_drag_a * sin(alpha_) - c_lift_a * cos(alpha_);
-    double c_z_q = -c_drag_q * sin(alpha_) - c_lift_q * cos(alpha_);
-
-    // std::cout << "x coeffs: " << c_x_a << ", " << c_x_q << std::endl;
+    // Rotate coefficients from wind to body frame.
+    const Vector3d c_alpha_body = airdata.S_wb() * Vector3d(-c_drag_a, 0, -c_lift_a);
+    const Vector3d c_q_body = airdata.S_wb() * Vector3d(-c_drag_q, 0, -c_lift_q);
+    const double c_x_a = c_alpha_body.x();
+    const double c_z_a = c_alpha_body.z();
+    const double c_x_q = c_q_body.x();
+    const double c_z_q = c_q_body.z();
 
     // calculate aerodynamic force
-    double qbar = calc_dynamic_pressure(rho, airspeed_) * s; // Calculate dynamic pressure
+    double qbar = calc_dynamic_pressure(rho, airdata.airspeed) * s; // Calculate dynamic pressure
     double ax, ay, az;
-    if (airspeed_ == 0)
+    if (airdata.airspeed == 0)
     {
         ax = 0;
         ay = 0;
@@ -250,10 +247,10 @@ void StdLinearAero::getForce(Environment_t environment)
     }
     else
     {
-        ax = qbar * (c_x_a + c_x_q * c * q / (2 * airspeed_) - c_drag_deltae * cos(alpha_) * fabs(inputElevator) + c_lift_deltae * sin(alpha_) * inputElevator);
+        ax = qbar * (c_x_a + c_x_q * c * q / (2 * airdata.airspeed) - c_drag_deltae * cos(airdata.alpha) * fabs(inputElevator) + c_lift_deltae * sin(airdata.alpha) * inputElevator);
         // split c_x_deltae to include "abs" term
-        ay = qbar * (c_y_0 + c_y_b * beta_ + c_y_p * b * p / (2 * airspeed_) + c_y_r * b * r / (2 * airspeed_) + c_y_deltaa * inputAileron + c_y_deltar * inputRudder);
-        az = qbar * (c_z_a + c_z_q * c * q / (2 * airspeed_) - c_drag_deltae * sin(alpha_) * fabs(inputElevator) - c_lift_deltae * cos(alpha_) * inputElevator);
+        ay = qbar * (c_y_0 + c_y_b * airdata.beta + c_y_p * b * p / (2 * airdata.airspeed) + c_y_r * b * r / (2 * airdata.airspeed) + c_y_deltaa * inputAileron + c_y_deltar * inputRudder);
+        az = qbar * (c_z_a + c_z_q * c * q / (2 * airdata.airspeed) - c_drag_deltae * sin(airdata.alpha) * fabs(inputElevator) - c_lift_deltae * cos(airdata.alpha) * inputElevator);
         // split c_z_deltae to include "abs" term
     }
 
@@ -269,9 +266,9 @@ void StdLinearAero::getTorque(Environment_t environment)
     rho = environment.density;
 
     // calculate aerodynamic torque
-    double qbar = calc_dynamic_pressure(rho, airspeed_) * s; // Calculate dynamic pressure
+    double qbar = calc_dynamic_pressure(rho, airdata.airspeed) * s; // Calculate dynamic pressure
     double la, na, ma;
-    if (airspeed_ == 0)
+    if (airdata.airspeed == 0)
     {
         la = 0;
         ma = 0;
@@ -279,9 +276,9 @@ void StdLinearAero::getTorque(Environment_t environment)
     }
     else
     {
-        la = qbar * b * (c_l_0 + c_l_b * beta_ + c_l_p * b * p / (2 * airspeed_) + c_l_r * b * r / (2 * airspeed_) + c_l_deltaa * inputAileron + c_l_deltar * inputRudder);
-        ma = qbar * c * (c_m_0 + c_m_a * alpha_ + c_m_q * c * q / (2 * airspeed_) + c_m_deltae * inputElevator);
-        na = qbar * b * (c_n_0 + c_n_b * beta_ + c_n_p * b * p / (2 * airspeed_) + c_n_r * b * r / (2 * airspeed_) + c_n_deltaa * inputAileron + c_n_deltar * inputRudder);
+        la = qbar * b * (c_l_0 + c_l_b * airdata.beta + c_l_p * b * p / (2 * airdata.airspeed) + c_l_r * b * r / (2 * airdata.airspeed) + c_l_deltaa * inputAileron + c_l_deltar * inputRudder);
+        ma = qbar * c * (c_m_0 + c_m_a * airdata.alpha + c_m_q * c * q / (2 * airdata.airspeed) + c_m_deltae * inputElevator);
+        na = qbar * b * (c_n_0 + c_n_b * airdata.beta + c_n_p * b * p / (2 * airdata.airspeed) + c_n_r * b * r / (2 * airdata.airspeed) + c_n_deltaa * inputAileron + c_n_deltar * inputRudder);
     }
 
     wrenchAero.torque = Vector3d(la, ma, na);
@@ -305,12 +302,28 @@ double StdLinearAero::liftCoeff(double alpha)
 
 //////////////////////////
 // C_drag_alpha calculation
-double StdLinearAero::dragCoeff(double alpha)
+
+double StdLinearAero::_dragCoeff(double alpha, double beta)
 {
     AR = pow(b, 2) / s;
     double c_drag_a = c_drag_p + pow(c_lift_0 + c_lift_a0 * alpha, 2) / (M_PI * oswald * AR);
 
     return c_drag_a;
+}
+
+double StdLinearAero::dragCoeff(double alpha, double beta)
+{
+    double sigmoid = (1 + exp(-M * (alpha - alpha0)) + exp(M * (alpha + alpha0))) / (1 + exp(-M * (alpha - alpha0))) / (1 + exp(M * (alpha + alpha0)));
+    const double linear = (1.0 - sigmoid) * _dragCoeff(alpha, beta);
+    double flatPlate = sigmoid * (2 * copysign(1, alpha) * pow(sin(alpha), 3)); // Drag beyond stall
+    const double c_drag = linear + flatPlate;
+
+    double flying_backwards_sign{1};
+    if (fabs(beta) > M_PI / 2) {
+        flying_backwards_sign = -1;
+    }
+
+    return c_drag * flying_backwards_sign;
 }
 
 /////////////////////////
@@ -353,8 +366,8 @@ double PolynomialAero::liftCoeff(double alpha)
 }
 
 //////////////////////////
-// C_drag_alpha_ calculation
-double PolynomialAero::dragCoeff(double alpha)
+// C_drag_airdata.alpha calculation
+double PolynomialAero::_dragCoeff(double alpha, double /*beta*/)
 {
     return dragCoeffPoly->evaluate(alpha);
 }
@@ -376,7 +389,7 @@ void SimpleDrag::update_parameters()
     c_drag_a = get_param<double>("c_D_alpha");
 }
 
-double SimpleDrag::dragCoeff(double alpha)
+double SimpleDrag::_dragCoeff(double alpha, double /*beta*/)
 {
     return c_drag_p + c_drag_a * fabs(alpha);
 }

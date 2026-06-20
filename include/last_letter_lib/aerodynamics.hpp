@@ -33,7 +33,7 @@ class Aerodynamics : public systems::Component
 public:
     ////////////
     // Variables
-    double airspeed_, alpha_, beta_;           // rotated airdata quantities
+    Airdata airdata;
     Vector3d relativeWind, relativeRates;      // rotated angular rate container vector
     double p, q, r;                            // rotated angular rates
     double deltaa_max, deltae_max, deltar_max; // Control inputs and maximum surface deflections
@@ -90,8 +90,10 @@ public:
     void getTorque(Environment_t environment) override;
     // Calculate lift coefficient from alpha
     virtual double liftCoeff(double);
-    // Calculate drag coefficient from alpha
-    virtual double dragCoeff(double);
+    // Calculate drag coefficient from alpha and beta
+    double dragCoeff(double, double);
+private:
+    virtual double _dragCoeff(double, double);
 };
 
 /////////////////////////////////////////////////////////////////////
@@ -106,7 +108,8 @@ public:
     void update_parameters() override;
     double c_drag_a;
     // Calculate drag coefficient from alpha
-    double dragCoeff(double) override;
+private:
+    virtual double _dragCoeff(double, double) override;
 };
 
 ////////////////////////////////////////////////////////
@@ -123,7 +126,8 @@ public:
     math_utils::Polynomial *dragCoeffPoly;
 
     double liftCoeff(double alpha) override;
-    double dragCoeff(double alpha) override;
+private:
+    virtual double _dragCoeff(double, double) override;
 };
 
 Aerodynamics *buildAerodynamics(ParameterManager config);

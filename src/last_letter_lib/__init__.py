@@ -6,7 +6,8 @@ from . import gravity
 
 # from . import model_creator
 from . import propulsion
-from . import simulation
+
+# from . import simulation
 from . import systems
 from .utils import math
 from .utils import programming
@@ -19,7 +20,7 @@ __all__ = [
     "systems",
     "aerodynamics",
     "propulsion",
-    "simulation",
+    # "simulation",
     # "model_creator",
     "programming",
     "math",

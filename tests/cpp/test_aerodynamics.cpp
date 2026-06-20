@@ -51,9 +51,9 @@ TEST(TestAerodynamics, TestAerodynamics1)
     EXPECT_NEAR(environmentModel.environment.wind(1), -5, 1e-3);
     // cout << "Body-frame wind:\n"
     //      << environmentModel.environment.wind << endl;
-    EXPECT_NEAR(airfoil1->airspeed_, 11.180, 1e-3);
-    EXPECT_NEAR(airfoil1->alpha_, 0, 1e-3);
-    EXPECT_NEAR(airfoil1->beta_, 0.464, 1e-3);
+    EXPECT_NEAR(airfoil1->airdata.airspeed, 11.180, 1e-3);
+    EXPECT_NEAR(airfoil1->airdata.alpha, 0, 1e-3);
+    EXPECT_NEAR(airfoil1->airdata.beta, 0.464, 1e-3);
     // cout << "Body-frame relative airdata:\n"
     //      << airfoil1->airspeed_ << "\n"
     //      << airfoil1->alpha_ << "\n"

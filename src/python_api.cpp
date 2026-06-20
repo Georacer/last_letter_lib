@@ -13,6 +13,7 @@
 #include "last_letter_lib/gravity.hpp"
 #include "last_letter_lib/environment.hpp"
 #include "last_letter_lib/systems.hpp"
+#include "last_letter_lib/aerodynamics.hpp"
 
 namespace py = pybind11;
 
@@ -35,6 +36,7 @@ using last_letter_lib::uav_utils::Input;
 using last_letter_lib::uav_utils::Pose;
 using last_letter_lib::uav_utils::SimState_t;
 using last_letter_lib::uav_utils::Wrench_t;
+using namespace last_letter_lib::aerodynamics;
 
 class PyParametrized : public Parametrized
 {
@@ -286,4 +288,23 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def("update_parameters", &EnvironmentModel::update_parameters)
         .def("calc_environment", &EnvironmentModel::calcEnvironment)
         .def_readonly("data", &EnvironmentModel::environment);
+
+    auto m_aerodynamics = m.def_submodule("cpp_aerodynamics", "last_letter_lib gravity aerodynamics");
+    m_aerodynamics.def("calc_dynamic_pressure", &calc_dynamic_pressure, "Calculate dynamic pressure");
+    m_aerodynamics.def("calc_bank_from_radius", &calc_bank_from_radius, "Calculate the required bank angle to sustain a turn");
+    py::class_<Aerodynamics, Component>(m_aerodynamics, "Aerodynamics")
+        .def("set_input", &Aerodynamics::setInput)
+        .def("step_dynamics", &Aerodynamics::stepDynamics)
+        .def_readonly("wrench_aero", &Aerodynamics::wrenchAero);
+    py::class_<NoAerodynamics, Aerodynamics>(m_aerodynamics, "NoAerodynamics")
+        .def(py::init<string>(), py::arg("name"));
+    py::class_<StdLinearAero, Aerodynamics>(m_aerodynamics, "StdLinearAero")
+        .def(py::init<string>(), py::arg("name"))
+        .def("lift_coeff", &StdLinearAero::liftCoeff)
+        .def("drag_coeff", &StdLinearAero::dragCoeff);
+    py::class_<SimpleDrag, StdLinearAero>(m_aerodynamics, "SimpleDrag")
+        .def(py::init<string>(), py::arg("name"));
+    py::class_<PolynomialAero, StdLinearAero>(m_aerodynamics, "PolynomialAero")
+        .def(py::init<string>(), py::arg("name"));
+
 }
