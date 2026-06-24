@@ -33,7 +33,7 @@ To build the code so that you can import the Python code in editable mode do
 
 ### Build and run C++ tests
 
-- cmake -S . -B build && cmake --build build && ./build/all_tests
+- cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug && cmake --build build && ./build/all_tests
 
 or straight after compiling the Python package:
 

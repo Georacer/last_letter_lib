@@ -186,6 +186,13 @@ TEST_F(ParameterManagerTest, TestKeys)
     EXPECT_EQ(v[2], "param_2/param_3");
 }
 
+TEST_F(ParameterManagerTest, TestParentWriteChildRead)
+{
+    parent->parameters.set("child/param_2/param_3", 33, true);
+    int r = child->parameters.get<int>("param_2/param_3");
+    ASSERT_EQ(r, 33);
+}
+
 TEST(ParameterManagerTest2, TestLoadFile)
 {
     auto pm = ParameterManager("pm");

@@ -67,3 +67,48 @@ TEST_F(ComponentTest, TestInitialize)
     EXPECT_EQ(c.pose.position.x(), 1);
     EXPECT_EQ(c.inertial.mass, 5);
 }
+
+class DynamicSystemChild : public DynamicSystem
+{
+public:
+    DynamicSystemChild(DynamicSystem::state_type x, DynamicSystem::state_type u) : DynamicSystem(x, u) { };
+    ~DynamicSystemChild() {};
+
+    state_type dynamics(const state_type x, const state_type u, const double /*t*/) {
+        double beta = 0.99; // The time constant is about 1s.
+        const double dxdt_0 = (-x[0] + u[0])/beta;
+        state_type dxdt = {dxdt_0};
+        return dxdt;
+    }
+
+    state_type outputs(const state_type x, const state_type /*u*/, const double /*t*/) {
+        return x;
+    }
+};
+
+class DynamicSystemTest : public ::testing::Test
+{
+public:
+    void SetUp() override {
+        DynamicSystem::state_type x_0{0};
+        DynamicSystem::state_type u_0{0};
+        system = new DynamicSystemChild(x_0, u_0);
+    }
+
+    DynamicSystemChild *system;
+};
+
+TEST_F(DynamicSystemTest, TestDynamicSystem)
+{
+    DynamicSystem::state_type u={1};
+    const double dt = 0.01;
+    const double rise_time = 0.35 * 2 * M_PI;
+    const int steps = rise_time/dt;
+    for (int i=0; i<steps; i++) {
+        system->step_dynamics(u, dt);
+    }
+    auto x = system->x;
+    double t = system->t;
+    const double x_end = (1 - exp(-rise_time));
+    EXPECT_NEAR(system->outputs(x, u, t)[0], x_end, 1e-2);
+}

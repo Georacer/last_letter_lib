@@ -28,6 +28,8 @@ find_package(Eigen3 REQUIRED NO_MODULE)
 # include(FindEigen3.cmake)
 find_package(LAPACK REQUIRED)
 
+find_package(Boost REQUIRED)
+
 # find_package(NLopt REQUIRED) # Will enable later with trimmer
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 message(STATUS "Current Python site-packages dir: ${Python3_SITELIB}")
@@ -100,6 +102,7 @@ target_link_libraries(last_letter_lib
   Eigen3::Eigen
   ${LAPACK_LIBRARIES}
   yaml-cpp
+  Boost::boost
 )
 
 # add_library(lib_trimmer src/trimmer.cpp)
