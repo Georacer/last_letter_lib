@@ -61,6 +61,7 @@ public:
     double t{0};
 
     DynamicSystem(state_type x_0_p, state_type u_0_p, double t_p=0);
+    DynamicSystem();
     ~DynamicSystem() {};
     // Carry out any data handling after the time step.
     void step_dynamics(const state_type u, const double dt);
@@ -71,13 +72,15 @@ public:
     virtual state_type dynamics(const state_type x, const state_type u, const double t) = 0;
     virtual state_type outputs(const state_type x, const state_type u, const double t) = 0;
 
+protected:
+    state_type x_0;
+    state_type u, u_0;
+    double t_0{0};
+
 private:
     state_type pack_odeint_state(const state_type u_p);
     void unpack_odeint_state(const state_type odeint_x, state_type &x_p, state_type &u_p);
 
-    state_type x_0;
-    state_type u, u_0;
-    double t_0{0};
     odeint::runge_kutta4<state_type> stepper;
 
 };

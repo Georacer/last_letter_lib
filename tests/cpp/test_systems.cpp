@@ -72,6 +72,7 @@ class DynamicSystemChild : public DynamicSystem
 {
 public:
     DynamicSystemChild(DynamicSystem::state_type x, DynamicSystem::state_type u) : DynamicSystem(x, u) { };
+    DynamicSystemChild() : DynamicSystem() { };
     ~DynamicSystemChild() {};
 
     state_type dynamics(const state_type x, const state_type u, const double /*t*/) {
@@ -111,4 +112,38 @@ TEST_F(DynamicSystemTest, TestDynamicSystem)
     double t = system->t;
     const double x_end = (1 - exp(-rise_time));
     EXPECT_NEAR(system->outputs(x, u, t)[0], x_end, 1e-2);
+}
+
+TEST(DynamicSystemTest2, EmptyConstructor)
+{
+    DynamicSystem::state_type u={1};
+    auto system = DynamicSystemChild();
+    DynamicSystem::state_type x={0};
+    system.reset(x, u);
+    system.step_dynamics(u, 1e-2);
+    EXPECT_GT(system.outputs(system.x, u, system.t)[0], 0);
+}
+
+class DynamicSystemEmpty : public DynamicSystem
+{
+public:
+    DynamicSystemEmpty() : DynamicSystem() { };
+    ~DynamicSystemEmpty() {};
+
+    state_type dynamics(const state_type /*x*/, const state_type /*u*/, const double /*t*/) {
+        state_type dxdt;
+        return dxdt;
+    }
+
+    state_type outputs(const state_type /*x*/, const state_type u, const double /*t*/) {
+        return u;
+    }
+};
+
+TEST(DynamicSystemTest2, StaticSystem)
+{
+    auto system = DynamicSystemEmpty();
+    DynamicSystem::state_type u={123};
+    system.step_dynamics(u, 1e-2);
+    EXPECT_EQ(system.outputs(system.x, u, system.t)[0], 123);
 }

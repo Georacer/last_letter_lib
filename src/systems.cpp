@@ -25,6 +25,12 @@ DynamicSystem::DynamicSystem(state_type x_0_p, state_type u_0_p, double t_p) :
         reset();
     }
 
+DynamicSystem::DynamicSystem() :
+        t_0(0)
+    {
+        reset();
+    }
+
 void DynamicSystem::reset(std::vector<double> x_0_p, std::vector<double> u_0_p, double t_p)
 {
     x_0 = x_0_p;
@@ -66,17 +72,20 @@ void DynamicSystem::unpack_odeint_state(const state_type odeint_x, state_type &x
 
 void DynamicSystem::step_dynamics(const std::vector<double> u, const double dt)
 {
-    state_type odeint_state = pack_odeint_state(u);
-    // Declare a lambda, because do_step requires a static function.
-    auto sys = [this, u](const state_type &odeint_state, state_type &dxdt, double t) {
-        state_type x_temp{x};
-        state_type u_temp{u};
-        unpack_odeint_state(odeint_state, x_temp, u_temp);
-        dxdt = dynamics(x_temp, u_temp, t);
-    };
-    stepper.do_step(sys, odeint_state , t, dt);
-    state_type throwaway_u{u};
-    unpack_odeint_state(odeint_state, x, throwaway_u);
+    // Only calculate dynamics if the system is not empty/static.
+    if (x.size() > 0) {
+        state_type odeint_state = pack_odeint_state(u);
+        // Declare a lambda, because do_step requires a static function.
+        auto sys = [this, u](const state_type &odeint_state, state_type &dxdt, double t) {
+            state_type x_temp{x};
+            state_type u_temp{u};
+            unpack_odeint_state(odeint_state, x_temp, u_temp);
+            dxdt = dynamics(x_temp, u_temp, t);
+        };
+        stepper.do_step(sys, odeint_state , t, dt);
+        state_type throwaway_u{u};
+        unpack_odeint_state(odeint_state, x, throwaway_u);
+    }
     t += dt;
 }
 
