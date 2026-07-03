@@ -356,7 +356,75 @@ public:
 	void calc_wrench(SimState_t states, Inertial inertial, Environment_t environment) override;
 };
 
+// A propeller model.
+//
+// Its parameters are according to these equations:
+//
+// .. math::
+//
+//     J = V_a / (n D)
+//
+//     T = \\rho n^2 D^4 C_{thrust}(J)
+//
+//     P = \\rho n^3 D^5 C_{power}(J)
+class Propeller : public Parametrized
+{
+public:
+    double diameter;
+
+    Propeller(string name) : Parametrized(name) {};
+
+    void initialize_parameters() override;
+    void update_parameters() override;
+
+    // Calculate the advance ratio of a propeller
+    //
+    // INPUTS:
+    //     V   Freestream airspeed, m/s
+    //     n   Propeller speed, revolutions per second
+    double calc_advance_ratio(double V, double n);
+
+    virtual double calc_coeff_thrust(double ar) = 0;
+    virtual double calc_coeff_power(double ar) = 0;
+
+    // Calculate thrust of propeller.
+    double calc_thrust(double V, double n, double rho);
+
+    // Calculate power of propeller.
+    double calc_power(double V, double n, double rho);
+
+    // Calculate torque of propeller.
+    double calc_torque(double V, double n, double rho);
+
+    // Calculate efficiency of propeller from advance ratio.
+    double calc_efficiency(double ar);
+
+    uav_utils::Wrench_t calc_wrench(double V, double n, double rho);
+
+private:
+    // The maximum drag the propeller produces when freewheeling.
+    //
+    // Used to cap the negative force produced, since the propeller will stall.
+    // A flat plate model is used.
+    double max_drag(double V);
+};
+
+class PropellerStandard : public Propeller
+{
+public:
+    double pitch{0};
+    Polynomial *c_thrust, *c_power;
+
+    PropellerStandard(string name) : Propeller(name) {};
+
+    void initialize_parameters() override;
+    void update_parameters() override;
+    double calc_coeff_thrust(double ar) override;
+    double calc_coeff_power(double ar) override;
+};
+
 Thruster *buildThruster(ParameterManager propConfig);
+
 
 } // namespace propulsion
 } // namespace last_letter_lib

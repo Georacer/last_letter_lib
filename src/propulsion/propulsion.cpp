@@ -186,186 +186,147 @@ double correct_pitch_for_hub(double pitch, double diam_nom, double diam_actual) 
     return pitch_actual;
 }
 
-// A propeller model.
-//
-// Its parameters are according to these equations:
-//
-// .. math::
-//
-//     J = V_a / (n D)
-//
-//     T = \\rho n^2 D^4 C_{thrust}(J)
-//
-//     P = \\rho n^3 D^5 C_{power}(J)
+//////////////////////////////
+// Propeller class
+//////////////////////////////
 
-class Propeller : public Parametrized
+void Propeller::initialize_parameters()
 {
-public:
-    double diameter;
+    set_param<double>("diameter", 0.3048, false);
+}
 
-    Propeller(string name) : Parametrized(name) {};
+void Propeller::update_parameters()
+{
+    diameter = get_param<double>("diameter");
+}
 
-    void initialize_parameters() override
-    {
-        set_param<double>("diameter", 0.3048, false);
+double Propeller::max_drag(double V) {
+    double c_d = 1.17;  // Flat plate drag coefficient from https://en.wikipedia.org/wiki/Drag_coefficient
+    double rho = 1.225;
+    double chord = diameter / 10;  // rough number for chord
+    double S = diameter * chord;
+    return 0.5 * rho * pow(V,2) * S * c_d;
+}
+
+double Propeller::calc_advance_ratio(double V, double n) {
+    if (fabs(n) != 0) {
+        return V / (n * diameter);
+    } else if (V == 0){
+            return 0;
+    } else {
+        return math_utils::sign(V) * std::numeric_limits<float>::infinity();
     }
-    void update_parameters() override
-    {
-        diameter = get_param<double>("diameter");
+}
+
+double Propeller::calc_thrust(double V, double n, double rho) {
+    double ar = calc_advance_ratio(V, n);
+    double Ct = calc_coeff_thrust(ar);
+
+    double thrust = Ct * rho * pow(n,2) * pow(diameter, 4);
+    // Cap the thrust of the propeller if negative
+    if (thrust < 0) {
+        thrust = max(thrust, -max_drag(V));
     }
+    return thrust;
 
-    // The maximum drag the propeller produces when freewheeling.
-    //
-    // Used to cap the negative force produced, since the propeller will stall.
-    // A flat plate model is used.
-    double max_drag(double V) {
-        double c_d = 1.17;  // Flat plate drag coefficient from https://en.wikipedia.org/wiki/Drag_coefficient
-        double rho = 1.225;
-        double chord = diameter / 10;  // rough number for chord
-        double S = diameter * chord;
-        return 0.5 * rho * pow(V,2) * S * c_d;
+}
+
+double Propeller::calc_power(double V, double n, double rho) {
+    double ar = calc_advance_ratio(V, n);
+    double Cp = calc_coeff_power(ar);
+
+    double power = Cp * rho * pow(n,3) * pow(diameter, 5);
+    double thrust = calc_thrust(V, n, rho);
+    // Don't perform power calculations if thrust is negative.
+    // Because the propeller is outside its operational envelope.
+    if (thrust < 0) {
+        power = 0;
     }
+    return power;
+}
 
-    // Calculate the advance ratio of a propeller
-    //
-    // INPUTS:
-    //     V   Freestream airspeed, m/s
-    //     n   Propeller speed, revolutions per second
-    double calc_advance_ratio(double V, double n) {
-        if (fabs(n) != 0) {
-            return V / (n * diameter);
-        } else if (V == 0){
-                return 0;
-        } else {
-            return math_utils::sign(V) * std::numeric_limits<float>::infinity();
-        }
+double Propeller::calc_torque(double V, double n, double rho) {
+    double ar = calc_advance_ratio(V, n);
+    double c_p = calc_coeff_power(ar);
+    double thrust = calc_thrust(V, n, rho);
+    // Don't perform power calculations if thrust is negative.
+    // Because the propeller is outside its operational envelope.
+    double c_q = 0;
+    if (thrust > 0) {
+        c_q = c_p / (2 * M_PI);
+    } else {
+        c_q = 0;
     }
+    return c_q * rho * pow(n, 2) * pow(diameter, 5);
+}
 
-    virtual double calc_coeff_thrust(double ar) = 0;
-    virtual double calc_coeff_power(double ar) = 0;
+double Propeller::calc_efficiency(double ar) {
+    double Ct = calc_coeff_thrust(ar);
+    double Cp = calc_coeff_power(ar);
+    return Ct * ar / Cp;
+}
 
-    // Calculate thrust of propeller.
-    double calc_thrust(double V, double n, double rho) {
-        double ar = calc_advance_ratio(V, n);
-        double Ct = calc_coeff_thrust(ar);
+uav_utils::Wrench_t Propeller::calc_wrench(double V, double n, double rho) {
+    double f_x = calc_thrust(V, n, rho);
+    double t_x = calc_torque(V, n, rho);
+    auto force = Vector3d(f_x, 0, 0);
+    auto torque = Vector3d(t_x, 0, 0);
+    return uav_utils::Wrench_t(force, torque);
+}
 
-        double thrust = Ct * rho * pow(n,2) * pow(diameter, 4);
-        // Cap the thrust of the propeller if negative
-        if (thrust < 0) {
-            thrust = max(thrust, -max_drag(V));
-        }
-        return thrust;
+//////////////////////////////
+// PropellerStandard class
+//////////////////////////////
 
+void PropellerStandard::initialize_parameters() {
+    Propeller::initialize_parameters();
+
+    set_param<double>("pitch", 0, false);
+
+    set_param<double>("c_thrust/Type", 0, false);
+    set_param<double>("c_thrust/polyNo", 3, false);
+    std::vector<double> c_thrust_coeffs = {0.064295, -0.045845, -0.161243};
+    set_param<vector<double>>("c_thrust/coeffs", c_thrust_coeffs, false);
+
+    set_param<double>("c_power/Type", 0, false);
+    set_param<double>("c_power/polyNo", 3, false);
+    std::vector<double> c_power_coeffs = {0.018441, 0.016194, -0.084206};
+    set_param<vector<double>>("c_power/coeffs", c_power_coeffs, false);
+}
+
+void PropellerStandard::update_parameters() {
+    Propeller::update_parameters();
+
+    pitch = get_param<double>("pitch");
+
+    // Create thrust polynomial
+    ParameterManager c_thrust_poly_config = params_.filter("c_thrust");
+    c_thrust = buildPolynomial(c_thrust_poly_config);
+
+    // Create power polynomial
+    ParameterManager c_power_poly_config = params_.filter("c_power");
+    c_power = buildPolynomial(c_power_poly_config);
+}
+
+double PropellerStandard::calc_coeff_thrust(double ar) {
+    double c_t;
+    if (isfinite(ar)) {
+        c_t = c_thrust->evaluate(ar);
+    } else {  // This applies in omega=0 situations and is a numerical hack
+        c_t = c_thrust->coeffs[0];
     }
+    return c_t;
+}
 
-    // Calculate power of propeller.
-    double calc_power(double V, double n, double rho) {
-        double ar = calc_advance_ratio(V, n);
-        double Cp = calc_coeff_power(ar);
-
-        double power = Cp * rho * pow(n,3) * pow(diameter, 5);
-        double thrust = calc_thrust(V, n, rho);
-        // Don't perform power calculations if thrust is negative.
-        // Because the propeller is outside its operational envelope.
-        if (thrust < 0) {
-            power = 0;
-        }
-        return power;
+double PropellerStandard::calc_coeff_power(double ar) {
+    double c_t;
+    if (isfinite(ar)) {
+        c_t = c_power->evaluate(ar);
+    } else {  // This applies in omega=0 situations and is a numerical hack
+        c_t = c_power->coeffs[0];
     }
-
-    // Calculate torque of propeller.
-    double calc_torque(double V, double n, double rho) {
-        double ar = calc_advance_ratio(V, n);
-        double c_p = calc_coeff_power(ar);
-        double thrust = calc_thrust(V, n, rho);
-        // Don't perform power calculations if thrust is negative.
-        // Because the propeller is outside its operational envelope.
-        double c_q = 0;
-        if (thrust > 0) {
-            c_q = c_p / (2 * M_PI);
-        } else {
-            c_q = 0;
-        }
-        return c_q * rho * pow(n, 2) * pow(diameter, 5);
-    }
-
-    // Calculate efficiency of propeller from advance ratio.
-    double calc_efficiency(double ar) {
-        double Ct = calc_coeff_thrust(ar);
-        double Cp = calc_coeff_power(ar);
-        return Ct * ar / Cp;
-    }
-
-    uav_utils::Wrench_t calc_wrench(double V, double n, double rho) {
-        double f_x = calc_thrust(V, n, rho);
-        double t_x = calc_torque(V, n, rho);
-        auto force = Vector3d(f_x, 0, 0);
-        auto torque = Vector3d(t_x, 0, 0);
-        return uav_utils::Wrench_t(force, torque);
-    }
-};
-
-
-class PropellerStandard : public Propeller {
-public:
-
-    double pitch{0};
-    Polynomial *c_thrust, *c_power;
-
-    PropellerStandard(string name) : Propeller(name) {};
-
-    void initialize_parameters() override {
-        Propeller::initialize_parameters();
-
-        set_param<double>("pitch", 0, false);
-
-        set_param<double>("c_thrust/Type", 0, false);
-        set_param<double>("c_thrust/polyNo", 3, false);
-        std::vector<double> c_thrust_coeffs = {0.064295, -0.045845, -0.161243};
-        set_param<vector<double>>("c_thrust/coeffs", c_thrust_coeffs, false);
-
-        set_param<double>("c_power/Type", 0, false);
-        set_param<double>("c_power/polyNo", 3, false);
-        std::vector<double> c_power_coeffs = {0.018441, 0.016194, -0.084206};
-        set_param<vector<double>>("c_power/coeffs", c_power_coeffs, false);
-    }
-
-    void update_parameters() override {
-        Propeller::update_parameters();
-
-        pitch = get_param<double>("pitch");
-
-        // Create thrust polynomial
-        ParameterManager c_thrust_poly_config = params_.filter("c_thrust");
-        c_thrust = buildPolynomial(c_thrust_poly_config);
-
-        // Create power polynomial
-        ParameterManager c_power_poly_config = params_.filter("c_power");
-        c_power = buildPolynomial(c_power_poly_config);
-    }
-
-    double calc_coeff_thrust(double ar) override {
-        double c_t;
-        if (isfinite(ar)) {
-            c_t = c_thrust->evaluate(ar);
-        } else {  // This applies in omega=0 situations and is a numerical hack
-            c_t = c_thrust->coeffs[0];
-        }
-        return c_t;
-    }
-
-    double calc_coeff_power(double ar) override {
-        double c_t;
-        if (isfinite(ar)) {
-            c_t = c_power->evaluate(ar);
-        } else {  // This applies in omega=0 situations and is a numerical hack
-            c_t = c_power->coeffs[0];
-        }
-        return c_t;
-    }
-
-};
-
+    return c_t;
+}
 
 Propeller *buildPropeller(ParameterManager propConfig)
 {
