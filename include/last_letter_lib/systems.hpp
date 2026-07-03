@@ -45,6 +45,8 @@ public:
     Inertial inertial;
 };
 
+typedef std::vector<double> stateType;
+
 /* Class to implement arbitrary time-variant dynamic systems.
  * It is meant to be (optionally) multiple-inherited alongside Parametrized,
  * so it should not duplicate any of its functionality.
@@ -56,32 +58,33 @@ public:
 class DynamicSystem
 {
 public:
-    typedef std::vector<double> state_type;
-    state_type x;
+    stateType x;
     double t{0};
 
-    DynamicSystem(state_type x_0_p, state_type u_0_p, double t_p=0);
+    DynamicSystem(stateType x_0_p, stateType u_0_p, double t_p=0);
     DynamicSystem();
     ~DynamicSystem() {};
     // Carry out any data handling after the time step.
-    void step_dynamics(const state_type u, const double dt);
-    virtual void post_propagation() {};
+    void step_dynamics(const stateType u, const double dt);
     virtual void reset();
-    virtual void reset(state_type x_0, state_type u_0, double t=0);
+    virtual void reset(stateType x_0, stateType u_0, double t=0);
 
-    virtual state_type dynamics(const state_type x, const state_type u, const double t) = 0;
-    virtual state_type outputs(const state_type x, const state_type u, const double t) = 0;
+    virtual stateType dynamics(const stateType x, const stateType u, const double t) = 0;
+    virtual stateType outputs(const stateType x, const stateType u, const double t) = 0;
 
 protected:
-    state_type x_0;
-    state_type u, u_0;
+    stateType x_0;
+    stateType u, u_0;
     double t_0{0};
 
-private:
-    state_type pack_odeint_state(const state_type u_p);
-    void unpack_odeint_state(const state_type odeint_x, state_type &x_p, state_type &u_p);
+    virtual void pre_propagation() {}; // Actions to take before stepping the dynaimcs.
+    virtual void post_propagation() {}; // Actions to take after stepping the dynaimcs.
 
-    odeint::runge_kutta4<state_type> stepper;
+private:
+    stateType pack_odeint_state(const stateType u_p);
+    void unpack_odeint_state(const stateType odeint_x, stateType &x_p, stateType &u_p);
+
+    odeint::runge_kutta4<stateType> stepper;
 
 };
 

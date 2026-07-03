@@ -211,7 +211,7 @@ namespace last_letter_lib
 
     void LinkPropulsion::buildDynamicModel(ParameterManager modelConfig, ParameterManager worldConfig)
     {
-        propulsion = propulsion::buildPropulsion(modelConfig);
+        propulsion = propulsion::buildThruster(modelConfig);
     }
 
     void LinkPropulsion::passModelParametersToModel(ParameterManager config)
@@ -238,7 +238,7 @@ namespace last_letter_lib
 
     void LinkPropulsion::stepModelDynamics(SimState_t state, Inertial inertial, Environment_t environment)
     {
-        propulsion->stepEngine(state, inertial, environment);
+        propulsion->step_thruster(state, inertial, environment);
         // updatePropTF();
     }
 

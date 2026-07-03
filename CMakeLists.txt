@@ -87,6 +87,7 @@ add_library(last_letter_lib SHARED
   src/aerodynamics.cpp
   src/propulsion/propulsion.cpp
   src/propulsion/no_engine.cpp
+  src/propulsion/thruster_simple.cpp
   src/propulsion/beard_engine.cpp
   src/propulsion/piston_engine.cpp
   src/propulsion/electric_engine.cpp

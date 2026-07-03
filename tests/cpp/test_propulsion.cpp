@@ -20,7 +20,7 @@ using namespace last_letter_lib::propulsion;
 TEST(TestPropulsion, TestPropulsion1)
 {
     ParameterManager config = load_config_aircraft("skywalker_2013");
-    Propulsion *motor1 = buildPropulsion(config.filter("prop/motor1/"));
+    Thruster *motor1 = buildThruster(config.filter("prop/motor1/"));
     SimState_t states = build_aircraft_state_from_config(config);
 
     double mass = config.filter("inertial").get<double>("m");
@@ -43,7 +43,7 @@ TEST(TestPropulsion, TestPropulsion1)
     environmentModel.calcEnvironment(states);
 
     motor1->setInput(input);
-    motor1->stepEngine(states, inertial, environmentModel.environment); // perform one step in the propdynamics
+    motor1->step_thruster(states, inertial, environmentModel.environment); // perform one step in the propdynamics
     EXPECT_GT(motor1->omega, 0);
     EXPECT_GT(motor1->wrenchProp.force(0), 0);
     EXPECT_EQ(motor1->wrenchProp.force(1), 0);

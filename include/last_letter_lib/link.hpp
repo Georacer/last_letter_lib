@@ -88,7 +88,7 @@ namespace last_letter_lib
         Wrench_t getWrench(Environment_t);
         // void updatePropTF();
         Eigen::Transform<double, 3, Eigen::Affine> gimbal_to_prop, body_to_prop; // Transformations in the propeller assembly for visual rendering
-        propulsion::Propulsion *propulsion;
+        propulsion::Thruster *propulsion;
 
     private:
     };

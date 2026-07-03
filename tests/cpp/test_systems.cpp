@@ -71,18 +71,18 @@ TEST_F(ComponentTest, TestInitialize)
 class DynamicSystemChild : public DynamicSystem
 {
 public:
-    DynamicSystemChild(DynamicSystem::state_type x, DynamicSystem::state_type u) : DynamicSystem(x, u) { };
+    DynamicSystemChild(stateType x, stateType u) : DynamicSystem(x, u) { };
     DynamicSystemChild() : DynamicSystem() { };
     ~DynamicSystemChild() {};
 
-    state_type dynamics(const state_type x, const state_type u, const double /*t*/) {
+    stateType dynamics(const stateType x, const stateType u, const double /*t*/) {
         double beta = 0.99; // The time constant is about 1s.
         const double dxdt_0 = (-x[0] + u[0])/beta;
-        state_type dxdt = {dxdt_0};
+        stateType dxdt = {dxdt_0};
         return dxdt;
     }
 
-    state_type outputs(const state_type x, const state_type /*u*/, const double /*t*/) {
+    stateType outputs(const stateType x, const stateType /*u*/, const double /*t*/) {
         return x;
     }
 };
@@ -91,8 +91,8 @@ class DynamicSystemTest : public ::testing::Test
 {
 public:
     void SetUp() override {
-        DynamicSystem::state_type x_0{0};
-        DynamicSystem::state_type u_0{0};
+        stateType x_0{0};
+        stateType u_0{0};
         system = new DynamicSystemChild(x_0, u_0);
     }
 
@@ -101,7 +101,7 @@ public:
 
 TEST_F(DynamicSystemTest, TestDynamicSystem)
 {
-    DynamicSystem::state_type u={1};
+    stateType u={1};
     const double dt = 0.01;
     const double rise_time = 0.35 * 2 * M_PI;
     const int steps = rise_time/dt;
@@ -116,9 +116,9 @@ TEST_F(DynamicSystemTest, TestDynamicSystem)
 
 TEST(DynamicSystemTest2, EmptyConstructor)
 {
-    DynamicSystem::state_type u={1};
+    stateType u={1};
     auto system = DynamicSystemChild();
-    DynamicSystem::state_type x={0};
+    stateType x={0};
     system.reset(x, u);
     system.step_dynamics(u, 1e-2);
     EXPECT_GT(system.outputs(system.x, u, system.t)[0], 0);
@@ -130,12 +130,12 @@ public:
     DynamicSystemEmpty() : DynamicSystem() { };
     ~DynamicSystemEmpty() {};
 
-    state_type dynamics(const state_type /*x*/, const state_type /*u*/, const double /*t*/) {
-        state_type dxdt;
+    stateType dynamics(const stateType /*x*/, const stateType /*u*/, const double /*t*/) {
+        stateType dxdt;
         return dxdt;
     }
 
-    state_type outputs(const state_type /*x*/, const state_type u, const double /*t*/) {
+    stateType outputs(const stateType /*x*/, const stateType u, const double /*t*/) {
         return u;
     }
 };
@@ -143,7 +143,7 @@ public:
 TEST(DynamicSystemTest2, StaticSystem)
 {
     auto system = DynamicSystemEmpty();
-    DynamicSystem::state_type u={123};
+    stateType u={123};
     system.step_dynamics(u, 1e-2);
     EXPECT_EQ(system.outputs(system.x, u, system.t)[0], 123);
 }

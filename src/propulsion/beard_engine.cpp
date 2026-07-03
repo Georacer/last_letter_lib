@@ -11,7 +11,7 @@ namespace propulsion
 
 // Constructor
 EngBeard::EngBeard(string name)
-    : Propulsion(name)
+    : Thruster(name)
 {
 	std::cout << "Building new Beard Engine" << std::endl;
 	omega = 0; // Initialize engine rotational speed
@@ -24,7 +24,7 @@ EngBeard::~EngBeard()
 
 void EngBeard::update_parameters()
 {
-	Propulsion::update_parameters();
+	Thruster::update_parameters();
 
 	s_prop = get_param<double>("s_prop");
 	c_prop = get_param<double>("c_prop");
@@ -33,14 +33,13 @@ void EngBeard::update_parameters()
 	k_omega = get_param<double>("k_omega");
 }
 
-// Update motor rotational speed and other states for each timestep
-void EngBeard::updateRadPS(SimState_t /* states */, Inertial /* inertial */, Environment_t /*environment*/)
+void EngBeard::post_propagation()
 {
 	omega = rotationDir * inputMotor * k_omega;
 }
 
-// Calculate propulsion forces
-void EngBeard::getForce(SimState_t /* states */, Inertial /* inertial */, Environment_t environment)
+// Calculate propulsion wrench
+void EngBeard::calc_wrench(SimState_t /* states */, Inertial /* inertial */, Environment_t environment)
 {
 	rho = environment.density;
 	double x, y, z;
@@ -54,12 +53,7 @@ void EngBeard::getForce(SimState_t /* states */, Inertial /* inertial */, Enviro
 	{
 		throw runtime_error("propulsion.cpp/EngBeard: State NaN in wrenchProp.force");
 	}
-}
 
-// Calculate propulsion torques
-void EngBeard::getTorque(SimState_t /* states */, Inertial /* inertial */, Environment_t /* environment */)
-{
-	double x, y, z;
 	x = -rotationDir * k_t_p * pow(omega, 2);
 	y = 0;
 	z = 0;
@@ -69,5 +63,6 @@ void EngBeard::getTorque(SimState_t /* states */, Inertial /* inertial */, Envir
 		throw runtime_error("propulsion.cpp/EngBeard: State NaN in wrenchProp.torque");
 	}
 }
+
 } // namespace propulsion
 } // namespace last_letter_lib

@@ -303,7 +303,7 @@ double StdLinearAero::liftCoeff(double alpha)
 //////////////////////////
 // C_drag_alpha calculation
 
-double StdLinearAero::_dragCoeff(double alpha, double beta)
+double StdLinearAero::_dragCoeff(double alpha, double /*beta*/)
 {
     AR = pow(b, 2) / s;
     double c_drag_a = c_drag_p + pow(c_lift_0 + c_lift_a0 * alpha, 2) / (M_PI * oswald * AR);

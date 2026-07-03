@@ -14,6 +14,7 @@
 #include "last_letter_lib/environment.hpp"
 #include "last_letter_lib/systems.hpp"
 #include "last_letter_lib/aerodynamics.hpp"
+#include "last_letter_lib/propulsion/propulsion.hpp"
 
 namespace py = pybind11;
 
@@ -37,6 +38,8 @@ using last_letter_lib::uav_utils::Pose;
 using last_letter_lib::uav_utils::SimState_t;
 using last_letter_lib::uav_utils::Wrench_t;
 using namespace last_letter_lib::aerodynamics;
+// using last_letter_lib::propulsion::Thruster;
+// using last_letter_lib::propulsion::NoEngine;
 
 class PyParametrized : public Parametrized
 {
@@ -45,6 +48,7 @@ public:
     using Parametrized::Parametrized;
 
     // Create trampolines for each virtual function.
+    // TODO: Why do we need to bind this method? Is it because we need to always call it after instantiation?
     void initialize_parameters() override
     {
         PYBIND11_OVERRIDE(
@@ -265,6 +269,7 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def_readwrite("inertial", &Component::inertial);
 
     auto m_gravity = m.def_submodule("cpp_gravity", "last_letter_lib gravity submodule");
+    // TODO: Attempt to bind pure virtual GravityModel.
     py::class_<GravitySimple>(m_gravity, "GravitySimple")
         .def(py::init())
         .def("calc_gravity", &GravitySimple::calcGravity)
@@ -307,4 +312,26 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
     py::class_<PolynomialAero, StdLinearAero>(m_aerodynamics, "PolynomialAero")
         .def(py::init<string>(), py::arg("name"));
 
+    // auto m_propulsion = m.def_submodule("cpp_propulsion", "last_letter_lib propulsion submodule");
+    // py::class_<Propulsion, Parametrized>(m_propulsion, "Propulsion")
+    //     .def("initialize_parameters", &Propulsion::initialize_parameters)
+    //     .def("update_parameters", &Propulsion::update_parameters)
+    //     .def("set_input", &Propulsion::setInput)
+    //     .def("set_input_pwm", &Propulsion::setInputPwm)
+    //     .def("step_engine", &Propulsion::stepEngine)
+    //     .def("update_radps", &Propulsion::updateRadPS)
+    //     .def("get_force", &Propulsion::getForce)
+    //     .def("get_torque", &Propulsion::getTorque)
+    //     .def_readonly("omega", &Propulsion::omega)
+    //     .def_readonly("wrenchProp", &Propulsion::wrenchProp);
+    // py::class_<NoEngine, Propulsion>(m_propulsion, "NoEngine")
+    //     .def(py::init<string>(), py::arg("name"))
+    //     .def("initialize_parameters", &NoEngine::initialize_parameters)
+    //     .def("update_parameters", &NoEngine::update_parameters)
+    //     .def("set_input", &NoEngine::setInput)
+    //     .def("set_input_pwm", &NoEngine::setInputPwm)
+    //     .def("step_engine", &NoEngine::stepEngine)
+    //     .def("update_radps", &NoEngine::updateRadPS)
+    //     .def("get_force", &NoEngine::getForce)
+    //     .def("get_torque", &NoEngine::getTorque);
 }

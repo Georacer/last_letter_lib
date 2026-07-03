@@ -19,7 +19,7 @@ void Component::update_parameters()
 }
 
 
-DynamicSystem::DynamicSystem(state_type x_0_p, state_type u_0_p, double t_p) :
+DynamicSystem::DynamicSystem(stateType x_0_p, stateType u_0_p, double t_p) :
         x_0(x_0_p), u_0(u_0_p), t_0(t_p)
     {
         reset();
@@ -47,9 +47,9 @@ void DynamicSystem::reset()
     reset(x_0, u_0, t_0);
 }
 
-DynamicSystem::state_type DynamicSystem::pack_odeint_state(const state_type u_p)
+stateType DynamicSystem::pack_odeint_state(const stateType u_p)
 {
-    state_type odeint_state;
+    stateType odeint_state;
     // Source - https://stackoverflow.com/a/3177252
     // Posted by Kirill V. Lyadvinsky
     // Retrieved 2026-06-24, License - CC BY-SA 2.5
@@ -60,12 +60,12 @@ DynamicSystem::state_type DynamicSystem::pack_odeint_state(const state_type u_p)
     return odeint_state;
 }
 
-void DynamicSystem::unpack_odeint_state(const state_type odeint_x, state_type &x_p, state_type &u_p)
+void DynamicSystem::unpack_odeint_state(const stateType odeint_x, stateType &x_p, stateType &u_p)
 {
     // Source - https://stackoverflow.com/a/421615
     // Posted by Greg Rogers
     // Retrieved 2026-06-24, License - CC BY-SA 2.5
-    state_type::const_iterator u_begin = odeint_x.begin() + x_p.size();
+    stateType::const_iterator u_begin = odeint_x.begin() + x_p.size();
     std::copy(odeint_x.begin(), u_begin, x_p.begin());
     std::copy(u_begin, odeint_x.end(), u_p.begin());
 }
@@ -74,16 +74,16 @@ void DynamicSystem::step_dynamics(const std::vector<double> u, const double dt)
 {
     // Only calculate dynamics if the system is not empty/static.
     if (x.size() > 0) {
-        state_type odeint_state = pack_odeint_state(u);
+        stateType odeint_state = pack_odeint_state(u);
         // Declare a lambda, because do_step requires a static function.
-        auto sys = [this, u](const state_type &odeint_state, state_type &dxdt, double t) {
-            state_type x_temp{x};
-            state_type u_temp{u};
+        auto sys = [this, u](const stateType &odeint_state, stateType &dxdt, double t) {
+            stateType x_temp{x};
+            stateType u_temp{u};
             unpack_odeint_state(odeint_state, x_temp, u_temp);
             dxdt = dynamics(x_temp, u_temp, t);
         };
         stepper.do_step(sys, odeint_state , t, dt);
-        state_type throwaway_u{u};
+        stateType throwaway_u{u};
         unpack_odeint_state(odeint_state, x, throwaway_u);
     }
     t += dt;

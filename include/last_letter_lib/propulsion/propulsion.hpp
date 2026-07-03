@@ -12,6 +12,7 @@
 #include "last_letter_lib/math_utils.hpp"
 #include "last_letter_lib/uav_utils.hpp"
 #include "last_letter_lib/prog_utils.hpp"
+#include "last_letter_lib/systems.hpp"
 
 ////////////////////////////////////////////
 // Propulsion interface class declaration //
@@ -19,6 +20,7 @@
 
 using Eigen::Vector3d;
 using namespace last_letter_lib::uav_utils;
+using namespace last_letter_lib::systems;
 using last_letter_lib::math_utils::Inertial;
 using last_letter_lib::math_utils::Polynomial;
 using last_letter_lib::programming_utils::buildPolynomial;
@@ -29,7 +31,7 @@ namespace last_letter_lib
 namespace propulsion
 {
 
-class Propulsion : public Parametrized
+class Thruster : public Parametrized, public DynamicSystem
 {
 public:
     ///////////
@@ -41,13 +43,17 @@ public:
     double rotationDir; // motor direction of rotation
     double theta;       // propeller angle in rads
     double normalWind;  // scalar wind normal to propeller disc
+    double thrustMax, thrustMin;
+    double torqueMax, torqueMin;
     Vector3d relativeWind;
     Wrench_t wrenchProp;
+    // stateType u holds the system input.
+    // stateType x holds the system state.
 
     ///////////
     // Functions
-    Propulsion(string name);
-    virtual ~Propulsion();
+    Thruster(string name);
+    virtual ~Thruster();
 
     void initialize_parameters() override
     {
@@ -55,30 +61,61 @@ public:
         set_param<double>("rotationDir", 0, false);
         set_param<int>("chanMotor", 0, false);
         set_param<int>("motorType", 0, false);
+        set_param<double>("thrustMax", 20, false);
+        set_param<double>("thrustMin", 0, false);
+        set_param<double>("torqueMax", 1, false);
+        set_param<double>("torqueMin", 0, false);
+
+        set_param<vector<double>>("sys_x_0", x_0, false);
+        set_param<vector<double>>("sys_u_0", u_0 , false);
     }
-    void update_parameters() override;
+    virtual void update_parameters() override;
 
     void setInput(Input input);                                                                     // store control input
     void setInputPwm(InputPwm_t input);                                                             // store PWM control input
-    void stepEngine(SimState_t states, Inertial inertial, Environment_t environment);               // engine physics step, container for the generic class
-    virtual void updateRadPS(SimState_t states, Inertial inertial, Environment_t environment) = 0;  // Step the angular speed
+    virtual stateType dynamics(const stateType x, const stateType u, const double t) override;
+    virtual stateType outputs(const stateType x, const stateType u, const double t) override;
+    void step_thruster(SimState_t states, Inertial inertial, Environment_t environment);               // engine physics step, container for the generic class
+    virtual void pre_propagation(SimState_t states, Inertial inertial, Environment_t environment) = 0; // Build the input u of the dynamic system.
+    virtual void post_propagation() override = 0; // Distribute the propagated state into other local variables.
     void rotateProp();                                                                              // Update the propeller angle
-    virtual void getForce(SimState_t states, Inertial inertial, Environment_t environment) = 0;     // Calculate Forces
-    virtual void getTorque(SimState_t states, Inertial inertial, Environment_t environment) = 0;    // Calculate Torques
+    virtual void calc_wrench(SimState_t states, Inertial inertial, Environment_t environment) = 0;     // Calculate Forces
+    double torque_sign() {return rotationDir;}
+
+protected:
+    bool initialized{false};
 };
 
-class NoEngine : public Propulsion
+class NoEngine : public Thruster
 {
 public:
 	NoEngine(string name);
-	~NoEngine();
+	~NoEngine() {};
 
-	void updateRadPS(SimState_t states, Inertial inertial, Environment_t environment);
-	void getForce(SimState_t states, Inertial inertial, Environment_t environment);
-	void getTorque(SimState_t states, Inertial inertial, Environment_t environment);
+    void pre_propagation(SimState_t, Inertial, Environment_t) override {};
+    void post_propagation() override {};
+	void calc_wrench(SimState_t, Inertial, Environment_t) override {};
 };
 
-class EngBeard : public Propulsion
+class ThrusterSimple : public Thruster
+{
+public:
+    ///////////
+    //Variables
+    double s_prop, c_prop, k_motor, k_t_p, k_omega;
+    double rho;
+
+    ///////////
+    //Functions
+    ThrusterSimple(string name);
+    ~ThrusterSimple() {};
+
+    void pre_propagation(SimState_t, Inertial, Environment_t) override {};
+    void post_propagation() override {};
+    void calc_wrench(SimState_t states, Inertial inertial, Environment_t environment) override;
+};
+
+class EngBeard : public Thruster
 {
 public:
     ///////////
@@ -92,7 +129,7 @@ public:
     ~EngBeard();
     void initialize_parameters() override
     {
-        Propulsion::initialize_parameters();
+        Thruster::initialize_parameters();
 
         set_param<double>("s_prop", 1.0, false);
         set_param<double>("c_prop", 0.33, false);
@@ -103,12 +140,12 @@ public:
 
     void update_parameters() override;
 
-    void updateRadPS(SimState_t states, Inertial inertial, Environment_t environment); //Step the angular speed
-    void getForce(SimState_t states, Inertial inertial, Environment_t environment);
-    void getTorque(SimState_t states, Inertial inertial, Environment_t environment);
+    void pre_propagation(SimState_t, Inertial, Environment_t) override {};
+    void post_propagation() override;
+    void calc_wrench(SimState_t states, Inertial inertial, Environment_t environment) override;
 };
 
-class ElectricEng : public Propulsion
+class ElectricEng : public Thruster
 {
 public:
     ////////////////
@@ -136,7 +173,7 @@ public:
     ~ElectricEng();
     void initialize_parameters() override
     {
-        Propulsion::initialize_parameters();
+        Thruster::initialize_parameters();
 
         set_param<double>("propDiam", 0.4064, false);
         set_param<double>("engInertia", 200e-6, false);
@@ -158,14 +195,15 @@ public:
         std::vector<double> propPowerPolyCoeffs = {-0.00405, 0.00289};
         set_param<vector<double>>("propPowerPoly/coeffs", propPowerPolyCoeffs, false);
     }
-    void update_parameters();
+    void update_parameters() override;
 
-    void updateRadPS(SimState_t states, Inertial inertial, Environment_t environment);
-    void getForce(SimState_t states, Inertial inertial, Environment_t environment);
-    void getTorque(SimState_t states, Inertial inertial, Environment_t environment);
+    void pre_propagation(SimState_t, Inertial, Environment_t) override;
+    void post_propagation() override;
+    stateType dynamics(const stateType x, const stateType u, const double t) override;
+    void calc_wrench(SimState_t states, Inertial inertial, Environment_t environment) override;
 };
 
-class ElectricEng2 : public Propulsion
+class ElectricEng2 : public Thruster
 {
 public:
     ////////////////
@@ -195,7 +233,7 @@ public:
     ~ElectricEng2();
     void initialize_parameters() override
     {
-        Propulsion::initialize_parameters();
+        Thruster::initialize_parameters();
 
         set_param<double>("propDiam", 0.4064, false);
         set_param<double>("engInertia", 200e-6, false);
@@ -219,14 +257,15 @@ public:
 
         set_param<double>("momentumDragCoeff", 0.0047, false);
     }
-    void update_parameters();
+    void update_parameters() override;
 
-    void updateRadPS(SimState_t states, Inertial inertial, Environment_t environment);
-    void getForce(SimState_t states, Inertial inertial, Environment_t environment);
-    void getTorque(SimState_t states, Inertial inertial, Environment_t environment);
+    void pre_propagation(SimState_t, Inertial, Environment_t) override;
+    void post_propagation() override;
+    stateType dynamics(const stateType x, const stateType u, const double t) override;
+    void calc_wrench(SimState_t states, Inertial inertial, Environment_t environment) override;
 };
 
-class EngOmegaControl : public Propulsion
+class EngOmegaControl : public Thruster
 {
 public:
 	///////////
@@ -242,7 +281,7 @@ public:
 	~EngOmegaControl();
     void initialize_parameters() override
     {
-        Propulsion::initialize_parameters();
+        Thruster::initialize_parameters();
 
         set_param<double>("prop_diam", 0.28, false);
         set_param<double>("omega_max", 1050, false);
@@ -260,12 +299,12 @@ public:
 
     void update_parameters() override;
 
-	void updateRadPS(SimState_t states, Inertial inertial, Environment_t environment); //Step the angular speed
-	void getForce(SimState_t states, Inertial inertial, Environment_t environment);
-	void getTorque(SimState_t states, Inertial inertial, Environment_t environment);
+    void pre_propagation(SimState_t, Inertial, Environment_t) override {};
+    void post_propagation() override;
+	void calc_wrench(SimState_t states, Inertial inertial, Environment_t environment) override;
 };
 
-class PistonEng : public Propulsion
+class PistonEng : public Thruster
 {
 public:
 	////////////
@@ -285,7 +324,7 @@ public:
     ~PistonEng();
     void initialize_parameters() override
     {
-        Propulsion::initialize_parameters();
+        Thruster::initialize_parameters();
 
         // TODO: These defaults have to be replaced with realistic numbers.
         set_param<double>("propDiam", 0.5588, false);
@@ -311,12 +350,13 @@ public:
     }
     void update_parameters() override;
 
-	void updateRadPS(SimState_t states, Inertial inertial, Environment_t environment);
-	void getForce(SimState_t states, Inertial inertial, Environment_t environment);
-	void getTorque(SimState_t states, Inertial inertial, Environment_t environment);
+    void pre_propagation(SimState_t, Inertial, Environment_t) override;
+    void post_propagation() override;
+    stateType dynamics(const stateType x, const stateType u, const double t) override;
+	void calc_wrench(SimState_t states, Inertial inertial, Environment_t environment) override;
 };
 
-Propulsion *buildPropulsion(ParameterManager propConfig);
+Thruster *buildThruster(ParameterManager propConfig);
 
 } // namespace propulsion
 } // namespace last_letter_lib

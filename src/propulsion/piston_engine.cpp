@@ -13,7 +13,7 @@ using namespace std;
 
 // Constructor
 PistonEng::PistonEng(string name)
-    :Propulsion(name)
+    :Thruster(name)
 {
 	omega = omegaMin; // Initialize engine rotational speed
 }
@@ -28,7 +28,7 @@ PistonEng::~PistonEng()
 
 void PistonEng::update_parameters()
 {
-	Propulsion::update_parameters();
+	Thruster::update_parameters();
 
 	propDiam = get_param<double>("propDiam");
 	engInertia = get_param<double>("engInertia");
@@ -49,8 +49,37 @@ void PistonEng::update_parameters()
 	propPowerPoly = buildPolynomial(propPowerPolyConfig);
 }
 
-// Update motor rotational speed and calculate thrust
-void PistonEng::updateRadPS(SimState_t /* states */, Inertial inertial, Environment_t environment)
+void PistonEng::pre_propagation(SimState_t, Inertial, Environment_t environment)
+{
+	rho = environment.density; // Read current air density
+
+	// Calculate current engine power
+	double powerHP = engPowerPoly->evaluate(omega/2.0/M_PI*60);
+	double engPower = inputMotor * powerHP * 745.7;
+
+	double advRatio = normalWind/ (omega/2.0/M_PI) /propDiam; // Convert advance ratio to dimensionless units, not 1/rad
+	advRatio = std::max(advRatio, 0.0); // Force advance ratio above zero, in lack of a better propeller model
+	double propPower = propPowerPoly->evaluate(advRatio) * rho * pow(omega/2.0/M_PI,3) * pow(propDiam,5);
+
+	double deltaT = (engPower - propPower)/omega;
+	double omegaDot = 1/engInertia*deltaT;
+
+    stateType temp_u = {omegaDot};
+    u = temp_u;
+}
+
+stateType PistonEng::dynamics(const stateType x, const stateType u, const double t)
+{
+    return u; // omegaDot is the single input.
+}
+
+void PistonEng::post_propagation()
+{
+    x[0] = constrain(x[0], omegaMin, omegaMax);
+    omega = rotationDir * x[0];
+}
+
+void PistonEng::calc_wrench(SimState_t /* states */, Inertial /* inertial */, Environment_t environment)
 {
 	rho = environment.density; // Read current air density
 
@@ -71,8 +100,7 @@ void PistonEng::updateRadPS(SimState_t /* states */, Inertial inertial, Environm
 	double staticThrust = 0.9*fadeFactor*pow(M_PI/2.0*propDiam*propDiam*rho*engPower*engPower,1.0/3); //static thrust fades at 5% at 12m/s
 	forceX += staticThrust;
 
-	// Constrain propeller force to +-2 times the aircraft weight
-	forceX = std::max(std::min(forceX, 2.0*inertial.mass*9.81), -2.0*inertial.mass*9.81);
+	forceX = constrain(forceX, thrustMin, thrustMax);
 	torqueX = propPower / omega;
 	if (inputMotor < 0.01) {
 		forceX = 0;
@@ -83,24 +111,7 @@ void PistonEng::updateRadPS(SimState_t /* states */, Inertial inertial, Environm
 
 	wrenchProp.torque = Vector3d(forceX, forceY, forceZ);
 	wrenchProp.torque = Vector3d(torqueX, torqueY, torqueZ);
-
-	double deltaT = (engPower - propPower)/omega;
-	double omegaDot = 1/engInertia*deltaT;
-	omega += rotationDir * omegaDot * dt;
-	omega = rotationDir * std::max(std::min(std::fabs(omega), omegaMax), omegaMin); // Constrain omega to working range
-
-	//TODO: Decide where this should be output
-	// parentObj->states.rotorspeed[0]=std::fabs(omega); // Write engine speed to states message
-
-}
-
-void PistonEng::getForce(SimState_t /* states */, Inertial /* inertial */, Environment_t /* environment */)
-{
 	if (!wrenchProp.force.allFinite()) {throw runtime_error("propulsion.cpp: State NaN in wrenchProp.force");}
-}
-
-void PistonEng::getTorque(SimState_t /* states */, Inertial /* inertial */, Environment_t /* environment */)
-{
 	if (!wrenchProp.torque.allFinite()) {throw runtime_error("propulsion.cpp: State NaN in wrenchProp.torque");}
 }
 
