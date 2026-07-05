@@ -16,6 +16,69 @@ using namespace last_letter_lib;
 using namespace last_letter_lib::programming_utils;
 using namespace last_letter_lib::math_utils;
 using namespace last_letter_lib::propulsion;
+using namespace last_letter_lib::uav_utils;
+
+TEST(TestPropulsion, TestThrusterSimple)
+{
+    auto thruster = ThrusterSimple("simple_thruster");
+    auto pm = ParameterManager("pm");
+    pm.set("chanMotor", 2, false);
+    thruster.initialize(pm);
+    auto input = Input();
+    std::vector<double> throttle = {1};
+    input.set_dt(throttle);
+
+    SimState_t states;
+    Inertial inertial(1);
+    Environment_t environment;
+    thruster.setInput(input);
+    thruster.step_thruster(states, inertial, environment);
+
+    EXPECT_EQ(thruster.wrenchProp.force.x(), thruster.get_param<double>("thrustMax"));
+    EXPECT_EQ(thruster.wrenchProp.torque.x(), -thruster.get_param<double>("torqueMax"));
+}
+
+TEST(TestPropulsion, TestOmegaControlledEngine)
+{
+    auto thruster = EngOmegaControl("omega_controlled_engine");
+    auto pm = ParameterManager("pm");
+    pm.set("chanMotor", 2, false);
+    thruster.initialize(pm);
+    auto input = Input();
+    std::vector<double> throttle = {1};
+    input.set_dt(throttle);
+
+    SimState_t states;
+    Inertial inertial(1);
+    Environment_t environment;
+    thruster.setInput(input);
+    thruster.step_thruster(states, inertial, environment);
+
+    EXPECT_EQ(thruster.omega, thruster.get_param<double>("omega_max"));
+    EXPECT_GT(thruster.wrenchProp.force.x(), 0);
+}
+
+TEST(TestPropulsion, TestElectricEngine2)
+{
+    auto thruster = ElectricEng2("electric_engine_2");
+    auto pm = ParameterManager("pm");
+    pm.set("chanMotor", 2, false);
+    thruster.initialize(pm);
+    auto input = Input();
+    std::vector<double> throttle = {1};
+    input.set_dt(throttle);
+
+    SimState_t states;
+    Inertial inertial(1);
+    Environment_t environment;
+    thruster.setInput(input);
+    for (uint16_t idx=0; idx<1000; idx++) {
+        thruster.step_thruster(states, inertial, environment);
+    }
+
+    EXPECT_GT(thruster.omega, 0);
+    EXPECT_GT(thruster.wrenchProp.force.x(), 0);
+}
 
 TEST(TestPropulsion, TestPropulsion1)
 {

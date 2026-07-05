@@ -34,10 +34,12 @@ Thruster::~Thruster()
 void Thruster::update_parameters()
 {
     dt = get_param<double>("deltaT");
-    rotationDir = get_param<float>("rotationDir");
+    rotationDir = get_param<double>("rotationDir");
     chanMotor = get_param<int>("chanMotor");
     thrustMax = get_param<double>("thrustMax");
     thrustMin = get_param<double>("thrustMin");
+    torqueMax = get_param<double>("torqueMax");
+    torqueMin = get_param<double>("torqueMin");
 
     x_0 = get_param<vector<double>>("sys_x_0");
     u_0 = get_param<vector<double>>("sys_u_0");
@@ -140,6 +142,10 @@ Thruster *buildThruster(ParameterManager propConfig)
         std::cout << "selecting electric engine 2" << std::endl;
         engine = new ElectricEng2(engineName);
         break;
+    case 6:
+        std::cout << "selecting simple thruster" << std::endl;
+        engine = new ThrusterSimple(engineName);
+        break;
     default:
         throw runtime_error("Error while constructing motor");
         break;
@@ -228,7 +234,6 @@ double Propeller::calc_thrust(double V, double n, double rho) {
         thrust = max(thrust, -max_drag(V));
     }
     return thrust;
-
 }
 
 double Propeller::calc_power(double V, double n, double rho) {
@@ -283,12 +288,12 @@ void PropellerStandard::initialize_parameters() {
 
     set_param<double>("pitch", 0, false);
 
-    set_param<double>("c_thrust/Type", 0, false);
+    set_param<double>("c_thrust/polyType", 0, false);
     set_param<double>("c_thrust/polyNo", 3, false);
     std::vector<double> c_thrust_coeffs = {0.064295, -0.045845, -0.161243};
     set_param<vector<double>>("c_thrust/coeffs", c_thrust_coeffs, false);
 
-    set_param<double>("c_power/Type", 0, false);
+    set_param<double>("c_power/polyType", 0, false);
     set_param<double>("c_power/polyNo", 3, false);
     std::vector<double> c_power_coeffs = {0.018441, 0.016194, -0.084206};
     set_param<vector<double>>("c_power/coeffs", c_power_coeffs, false);
@@ -300,11 +305,11 @@ void PropellerStandard::update_parameters() {
     pitch = get_param<double>("pitch");
 
     // Create thrust polynomial
-    ParameterManager c_thrust_poly_config = params_.filter("c_thrust");
+    ParameterManager c_thrust_poly_config = params_.filter("c_thrust/");
     c_thrust = buildPolynomial(c_thrust_poly_config);
 
     // Create power polynomial
-    ParameterManager c_power_poly_config = params_.filter("c_power");
+    ParameterManager c_power_poly_config = params_.filter("c_power/");
     c_power = buildPolynomial(c_power_poly_config);
 }
 

@@ -17,7 +17,7 @@ ThrusterSimple::ThrusterSimple(string name_p)
 void ThrusterSimple::calc_wrench(SimState_t /*states*/, Inertial /*inertial*/, Environment_t /*environment*/)
 {
     wrenchProp.force.x() = (thrustMax - thrustMin)*inputMotor + thrustMin;
-    wrenchProp.torque.x() = torque_sign()*((torqueMax - torqueMin)*inputMotor + torqueMin);
+    wrenchProp.torque.x() = -torque_sign()*((torqueMax - torqueMin)*inputMotor + torqueMin);
 }
 
 } // namespace propulsion

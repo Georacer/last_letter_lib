@@ -16,6 +16,10 @@ PistonEng::PistonEng(string name)
     :Thruster(name)
 {
 	omega = omegaMin; // Initialize engine rotational speed
+
+    stateType x_0 = {0};
+    stateType u_0 = {0};
+    reset(x_0, u_0);
 }
 
 // Destructor

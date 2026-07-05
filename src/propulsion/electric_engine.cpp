@@ -19,6 +19,10 @@ ElectricEng::ElectricEng(string name) : Thruster(name)
 	// ros::NodeHandle n;
 	// pub = n.advertise<last_letter_msgs::ElectricEng>(paramMsg, 1000); //propulsion data publisher
 	omega = omegaMin; // Initialize engine rotational speed
+
+    stateType x_0 = {0};
+    stateType u_0 = {0};
+    reset(x_0, u_0);
 }
 
 // Destructor
@@ -105,7 +109,7 @@ void ElectricEng::calc_wrench(SimState_t /* states */, Inertial /* inertial */, 
 	forceX += staticThrust;
 
 	forceX = constrain(forceX, thrustMin, thrustMax);
-	torqueX = propPower / omega;
+	torqueX = - torque_sign() * propPower / omega;
 	torqueY = 0.0;
 	torqueZ = 0.0;
 
@@ -135,6 +139,10 @@ ElectricEng2::ElectricEng2(string name) : Thruster(name)
 	// ros::NodeHandle n;
 	// pub = n.advertise<last_letter_msgs::ElectricEng2>(paramMsg, 1000); //propulsion data publisher
 	omega = omegaMin; // Initialize engine rotational speed
+
+    stateType x_0 = {0};
+    stateType u_0 = {0};
+    reset(x_0, u_0);
 }
 
 // Destructor
@@ -223,9 +231,9 @@ void ElectricEng2::calc_wrench(SimState_t /* states */, Inertial /* inertial */,
 	sidewind.x() = 0; // Null out the axial component
 	Vector3d momentumDrag = -forceX * sidewind * momentumDragCoeff;
 	forceY += momentumDrag.y();
-	forceZ += momentumDrag.z();
+	forceZ = momentumDrag.z();
 
-	torqueX = propPower / omega;
+	torqueX = - torque_sign() * propPower / omega;
 	torqueY = 0.0;
 	torqueZ = 0.0;
 

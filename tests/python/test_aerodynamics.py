@@ -39,26 +39,6 @@ def build_desc_airfoil_simple():
     """
     Build a simple test airfoil description
     """
-    # return aerodynamics.AerodynamicParameters(
-    #     name="test_airfoil",
-    #     pose=Pose(position=(0, 0, 0), orientation=(0, 0, 0)),
-    #     s=1,
-    #     b=2,
-    #     c=0.5,
-    #     c_L_0=0.3269,
-    #     c_L_alpha=[3.85, 0],
-    #     c_D_0=0.0322,
-    #     c_D_alpha=[0.0005, 0.0037, 0],
-    #     c_Y_beta=[0.1, 0],
-    #     c_l_0=0,
-    #     c_l_deltaa=[1, 0],
-    #     c_m_0=0.1,
-    #     c_m_alpha=[-0.5, 0],
-    #     c_m_deltae=[1, 0],
-    #     c_n_0=0,
-    #     c_n_beta=[0.1, 0],
-    #     c_n_deltar=[0.1, 0],
-    # )
     return """
     s: 1
     b: 2

@@ -25,7 +25,7 @@ void EngOmegaControl::update_parameters()
 {
 	Thruster::update_parameters();
 
-	prop_diam = get_param<double>("propDiam");
+	prop_diam = get_param<double>("prop_diam");
 	omega_max = get_param<double>("omega_max");
 	// Create propeller thrust polynomial
 	ParameterManager thrustPolyConfig = params_.filter("thrust_poly/");

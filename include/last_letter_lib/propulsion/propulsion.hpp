@@ -58,7 +58,7 @@ public:
     void initialize_parameters() override
     {
         set_param<double>("deltaT", 0.0025, false);
-        set_param<double>("rotationDir", 0, false);
+        set_param<double>("rotationDir",        1, false);
         set_param<int>("chanMotor", 0, false);
         set_param<int>("motorType", 0, false);
         set_param<double>("thrustMax", 20, false);
@@ -100,11 +100,6 @@ public:
 class ThrusterSimple : public Thruster
 {
 public:
-    ///////////
-    //Variables
-    double s_prop, c_prop, k_motor, k_t_p, k_omega;
-    double rho;
-
     ///////////
     //Functions
     ThrusterSimple(string name);
@@ -179,6 +174,7 @@ public:
         set_param<double>("engInertia", 200e-6, false);
         set_param<double>("Kv", 8.17, false);
         set_param<double>("Rm", 0.1, false);
+        set_param<double>("Rs", 0.003, false);
         set_param<double>("Cells", 6, false);
         set_param<double>("I0", 0.5, false);
         std::vector<double> radpslimits = {0.01, 1000};
@@ -239,6 +235,7 @@ public:
         set_param<double>("engInertia", 200e-6, false);
         set_param<double>("Kv", 8.17, false);
         set_param<double>("Rm", 0.1, false);
+        set_param<double>("Rs", 0.003, false);
         set_param<double>("Cells", 6, false);
         set_param<double>("I0", 0.5, false);
         std::vector<double> radpslimits = {0.01, 1000};
