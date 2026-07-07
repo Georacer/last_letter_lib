@@ -2,15 +2,10 @@
 // Define NoGroundReactions class
 /////////////////////////////////
 
-// Constructor
-NoGroundReaction::NoGroundReaction(ParameterManager config, ParameterManager worldConfig) : GroundReaction(config, worldConfig)
-{
-}
+#include "last_letter_lib/ground_reaction/ground_reaction.hpp"
 
-// Destructor
-NoGroundReaction::~NoGroundReaction()
-{
-}
+namespace last_letter_lib {
+namespace ground_reaction {
 
 // Force calculation function
 Vector3d NoGroundReaction::getForce(const SimState_t /*states*/, const WrenchSum_t /*wrenchSum*/)
@@ -23,3 +18,6 @@ Vector3d NoGroundReaction::getTorque(const SimState_t /*states*/, const WrenchSu
 {
 	return wrenchGround.torque;
 }
+
+} // namespace ground_reaction
+} // namespace last_letter_lib

@@ -87,7 +87,7 @@ namespace last_letter_lib
             vector<string> parameter_list = get_keys_(parameters_);
             for (auto param_name : parameter_list)
             {
-                YAML::Node param_node = find_parameter_(n, param_name);
+                YAML::Node param_node = find_parameter_(n, param_name); // Only load a parameter if it already exists.
                 if (param_node)
                 {
                     YAML::Node own_param_node = find_parameter_(parameters_, param_name);

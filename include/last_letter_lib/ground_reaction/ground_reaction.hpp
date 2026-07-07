@@ -8,40 +8,93 @@
 
 using namespace std;
 using Eigen::Vector3d;
+using Eigen::Dynamic;
 using namespace last_letter_lib::uav_utils;
 using last_letter_lib::math_utils::quat2euler;
 using last_letter_lib::programming_utils::ParameterManager;
+using last_letter_lib::programming_utils::Parametrized;
 
-namespace last_letter_lib
+namespace last_letter_lib {
+namespace ground_reaction {
+
+class GroundReaction: public Parametrized
 {
-	namespace ground_reaction
-	{
+public:
+    GroundReaction(string name);
+    virtual ~GroundReaction() {};
 
-		class GroundReaction
-		{
-		public:
-			GroundReaction(ParameterManager config, ParameterManager worldConfig);
-			virtual ~GroundReaction();
-			virtual void readParametersGround(ParameterManager config);
-			virtual void readParametersWorld(ParameterManager config);
-			double dt;
-			Wrench_t wrenchGround;
-			double inputSteer, inputBrake;
-			double steerAngle_max;
-			int chanSteer, chanBrake;
-			void setInput(Input input);
-			void setInputPwm(InputPwm_t input);
-			virtual Vector3d getForce(const SimState_t states, const WrenchSum_t wrenchSum) = 0;
-			virtual Vector3d getTorque(const SimState_t states, const WrenchSum_t wrenchSum) = 0;
-		};
+    virtual void initialize_parameters() override;
+    virtual void update_parameters() override;
+    double dt;
+    Wrench_t wrenchGround;
+    double inputSteer, inputBrake;
+    double steerAngle_max;
+    int chanSteer, chanBrake;
+    void setInput(Input input);
+    void setInputPwm(InputPwm_t input);
+    virtual Vector3d getForce(const SimState_t states, const WrenchSum_t wrenchSum) = 0;
+    virtual Vector3d getTorque(const SimState_t states, const WrenchSum_t wrenchSum) = 0;
+};
 
-#include "no_ground_reactions.hpp"
+/// No ground reactions, dummy class
+class NoGroundReaction : public GroundReaction
+{
+public:
+	///This is the NoGroundReaction constructor brief description
+    NoGroundReaction(string name) : GroundReaction(name) {};
+	~NoGroundReaction() {};
+	Vector3d getForce(const SimState_t states, const WrenchSum_t wrenchSum);
+	Vector3d getTorque(const SimState_t states, const WrenchSum_t wrenchSum);
+};
 
-#include "panos_contact_points.hpp"
 
-#include "point_friction.hpp"
+class PanosContactPoints : public GroundReaction
+{
+public:
+	PanosContactPoints(string name);
+	~PanosContactPoints() {};
+    void initialize_parameters() override;
+    void update_parameters() override;
 
-		GroundReaction *buildGroundReaction(ParameterManager config, ParameterManager worldConfig);
+	Eigen::Matrix<double, 3, Dynamic> pointCoords, cpi_up, cpi_down;
+	Eigen::Matrix<double, 2, Dynamic> springIndex;
+	Eigen::VectorXd materialIndex, spp, sppprev, spd;
 
-	} // namespace ground_reaction
+	double normVe;
+	Vector3d uavpos, we;
+	double len, frictForw[4], frictSide[4];
+	bool contact, safe;
+	int contactPtsNo;
+	Vector3d getForce(const SimState_t states, const WrenchSum_t wrenchSum) override;
+	Vector3d getTorque(const SimState_t states, const WrenchSum_t wrenchSum) override;
+};
+
+
+class PointFriction : public GroundReaction
+{
+	/// Does not include rolling wheel model
+public:
+	PointFriction(string name);
+	~PointFriction() {};
+    void initialize_parameters() override;
+    void update_parameters() override;
+
+	Eigen::Matrix<double, 3, Dynamic> pointCoords, cpi_up, cpi_down;
+	Eigen::Matrix<double, 2, Dynamic> springIndex;
+	Eigen::VectorXd materialIndex, spp, sppprev, spd;
+
+	// double uavpos[3], normVe;
+	double normVe;
+	Vector3d uavpos, we;
+	double len, frict[4];
+	bool contact, safe;
+	int contactPtsNo;
+	Vector3d extForce, extTorque;
+	Vector3d getForce(const SimState_t states, const WrenchSum_t wrenchSum) override;
+	Vector3d getTorque(const SimState_t states, const WrenchSum_t wrenchSum) override;
+};
+
+GroundReaction *buildGroundReaction(ParameterManager config);
+
+} // namespace ground_reaction
 } // namespace last_letter_lib

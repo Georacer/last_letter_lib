@@ -1,13 +1,15 @@
-
 //////////////////////////////////
 // Define PanosContactPoints class
 //////////////////////////////////
 
-// Class constructor
-PanosContactPoints::PanosContactPoints(ParameterManager config, ParameterManager worldConfig) : GroundReaction(config, worldConfig)
-{
-	readParametersGround(config);
+#include "last_letter_lib/ground_reaction/ground_reaction.hpp"
 
+namespace last_letter_lib {
+namespace ground_reaction {
+
+// Class constructor
+PanosContactPoints::PanosContactPoints(string name) : GroundReaction(name)
+{
 	len=0.2;
 
 	// Set coefficient of friction for each material
@@ -29,35 +31,57 @@ PanosContactPoints::PanosContactPoints(ParameterManager config, ParameterManager
 	spd.setZero(contactPtsNo, 1); // spring contraction speed
 }
 
-// Class destructor
-PanosContactPoints::~PanosContactPoints()
+void PanosContactPoints::initialize_parameters()
 {
+    GroundReaction::initialize_parameters();
+
+    const int num_contacts = 3;
+    set_param<int>("contactPtsNo", num_contacts, false);
+
+    // For each contact point, fill in their triplet coordinates.
+    const double radius = 0.4;
+    const double height = 0.2;
+    const double contact_type = 2;
+    const double spring_constant = 500;
+    const double damping_constant = 25;
+    for (int i = 0; i < num_contacts; i++)
+    {
+        const double coord_x = radius*cos(math_utils::deg_to_rad(120*i));
+        const double coord_y = radius*sin(math_utils::deg_to_rad(120*i));
+        const std::vector<double> entry = {coord_x, coord_y, height, contact_type, spring_constant, damping_constant};
+
+        set_param<vector<double>>("contactPoint" + std::to_string(i+1), entry, false);
+    }
+
+    // Preallocate a total of 64 contact points.
+    for (int i = num_contacts; i < 64; i++)
+    {
+        const std::vector<double> entry = {};
+        set_param<vector<double>>("contactPoint" + std::to_string(i+1), entry, false);
+    }
 }
 
-void PanosContactPoints::readParametersGround(ParameterManager config)
+void PanosContactPoints::update_parameters()
 {
-	GroundReaction::readParametersGround(config);
+	GroundReaction::update_parameters();
 
-	// Read contact points number from parameter server
-	vector<double> doubleVect;
+	// Read contact points number.
+	contactPtsNo = get_param<double>("contactPtsNo");
 
-	contactPtsNo = config.get<double>("contactPtsNo");
+	// Create an appropriately sized matrix to contain contact point information
 	pointCoords.setZero(3, contactPtsNo); // contact points coordinates in the body frame
 	materialIndex.setZero(contactPtsNo, 1); // contact points material type index
 	springIndex.setZero(2,contactPtsNo); // contact points spring characteristics
-
-	// Read contact points location and material from parameter server
-	for (int j = 0; j<contactPtsNo; j++) { //Distribute the data
-		string contactPointName = "contactPoint" + std::to_string(j+1);
-		doubleVect.clear();
-		doubleVect = config.get<vector<double>>(contactPointName);
-		pointCoords(0, j) = doubleVect[0]; // Save body frame contact point coordinates
-		pointCoords(1, j) = doubleVect[1];
-		pointCoords(2, j) = doubleVect[2];
-		materialIndex(j) = doubleVect[3]; // A separate contact point material index array
-		springIndex(0, j) = doubleVect[4];
-		springIndex(1, j) = doubleVect[5]; // And the spring constants
-	}
+    for (int i = 0; i < contactPtsNo; i++)
+    {
+        vector<double> doubleVect = get_param<vector<double>>("contactPoint" + std::to_string(i+1));
+		pointCoords(0, i) = doubleVect[0]; // Save body frame contact point coordinates.
+		pointCoords(1, i) = doubleVect[1];
+		pointCoords(2, i) = doubleVect[2];
+		materialIndex(i) = doubleVect[3]; // A separate contact point material index array.
+		springIndex(0, i) = doubleVect[4];
+		springIndex(1, i) = doubleVect[5]; // And the spring constants.
+    }
 }
 
 // Wrench calculation function
@@ -194,3 +218,6 @@ Vector3d PanosContactPoints::getTorque(SimState_t /* states */, const WrenchSum_
 {
 	return wrenchGround.torque;
 }
+
+} // namespace ground_reaction
+} // namespace last_letter_lib

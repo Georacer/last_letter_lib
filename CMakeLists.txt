@@ -93,6 +93,9 @@ add_library(last_letter_lib SHARED
   src/propulsion/electric_engine.cpp
   src/propulsion/omega_control_engine.cpp
   src/ground_reaction/ground_reaction.cpp
+  src/ground_reaction/no_ground_reactions.cpp
+  src/ground_reaction/panos_contact_points.cpp
+  src/ground_reaction/point_friction.cpp
   src/link.cpp
   src/dynamics.cpp
   src/kinematics.cpp
@@ -163,6 +166,7 @@ list(APPEND test_sources
   tests/cpp/test_environment.cpp
   tests/cpp/test_aerodynamics.cpp
   tests/cpp/test_propulsion.cpp
+  tests/cpp/test_ground_reaction.cpp
   tests/cpp/test_gravity.cpp
   tests/cpp/test_dynamics.cpp
   tests/cpp/test_uav_model.cpp

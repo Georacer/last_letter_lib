@@ -266,19 +266,19 @@ namespace last_letter_lib
         delete groundReaction_;
     }
 
-    void LinkGroundReaction::buildDynamicModel(ParameterManager modelConfig, ParameterManager worldConfig)
+    void LinkGroundReaction::buildDynamicModel(ParameterManager modelConfig, ParameterManager /*worldConfig*/)
     {
-        groundReaction_ = ground_reaction::buildGroundReaction(modelConfig, worldConfig);
+        groundReaction_ = ground_reaction::buildGroundReaction(modelConfig);
     }
 
     void LinkGroundReaction::passModelParametersToModel(ParameterManager config)
     {
-        groundReaction_->readParametersGround(config);
+        groundReaction_->load_parameters(config);
+        groundReaction_->update_parameters();
     }
 
     void LinkGroundReaction::passWorldParametersToModel(ParameterManager config)
     {
-        groundReaction_->readParametersWorld(config);
     }
 
     void LinkGroundReaction::setModelInput(Input input)
