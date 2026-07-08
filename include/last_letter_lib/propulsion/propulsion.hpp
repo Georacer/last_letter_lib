@@ -31,7 +31,7 @@ namespace last_letter_lib
 namespace propulsion
 {
 
-class Thruster : public Parametrized, public DynamicSystem
+class Thruster : public Component, public DynamicSystem
 {
 public:
     ///////////
@@ -53,22 +53,9 @@ public:
     ///////////
     // Functions
     Thruster(string name);
-    virtual ~Thruster();
+    virtual ~Thruster() {};
 
-    void initialize_parameters() override
-    {
-        set_param<double>("deltaT", 0.0025, false);
-        set_param<double>("rotationDir",        1, false);
-        set_param<int>("chanMotor", 0, false);
-        set_param<int>("motorType", 0, false);
-        set_param<double>("thrustMax", 20, false);
-        set_param<double>("thrustMin", 0, false);
-        set_param<double>("torqueMax", 1, false);
-        set_param<double>("torqueMin", 0, false);
-
-        set_param<vector<double>>("sys_x_0", x_0, false);
-        set_param<vector<double>>("sys_u_0", u_0 , false);
-    }
+    void initialize_parameters() override;
     virtual void update_parameters() override;
 
     void setInput(Input input);                                                                     // store control input

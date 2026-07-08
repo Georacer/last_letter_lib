@@ -19,20 +19,34 @@ namespace propulsion {
 
 // Constructor
 Thruster::Thruster(string name)
-    : Parametrized(name),
+    : Component(name),
     DynamicSystem()
 {
     theta = 0; // Initialize propeller angle
     inputMotor = 0.0;
 }
 
-// Destructor
-Thruster::~Thruster()
+void Thruster::initialize_parameters()
 {
+    Component::initialize_parameters();
+
+    set_param<double>("deltaT", 0.0025, false);
+    set_param<double>("rotationDir",        1, false);
+    set_param<int>("chanMotor", 0, false);
+    set_param<int>("motorType", 0, false);
+    set_param<double>("thrustMax", 20, false);
+    set_param<double>("thrustMin", 0, false);
+    set_param<double>("torqueMax", 1, false);
+    set_param<double>("torqueMin", 0, false);
+
+    set_param<vector<double>>("sys_x_0", x_0, false);
+    set_param<vector<double>>("sys_u_0", u_0 , false);
 }
 
 void Thruster::update_parameters()
 {
+    Component::update_parameters();
+
     dt = get_param<double>("deltaT");
     rotationDir = get_param<double>("rotationDir");
     chanMotor = get_param<int>("chanMotor");

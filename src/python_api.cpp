@@ -327,7 +327,7 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def("update_parameters", &PropellerStandard::update_parameters)
         .def("calc_coeff_thrust", &PropellerStandard::calc_coeff_thrust)
         .def("calc_coeff_power", &PropellerStandard::calc_coeff_power);
-    py::class_<Thruster, Parametrized>(m_propulsion, "Thruster")
+    py::class_<Thruster, Component>(m_propulsion, "Thruster")
         .def("update_parameters", &Thruster::update_parameters)
         .def("set_input", &Thruster::setInput)
         .def("set_input_pwm", &Thruster::setInputPwm)
