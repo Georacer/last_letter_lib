@@ -191,6 +191,26 @@ TEST_F(ParameterManagerTest, TestParentWriteChildRead)
     ASSERT_EQ(r, 33);
 }
 
+// Ensure a common child can be manipulated at runtime.
+TEST_F(ParameterManagerTest, TestSharedChildNodeAliasing)
+{
+    auto parent2 = B("parent2");
+    parent2.setChild(child);
+
+    int r = parent2.parameters.get<int>("child/param_2/param_3");
+    ASSERT_EQ(r, 3);
+
+    child->parameters.set("param_2/param_3", 4);
+    r = parent2.parameters.get<int>("child/param_2/param_3");
+    ASSERT_EQ(r, 4);
+    r = parent->parameters.get<int>("child/param_2/param_3");
+    ASSERT_EQ(r, 4);
+
+    parent2.parameters.set("child/param_2/param_3", 5);
+    r = parent->parameters.get<int>("child/param_2/param_3");
+    ASSERT_EQ(r, 5);
+}
+
 TEST(ParameterManagerTest2, TestLoadFile)
 {
     auto pm = ParameterManager("pm");
