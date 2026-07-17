@@ -48,7 +48,7 @@ namespace last_letter_lib
 			j_x, 0.0, -j_xz,
 			0.0, j_y, 0.0,
 			-j_xz, 0.0, j_z};
-		Inertial inertial(mass, J);
+		inertial = Inertial(mass, J);
 
 		int res = math_utils::is_pos_def(inertial.tensor);
 		if (!(res == 0))

@@ -1,20 +1,21 @@
 #include <iostream>
+#include <gtest/gtest.h>
 #include <time.h>
 #include <chrono>
 
 #include "last_letter_lib/uav_model.hpp"
 
+#include "test_utils.hpp"
+
 using namespace std;
 using namespace Eigen;
 
-int main(int /* argc */, char * argv[])
+TEST(TestLoopRate, TestLoopRate1)
 {
-    ConfigsStruct_t configs;
-    configs = loadModelConfig(argv[1]);
-    UavModel uav(configs);
-
-    SimState_t state;
-    state = uav.state;
+    auto config = load_config_aircraft("skywalker_2013");
+    SimState_t state = build_aircraft_state_from_config(config);
+    state.pose.position.z() = -1000; // Lift the aircraft above the ground.
+    UavModel uav(config);
 
     uint32_t loopNum=10000;
     double t_steps, t_derivs;
@@ -37,7 +38,7 @@ int main(int /* argc */, char * argv[])
     t_start = chrono::steady_clock::now();
     for (uint32_t i=0; i<loopNum; i++)
     {
-        uav.dynamics.calcWrench(uav.state, uav.kinematics.inertial, uav.environmentModel.environment);
+        uav.dynamics.calc_model(uav.state);
     }
     t_end = chrono::steady_clock::now();
     t_derivs = (double)chrono::duration_cast<chrono::milliseconds>(t_end-t_start).count()/1000;

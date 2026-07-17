@@ -168,7 +168,9 @@ list(APPEND test_sources
   tests/cpp/test_ground_reaction.cpp
   tests/cpp/test_gravity.cpp
   tests/cpp/test_dynamics.cpp
+  tests/cpp/test_kinematics.cpp
   tests/cpp/test_uav_model.cpp
+  tests/cpp/test_loop_rate.cpp
 
   # tests/cpp/test_pybind.cpp
 )
