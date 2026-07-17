@@ -46,14 +46,14 @@ class TestGravitySimple:
 
     def test_simple_norm(self):
         grav = gravity.GravitySimple()
-        grav.calc_gravity(build_state(), build_inertial())
-        g_norm = np.linalg.norm(grav.get_force(build_state(), build_inertial()))
+        grav.calc_gravity(build_state())
+        g_norm = np.linalg.norm(grav.get_wrench(build_state(), build_inertial()).force)
         assert g_norm == pytest.approx(G)
 
     def test_simple_vector(self):
         grav = gravity.GravitySimple()
-        grav.calc_gravity(build_state(), build_inertial())
-        g_vec = grav.get_force(build_state(), build_inertial())
+        grav.calc_gravity(build_state())
+        g_vec = grav.get_wrench(build_state(), build_inertial()).force
         assert np.allclose(g_vec, Vector3(0, 0, G).to_array())
 
 
@@ -66,12 +66,12 @@ class TestGravityClassic:
 
     def test_classic_norm(self):
         grav = gravity.GravityClassic()
-        grav.calc_gravity(build_state(), build_inertial())
-        g_norm = np.linalg.norm(grav.get_force(build_state(), build_inertial()))
+        grav.calc_gravity(build_state())
+        g_norm = np.linalg.norm(grav.get_wrench(build_state(), build_inertial()).force)
         assert g_norm == pytest.approx(self.G, rel=0.01)
 
     def test_classic_vector(self):
         grav = gravity.GravityClassic()
-        grav.calc_gravity(build_state(), build_inertial())
-        g_vec = grav.get_force(build_state(), build_inertial())
+        grav.calc_gravity(build_state())
+        g_vec = grav.get_wrench(build_state(), build_inertial()).force
         assert np.allclose(g_vec, Vector3(0, 0, self.G).to_array(), 1e-3)

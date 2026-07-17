@@ -335,8 +335,9 @@ class TestThruster:
         delta_t = 0.5
         inputs = Inputs.from_array([0, 0, 0, delta_t])
         thruster.set_input(inputs)
-        thruster.step_thruster(build_uav_state, Inertial(1), build_environment_data)
-        wrench = thruster.wrenchProp
+        thruster.update_local_state(build_uav_state, build_environment_data)
+        thruster.calc_model()
+        wrench = thruster.wrench_sum.wrench_prop
 
         tests = []
         tests.append(
@@ -383,8 +384,9 @@ class TestThruster:
         delta_t = 0.5
         inputs = Inputs.from_array([0, 0, 0, delta_t])
         thruster.set_input(inputs)
-        thruster.step_thruster(build_uav_state, Inertial(1), build_environment_data)
-        wrench = thruster.wrenchProp
+        thruster.update_local_state(build_uav_state, build_environment_data)
+        thruster.calc_model()
+        wrench = thruster.wrench_sum.wrench_prop
         assert wrench.torque[0] > 0
 
     # Test ThrusterBeard class
@@ -407,8 +409,9 @@ class TestThruster:
         delta_t = 0.5
         inputs = Inputs.from_array([0, 0, 0, delta_t])
         thruster.set_input(inputs)
-        thruster.step_thruster(state, Inertial(1), build_environment_data)
-        wrench = thruster.wrenchProp
+        thruster.update_local_state(build_uav_state, build_environment_data)
+        thruster.calc_model()
+        wrench = thruster.wrench_sum.wrench_prop
 
         tests = []
         tests.append(wrench.force[0] > 0)
@@ -426,8 +429,9 @@ class TestThruster:
         delta_t = 0.5
         inputs = Inputs.from_array([0, 0, 0, delta_t])
         thruster.set_input(inputs)
-        thruster.step_thruster(state, Inertial(1), build_environment_data)
-        wrench = thruster.wrenchProp
+        thruster.update_local_state(build_uav_state, build_environment_data)
+        thruster.calc_model()
+        wrench = thruster.wrench_sum.wrench_prop
         print(wrench.force)
         print(wrench.torque)
 
@@ -456,10 +460,11 @@ class TestThruster:
         delta_t = 0.5
         inputs = Inputs.from_array([0, 0, 0, delta_t])
         thruster.set_input(inputs)
+        thruster.update_local_state(build_uav_state, build_environment_data)
         for _ in range(100):  # TODO: Once you bind DynamicSystem, check t=1 to stop.
-            thruster.step_thruster(state, Inertial(1), build_environment_data)
+            thruster.calc_model()
 
-        wrench = thruster.wrenchProp
+        wrench = thruster.wrench_sum.wrench_prop
 
         tests = []
         tests.append(wrench.force[0] > 0)  # Thrust positive
@@ -484,8 +489,9 @@ class TestThruster:
 
         omega = 1
         omega_prev = 0
+        thruster.update_local_state(build_uav_state, build_environment_data)
         for _ in range(1000):  # TODO: Once you bind DynamicSystem, check t=10 to stop.
-            thruster.step_thruster(state, Inertial(1), build_environment_data)
+            thruster.calc_model()
             omega_prev = omega
             omega = thruster.omega
 
@@ -523,9 +529,10 @@ class TestThruster:
         delta_t = 0
         inputs = Inputs.from_array([0, 0, 0, delta_t])
         thruster.set_input(inputs)
-        thruster.step_thruster(state, Inertial(1), build_environment_data)
+        thruster.update_local_state(build_uav_state, build_environment_data)
+        thruster.calc_model()
 
-        wrench = thruster.wrenchProp
+        wrench = thruster.wrench_sum.wrench_prop
 
         tests = []
         tests.append(wrench.force[0] == 0)
@@ -544,7 +551,8 @@ class TestThruster:
         delta_t = omega_ref / thruster.get_param_double("omega_max")
         inputs = Inputs.from_array([0, 0, 0, delta_t])
         thruster.set_input(inputs)
-        thruster.step_thruster(state, Inertial(1), build_environment_data)
+        thruster.update_local_state(build_uav_state, build_environment_data)
+        thruster.calc_model()
 
         tests = []
         tests.append(omega_ref == thruster.omega)
@@ -562,8 +570,9 @@ class TestThruster:
         delta_t = omega_ref / thruster.get_param_double("omega_max")
         inputs = Inputs.from_array([0, 0, 0, delta_t])
         thruster.set_input(inputs)
-        thruster.step_thruster(state, Inertial(1), build_environment_data)
-        wrench = thruster.wrenchProp
+        thruster.update_local_state(build_uav_state, build_environment_data)
+        thruster.calc_model()
+        wrench = thruster.wrench_sum.wrench_prop
 
         tests = []
         tests.append(wrench.force[0] > 0)
