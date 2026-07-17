@@ -251,6 +251,7 @@ class Parametrized
 {
 public:
     Parametrized(string name_p);
+    virtual ~Parametrized() = default;
     // Initialize parameters, read from custom values and set attribute values.
     void initialize(ParameterManager params_p = ParameterManager("temp_node"));
     // Initializing object from YAML stream.

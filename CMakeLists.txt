@@ -96,7 +96,6 @@ add_library(last_letter_lib SHARED
   src/ground_reaction/no_ground_reactions.cpp
   src/ground_reaction/panos_contact_points.cpp
   src/ground_reaction/point_friction.cpp
-  src/link.cpp
   src/dynamics.cpp
   src/kinematics.cpp
   src/sensors.cpp

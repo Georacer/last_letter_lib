@@ -51,31 +51,30 @@ namespace last_letter_lib
 	// Initialize states
 	void UavModel::init()
 	{
-		// TODO: All initialization state is not used, passed by Gazebo
-		//  // Read initial NED coordinates
-		//  state.pose.position = initPosition_;
+        // TODO: All initialization state is not used, passed by Gazebo
+        // Read initial NED coordinates
+        state.pose.position = initPosition_;
 
-		// // Read initial orientation quaternion
-		// state.pose.orientation = initOrientation_;
+        // Read initial orientation quaternion
+        state.pose.orientation = initOrientation_;
 
-		// // Read initial velocity
-		// state.velocity.linear = initVelLinear_;
+        // Read initial velocity
+        state.velocity.linear = initVelLinear_;
 
-		// // Read initial angular velocity
-		// state.velocity.angular = initVelAngular_;
+        // Read initial angular velocity
+        state.velocity.angular = initVelAngular_;
 
-		// // Initialize rotorspeed vector
-		// fill(state.rotorspeed.begin(), state.rotorspeed.end(), 0.01);
+		// Initialize rotorspeed vector
+		fill(state.rotorspeed.begin(), state.rotorspeed.end(), 0.01);
 		// And propulsion model omega
-		for (int i = 0; i < dynamics.nMotors; i++)
-		{
-			dynamics.propulsionLinks[i]->propulsion->omega = 0.01; // A small non-zero value
-		}
+        for (auto &thruster : dynamics.thrusters) {
+            thruster->omega = 0.01; // A small non-zero value
+        }
 
-		// // Initialize WGS coordinates
-		// state.geoid.latitude = initCoordinates_(0);
-		// state.geoid.longitude = initCoordinates_(1);
-		// state.geoid.altitude = initCoordinates_(2);
+		// Initialize WGS coordinates
+		state.geoid.latitude = initCoordinates_(0);
+		state.geoid.longitude = initCoordinates_(1);
+		state.geoid.altitude = initCoordinates_(2);
 
 		chanReset = initChanReset_;
 
@@ -191,89 +190,56 @@ namespace last_letter_lib
 
 	///////////////////////////////////////
 	// Make one step of the plane simulation
-	void UavModel::step(LinkStateMap_t linkStates)
+	void UavModel::step()
 	{
 		// Perform step actions serially
 
-		setLinkStates(linkStates);
-
 		// Calculate dynamics
-		linkWrenches = dynamics.calcWrench(linkStates_, kinematics.inertial, environmentModel.environment);
+		dynamics.calc_model(state);
+        auto inpWrench = dynamics.wrench_sum.sum();
 
-		// SimState_t newState;
-		// newState = kinematics.propagateState(state, inpWrench);
+		SimState_t newState;
+		newState = kinematics.propagateState(state, inpWrench);
 
-		// // Check new state for non-finite values
-		// Vector3d tempVect;
-		// Quaterniond tempQuat;
-		// if (!newState.pose.position.allFinite())
-		// {
-		// 	tempVect = newState.pose.position;
-		// 	cout << "New position:\n"
-		// 		 << tempVect << endl;
-		// 	throw runtime_error("uav_model.cpp: NaN member in new position");
-		// }
-		// if (!myisfinite(newState.pose.orientation))
-		// {
-		// 	tempQuat = newState.pose.orientation;
-		// 	cout << "New orientation:\n"
-		// 		 << tempQuat.w() << "\n"
-		// 		 << tempQuat.vec() << endl;
-		// 	throw runtime_error("uav_model.cpp: NaN member in new orientation");
-		// }
-		// if (!newState.velocity.linear.allFinite())
-		// {
-		// 	tempVect = newState.velocity.linear;
-		// 	cout << "New linear velocity:\n"
-		// 		 << tempVect << endl;
-		// 	throw runtime_error("uav_model.cpp: NaN member in new linear velocity");
-		// }
-		// if (!newState.velocity.angular.allFinite())
-		// {
-		// 	tempVect = newState.velocity.angular;
-		// 	cout << "New angular velocity:\n"
-		// 		 << tempVect << endl;
-		// 	throw runtime_error("uav_model.cpp: NaN member in new angular velocity");
-		// }
-
-		// for (int i = 0; i < dynamics.nMotors; i++)
-		// {
-		// 	newState.rotorspeed[i] = dynamics.propulsion[i]->omega;
-		// }
-
-		// state = newState;
-	}
-
-	/////////////////////////////////////////////////////////////////
-	// Make one step of the plane simulation using the existing state
-	void UavModel::step()
-	{
-
-		// Calculate dynamics
-		linkWrenches = dynamics.calcWrench(linkStates_, kinematics.inertial, environmentModel.environment);
-	}
-
-	////////////////////////
-	// Set state explicitly
-	void UavModel::setLinkStates(LinkStateMap_t linkStates)
-	{
-		// TODO: read the updated propeller velocities and store them (if needed)
-		linkStates_ = linkStates;
-
-		SimState_t bodyLinkState = linkStates["body_frd"];
-		// Build geoid coordinates
-		// TODO: Make this propagate coordinates, instead of delegating it to the PX4 adapter
-		bodyLinkState.geoid.altitude = -bodyLinkState.pose.position.z();
-
-		// Re-calculate the environment based on the new state
-		// This should only involve static calculations, not dynamic
-		environmentModel.calcEnvironment(bodyLinkState);
-
-		// Update sensors
-		for (auto it = std::begin(sensors); it != std::end(sensors); ++it)
+		// Check new state for non-finite values
+		Vector3d tempVect;
+		Quaterniond tempQuat;
+		if (!newState.pose.position.allFinite())
 		{
-			(*it)->update(bodyLinkState, environmentModel.environment);
+			tempVect = newState.pose.position;
+			cout << "New position:\n"
+				 << tempVect << endl;
+			throw runtime_error("uav_model.cpp: NaN member in new position");
 		}
+		if (!myisfinite(newState.pose.orientation))
+		{
+			tempQuat = newState.pose.orientation;
+			cout << "New orientation:\n"
+				 << tempQuat.w() << "\n"
+				 << tempQuat.vec() << endl;
+			throw runtime_error("uav_model.cpp: NaN member in new orientation");
+		}
+		if (!newState.velocity.linear.allFinite())
+		{
+			tempVect = newState.velocity.linear;
+			cout << "New linear velocity:\n"
+				 << tempVect << endl;
+			throw runtime_error("uav_model.cpp: NaN member in new linear velocity");
+		}
+		if (!newState.velocity.angular.allFinite())
+		{
+			tempVect = newState.velocity.angular;
+			cout << "New angular velocity:\n"
+				 << tempVect << endl;
+			throw runtime_error("uav_model.cpp: NaN member in new angular velocity");
+		}
+
+		for (int i = 0; i < (int)dynamics.thrusters.size(); i++)
+		{
+			newState.rotorspeed[i] = dynamics.thrusters.at(i)->omega;
+		}
+
+		state = newState;
 	}
 
 	/////////////////////////////////////////////////

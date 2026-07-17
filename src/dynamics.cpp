@@ -1,5 +1,7 @@
 #include "last_letter_lib/dynamics.hpp"
 #include "last_letter_lib/environment.hpp"
+#include "last_letter_lib/propulsion/propulsion.hpp"
+#include "last_letter_lib/uav_utils.hpp"
 
 namespace last_letter_lib
 {
@@ -10,31 +12,33 @@ namespace last_letter_lib
 
 	///////////////////
 	//Class Constructor
-	Dynamics::Dynamics(ParameterManager p_worldConfig, ParameterManager p_aeroConfig, ParameterManager p_propConfig, ParameterManager /*p_groundConfig*/)
+	Dynamics::Dynamics(ParameterManager p_worldConfig, ParameterManager p_aeroConfig, ParameterManager p_propConfig, ParameterManager p_groundConfig)
 	{
 		// Create and initialize aerodynamic objects array
 		nWings = p_aeroConfig.get<int>("nWings");
-		aerodynamicLinks = new LinkAerodynamic *[nWings];
+        aerodynamics.clear();
 		for (int i = 0; i < nWings; i++)
 		{
 			ParameterManager aeroConfig = p_aeroConfig.filter("airfoil" + std::to_string(i + 1) + "/");
-			aerodynamicLinks[i] = new LinkAerodynamic(aeroConfig, p_worldConfig); // Create a new aerodynamics object, id's are 1-indexed
+            auto new_aero = aerodynamics::buildAerodynamics(aeroConfig);
+            aerodynamics.push_back(new_aero.get());
+            components.push_back(std::move(new_aero));
 		}
-
-		// Create and initialize gravity object
-		// gravity = new Gravity();
 
 		// Create and initialize motor objects array
 		nMotors = p_propConfig.get<int>("nMotors");
-		propulsionLinks = new LinkPropulsion *[nMotors];
+        thrusters.clear();
 		for (int i = 0; i < nMotors; i++)
 		{
 			ParameterManager propConfig = p_propConfig.filter("motor" + std::to_string(i + 1) + "/");
-			propulsionLinks[i] = new LinkPropulsion(propConfig, p_worldConfig); // Create a new propulsion object, id's are 1-indexed
+            propConfig.register_child_mngr(p_worldConfig);
+            auto new_thruster = propulsion::buildThruster(propConfig);
+            thrusters.push_back(new_thruster.get());
+            components.push_back(std::move(new_thruster));
 		}
 
 		// Create and initialize ground reactions object
-		// groundReactionLink = new LinkGroundReaction(p_groundConfig, p_worldConfig);
+		groundReaction = ground_reaction::buildGroundReaction(p_groundConfig);
 	}
 
 	void Dynamics::readParametersAerodynamics(ParameterManager config)
@@ -42,7 +46,8 @@ namespace last_letter_lib
 		for (int i = 0; i < nWings; i++)
 		{
 			ParameterManager aeroConfig = config.filter("airfoil" + std::to_string(i + 1) + "/");
-			aerodynamicLinks[i]->readParametersModel(aeroConfig); // Update aerodynamic parameters
+            aerodynamics.at(i)->load_parameters(aeroConfig);
+            aerodynamics.at(i)->update_parameters();
 		}
 	}
 
@@ -51,155 +56,82 @@ namespace last_letter_lib
 		for (int i = 0; i < nMotors; i++)
 		{
 			ParameterManager propConfig = config.filter("motor" + std::to_string(i + 1) + "/");
-			propulsionLinks[i]->readParametersModel(propConfig); // Update propulsion parameters
+            thrusters.at(i)->load_parameters(propConfig);
+            thrusters.at(i)->update_parameters();
 		}
 	}
 
-	void Dynamics::readParametersWorld(ParameterManager config)
+	void Dynamics::readParametersWorld(ParameterManager /*config*/)
 	{
-		for (int i = 0; i < nMotors; i++)
-		{
-			propulsionLinks[i]->readParametersWorld(config); // Update world parameters
-		}
-		// groundReactionLink->readParametersWorld(config);
 	}
 
-	void Dynamics::readParametersGround(ParameterManager /*config*/)
+	void Dynamics::readParametersGround(ParameterManager config)
 	{
-		// groundReactionLink->readParametersModel(config);
+        groundReaction->load_parameters(config);
+        groundReaction->update_parameters();
 	}
 
 	//Class Destructor
 	Dynamics::~Dynamics()
 	{
-		for (int i = 0; i < nWings; i++)
-		{
-			delete aerodynamicLinks[i]; // delete all aerodynamics objects
-		}
-		delete aerodynamicLinks; // Must also separately delete the array of object pointers
-		// delete gravity;
-		for (int i = 0; i < nMotors; i++)
-		{
-			delete propulsionLinks[i]; // delete all propulsion objects
-		}
-		delete propulsionLinks; // Must also separately delete the array of object pointers
-								// delete groundReactionLink;
+        delete groundReaction;
 	}
 
 	// Order subsystems to store control input
 	void Dynamics::setInput(Input input)
 	{
-		for (int i = 0; i < nMotors; i++)
-		{
-			propulsionLinks[i]->setInput(input);
-		}
-		for (int i = 0; i < nWings; i++)
-		{
-			aerodynamicLinks[i]->setInput(input);
-		}
-		// groundReactionLink->setInput(input);
+        for (auto &thruster : thrusters) {
+            thruster->setInput(input);
+        }
+        for (auto &airfoil : aerodynamics) {
+            airfoil->setInput(input);
+        }
+		groundReaction->setInput(input);
 	}
 
 	// Order subsystems to store control input, passed as PWM micorseconds
 	void Dynamics::setInputPwm(InputPwm_t input)
 	{
-		for (int i = 0; i < nMotors; i++)
-		{
-			propulsionLinks[i]->setInputPwm(input);
-		}
-		for (int i = 0; i < nWings; i++)
-		{
-			aerodynamicLinks[i]->setInputPwm(input);
-		}
-		// groundReactionLink->setInputPwm(input);
+        for (auto &thruster : thrusters) {
+            thruster->setInputPwm(input);
+        }
+        for (auto &airfoil : aerodynamics) {
+            airfoil->setInputPwm(input);
+        }
+		groundReaction->setInputPwm(input);
 	}
+
+    void Dynamics::update_local_state(SimState_t states, Environment_t environment)
+    {
+        for (auto &component : components) {
+            component->update_local_state(states, environment);
+        }
+    }
 
 	// Calculate the forces and torques for each Wrench_t source
-	LinkWrenchMap_t Dynamics::calcWrench(LinkStateMap_t states, Inertial inertial, Environment_t environment)
+	void Dynamics::calc_model(SimState_t states)
 	{
-		LinkWrenchMap_t linkWrenches;
+        WrenchSum_t new_sum;
+        for (auto &component : components) {
+            component->calc_model();
+            new_sum += component->wrench_sum;
+        }
 
-		// Vector3d tempVect;
-		// // Call gravity calculation routines
-		// forceGrav = gravity->getForce(states.pose.orientation.conjugate(), environment.gravity, inertial.mass);
-		// if (!forceGrav.allFinite())
-		// {
-		// 	throw runtime_error("dynamicsLib.cpp: NaN member in gravity force vector");
-		// }
-
-		// torqueGrav = gravity->getTorque(states.pose.orientation.conjugate(), environment.gravity, inertial.mass);
-		// if (!torqueGrav.allFinite())
-		// {
-		// 	throw runtime_error("dynamicsLib.cpp: NaN member in gravity torque vector");
-		// }
-
-		// Call  motors routines
-
-		for (int i = 0; i < nMotors; i++)
+		// Call ground reactions routines - MUST BE CALLED LAST!!!
+		// This is needed for some ground reactions models, which are designed to counter the remaining force sum
+		new_sum.wrenchGround.force = groundReaction->getForce(states, new_sum);
+		if (!new_sum.wrenchGround.force.allFinite())
 		{
-			// Execute one step in the motor dynamics
-			std::string link_name = propulsionLinks[i]->name;
-			auto link_state = states[link_name];
-			propulsionLinks[i]->step(link_state, inertial, environment);
-			linkWrenches[link_name] = propulsionLinks[i]->wrenchLinkFrame;
-		}
-		// Execute one step in the aerodynamics
-		for (int i = 0; i < nWings; i++)
-		{
-			std::string link_name = aerodynamicLinks[i]->name;
-			auto link_state = states[aerodynamicLinks[i]->name];
-			aerodynamicLinks[i]->step(link_state, inertial, environment);
-			linkWrenches[link_name] = aerodynamicLinks[i]->wrenchLinkFrame;
+			throw runtime_error("dynamicsLib.cpp: NaN member in groundReaction force vector");
 		}
 
-		return linkWrenches;
+		new_sum.wrenchGround.torque = groundReaction->getTorque(states, new_sum);
+		if (!new_sum.wrenchGround.torque.allFinite())
+		{
+			throw runtime_error("dynamicsLib.cpp: NaN member in groundReaction torque vector");
+		}
 
-		// // Call ground reactions routines - MUST BE CALLED LAST!!!
-		// // This is needed for some ground reactions models, which are designed to counter the remaining force sum
-		// WrenchSum_t wrenchSum;
-		// wrenchSum.wrenchAero.force = forceAero;
-		// wrenchSum.wrenchAero.torque = torqueAero;
-		// wrenchSum.wrenchProp.force = forceProp;
-		// wrenchSum.wrenchProp.torque = torqueProp;
-		// wrenchSum.wrenchGrav.force = forceGrav;
-		// wrenchSum.wrenchGrav.torque = torqueGrav;
-		// forceGround = groundReactionLink->getForce(states, wrenchSum);
-		// if (!forceGround.allFinite())
-		// {
-		// 	throw runtime_error("dynamicsLib.cpp: NaN member in groundReaction force vector");
-		// }
-
-		// torqueGround = groundReactionLink->getTorque(states, wrenchSum);
-		// if (!torqueGround.allFinite())
-		// {
-		// 	throw runtime_error("dynamicsLib.cpp: NaN member in groundReaction torque vector");
-		// }
+        wrench_sum = new_sum;
 	}
-
-	// // Collect forces from underlying models
-	// Vector3d Dynamics::getForce()
-	// {
-	// 	Vector3d accumulator;
-
-	// 	accumulator = forceGrav;
-	// 	accumulator = accumulator + forceProp;
-	// 	accumulator = accumulator + forceAero;
-	// 	accumulator = accumulator + forceGround;
-
-	// 	return accumulator;
-	// }
-
-	// // Collect torques from underlying models
-	// Vector3d Dynamics::getTorque()
-	// {
-	// 	Vector3d accumulator;
-
-	// 	accumulator = torqueGrav;
-	// 	accumulator = accumulator + torqueProp;
-	// 	accumulator = accumulator + torqueAero;
-	// 	accumulator = accumulator + torqueGround;
-
-	// 	return accumulator;
-	// }
 
 } // namespace last_letter_lib

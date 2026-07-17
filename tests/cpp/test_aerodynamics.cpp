@@ -44,7 +44,7 @@ TEST(TestAerodynamics, TestAerodynamics1)
     input.value[2] = 0.5;
     input.value[3] = 0.0;
 
-    Aerodynamics *airfoil1 = buildAerodynamics(config.filter("aero/airfoil1/"));
+    auto airfoil1 = buildAerodynamics(config.filter("aero/airfoil1/"));
     airfoil1->setInput(input);
 
     airfoil1->update_local_state(state, environmentModel.environment);

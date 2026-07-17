@@ -2,6 +2,8 @@
 // Aerodynamics class related declarations //
 /////////////////////////////////////////////
 
+#include <memory>
+
 #include <Eigen/Eigen>
 #include "yaml-cpp/yaml.h"
 
@@ -127,7 +129,7 @@ private:
     virtual double _dragCoeff(double, double) override;
 };
 
-Aerodynamics *buildAerodynamics(ParameterManager config);
+std::unique_ptr<Aerodynamics> buildAerodynamics(ParameterManager config);
 
 } // namespace aerodynamics
 } // namespace last_letter_lib

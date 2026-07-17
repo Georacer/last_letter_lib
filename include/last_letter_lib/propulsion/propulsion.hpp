@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include <Eigen/Eigen>
 #include <string>
 #include "yaml-cpp/yaml.h"
@@ -405,7 +407,7 @@ public:
     double calc_coeff_power(double ar) override;
 };
 
-Thruster *buildThruster(ParameterManager propConfig);
+std::unique_ptr<Thruster> buildThruster(ParameterManager propConfig);
 
 
 } // namespace propulsion

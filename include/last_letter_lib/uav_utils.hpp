@@ -127,6 +127,8 @@ class WrenchSum_t
 public:
     WrenchSum_t(): wrenchGrav(), wrenchAero(), wrenchProp(), wrenchGround(), wrenchExternal() {};
     Wrench_t sum(); // Sum the wrench components.
+    WrenchSum_t operator+(const WrenchSum_t w) const;
+    WrenchSum_t &operator+=(const WrenchSum_t w);
 
     Wrench_t wrenchGrav;
     Wrench_t wrenchAero;

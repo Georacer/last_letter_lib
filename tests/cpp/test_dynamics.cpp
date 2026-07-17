@@ -47,24 +47,15 @@ TEST(TestDynamics, TestDynamics1)
     environmentModel.calcEnvironment(state);
     Environment_t environment = environmentModel.environment;
 
-    // Create LinkStateMap
-    LinkStateMap_t linkStateMap;
-    linkStateMap["body_frd"] = state;
-    linkStateMap["thruster_0"] = state;
-
     // Create dynamics object
     Dynamics dynamics(config.filter("world"), config.filter("aero"), config.filter("prop"), config.filter("ground"));
     dynamics.setInput(input);
-    LinkWrenchMap_t linkWrenchMap = dynamics.calcWrench(linkStateMap, inertial, environment);
-    Eigen::Vector3d force, torque;
+    dynamics.update_local_state(state, environment);
+    dynamics.calc_model(state);
 
-    force = linkWrenchMap["body_frd"].force;
-    torque = linkWrenchMap["body_frd"].torque;
-    EXPECT_NEAR(force(2), -17, 1);
-    EXPECT_NEAR(torque(2), 7.5, 1);
+    EXPECT_NEAR(dynamics.wrench_sum.wrenchAero.force(2), -19, 1);
+    EXPECT_NEAR(dynamics.wrench_sum.wrenchAero.torque(2), 7.5, 1);
 
-    force = linkWrenchMap["thruster_0"].force;
-    torque = linkWrenchMap["thruster_0"].torque;
-    EXPECT_NEAR(force(0), 25, 1);
-    EXPECT_LE(torque(0), 0);
+    EXPECT_NEAR(dynamics.wrench_sum.wrenchProp.force(0), 25, 1);
+    EXPECT_LE(dynamics.wrench_sum.wrenchProp.torque(0), 0);
 }

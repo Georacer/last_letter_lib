@@ -125,42 +125,42 @@ void Thruster::rotateProp() // Update propeller angle
         theta += 2 * M_PI;
 }
 
-Thruster *buildThruster(ParameterManager propConfig)
+std::unique_ptr<Thruster> buildThruster(ParameterManager propConfig)
 {
     int motorType;
     motorType = propConfig.get<double>("motorType");
     string engineName = propConfig.get<string>("name");
     std::cout << "building engine model: ";
-    Thruster *engine;
+    std::unique_ptr<Thruster> engine;
     switch (motorType)
     {
     case 0:
         std::cout << "selecting no engine" << std::endl;
-        engine = new NoEngine(engineName);
+        engine = std::make_unique<NoEngine>(engineName);
         break;
     case 1:
         std::cout << "selecting Beard engine" << std::endl;
-        engine = new EngBeard(engineName);
+        engine = std::make_unique<EngBeard>(engineName);
         break;
     case 2:
         std::cout << "selecting piston engine" << std::endl;
-        engine = new PistonEng(engineName);
+        engine = std::make_unique<PistonEng>(engineName);
         break;
     case 3:
         std::cout << "selecting electric engine" << std::endl;
-        engine = new ElectricEng(engineName);
+        engine = std::make_unique<ElectricEng>(engineName);
         break;
     case 4:
         std::cout << "selecting omega-controlled engine" << std::endl;
-        engine = new EngOmegaControl(engineName);
+        engine = std::make_unique<EngOmegaControl>(engineName);
         break;
     case 5:
         std::cout << "selecting electric engine 2" << std::endl;
-        engine = new ElectricEng2(engineName);
+        engine = std::make_unique<ElectricEng2>(engineName);
         break;
     case 6:
         std::cout << "selecting simple thruster" << std::endl;
-        engine = new ThrusterSimple(engineName);
+        engine = std::make_unique<ThrusterSimple>(engineName);
         break;
     default:
         throw runtime_error("Error while constructing motor");

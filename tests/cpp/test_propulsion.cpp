@@ -85,7 +85,7 @@ TEST(TestPropulsion, TestPropulsion1)
     ParameterManager config = load_config_aircraft("skywalker_2013");
     auto prop_config = config.filter("prop/motor1/");
     prop_config.register_child_mngr(config.filter("world/"));
-    Thruster *motor1 = buildThruster(prop_config);
+    auto motor1 = buildThruster(prop_config);
     SimState_t states = build_aircraft_state_from_config(config);
 
     double mass = config.filter("inertial").get<double>("m");

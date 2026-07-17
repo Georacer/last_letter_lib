@@ -25,8 +25,7 @@ namespace last_letter_lib
 		///////////
 		// Variables
 		ParameterManager configs;
-		// SimState_t state;	 // main simulation states
-		LinkWrenchMap_t linkWrenches;
+		SimState_t state;	 // main simulation states
 		Input input;		 // Normalized input to the model
 		InputPwm_t PwmInput; // PWM input to the model
 		double dt;			 // simulation timestep in s
@@ -45,8 +44,6 @@ namespace last_letter_lib
 		Quaterniond initOrientation_;
 		int initChanReset_;
 		Input initCtrlInput_;
-		// Link state storage
-		LinkStateMap_t linkStates_;
 
 		///////////
 		// Methods
@@ -60,8 +57,7 @@ namespace last_letter_lib
 		// Destructor
 		~UavModel();
 
-		void setLinkStates(LinkStateMap_t linkStates);			  // Set simulation state
-		SimState_t getState() { return linkStates_["body_frd"]; } // Return the state of the Body Frame
+		SimState_t getState() { return state; } // Return the state of the Body Frame
 		void setInput(Input inputMsg);
 		void setInputPwm(InputPwm_t inputMsg);
 		bool set_parameter(programming_utils::ParamType_t paramType, std::string name, double value);
@@ -80,7 +76,6 @@ namespace last_letter_lib
 		void readParametersWorld(ParameterManager worldConfig);
 		void readParametersInit(ParameterManager initConfig);
 
-		void step(LinkStateMap_t linkStates); // Perform simulation step
-		void step();						  // Perform simulation step on stored link states
+		void step(); // Perform simulation step
 	};
 } // namespace last_letter_lib

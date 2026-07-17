@@ -361,30 +361,30 @@ double SimpleDrag::_dragCoeff(double alpha, double /*beta*/)
 }
 
 // Build aerodynamics model
-Aerodynamics *buildAerodynamics(ParameterManager config)
+std::unique_ptr<Aerodynamics> buildAerodynamics(ParameterManager config)
 {
     const int aerodynamicsType = config.get<double>("aerodynamicsType");
     const string aerodynamics_name = config.get<string>("name");
 
-    Aerodynamics *aerodynamics;
+    std::unique_ptr<Aerodynamics> aerodynamics;
     std::cout << "building aerodynamics model type " << aerodynamicsType << ":\n";
     switch (aerodynamicsType)
     {
     case 0:
         std::cout << "selecting no aerodynamics model" << std::endl;
-        aerodynamics = new NoAerodynamics(aerodynamics_name);
+        aerodynamics = std::make_unique<NoAerodynamics>(aerodynamics_name);
         break;
     case 1:
         std::cout << "selecting StdLinearAero aerodynamics" << std::endl;
-        aerodynamics = new StdLinearAero(aerodynamics_name);
+        aerodynamics = std::make_unique<StdLinearAero>(aerodynamics_name);
         break;
     case 2:
         std::cout << "selecting HCUAVAero aerodynamics" << std::endl;
-        aerodynamics = new PolynomialAero(aerodynamics_name);
+        aerodynamics = std::make_unique<PolynomialAero>(aerodynamics_name);
         break;
     case 3:
         std::cout << "selecting simplified drag aerodynamics" << std::endl;
-        aerodynamics = new SimpleDrag(aerodynamics_name);
+        aerodynamics = std::make_unique<SimpleDrag>(aerodynamics_name);
         break;
     default:
         stringstream ss;

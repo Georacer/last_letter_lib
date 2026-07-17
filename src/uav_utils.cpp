@@ -17,6 +17,25 @@ Wrench_t WrenchSum_t::sum()
     return result;
 }
 
+WrenchSum_t WrenchSum_t::operator+(const WrenchSum_t w) const
+{
+    auto result = WrenchSum_t();
+    result.wrenchGrav = wrenchGrav + w.wrenchGrav;
+    result.wrenchAero = wrenchAero + w.wrenchAero;
+    result.wrenchProp = wrenchProp + w.wrenchProp;
+    result.wrenchExternal = wrenchExternal + w.wrenchExternal;
+    return result;
+}
+
+WrenchSum_t &WrenchSum_t::operator+=(const WrenchSum_t w)
+{
+    wrenchGrav = wrenchGrav + w.wrenchGrav;
+    wrenchAero = wrenchAero + w.wrenchAero;
+    wrenchProp = wrenchProp + w.wrenchProp;
+    wrenchExternal = wrenchExternal + w.wrenchExternal;
+    return *this;
+}
+
 SimState_t::SimState_t(Vector3d position,
                         UnitQuaternion orientation,
                         Vector3d velocity_linear,
