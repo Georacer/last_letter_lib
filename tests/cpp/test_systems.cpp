@@ -61,10 +61,13 @@ TEST_F(ComponentTest, TestComponent5)
 
 TEST_F(ComponentTest, TestInitialize)
 {
+    SimState_t state;
+    Environment_t environment;
     c.initialize("pose:\n position:\n  x: 1\ninertial:\n mass: 5.0");
+    c.update_local_state(state, environment);
     EXPECT_EQ(c.get_param<double>("pose/position/x"), 1);
     EXPECT_EQ(c.get_param<double>("inertial/mass"), 5);
-    EXPECT_EQ(c.pose.position.x(), 1);
+    EXPECT_EQ(c.local_state.pose.position.x(), 1);
     EXPECT_EQ(c.inertial.mass, 5);
 }
 

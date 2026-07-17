@@ -47,7 +47,8 @@ TEST(TestAerodynamics, TestAerodynamics1)
     Aerodynamics *airfoil1 = buildAerodynamics(config.filter("aero/airfoil1/"));
     airfoil1->setInput(input);
 
-    airfoil1->stepDynamics(state, inertial, environmentModel.environment); // perform one step in the aerodynamics
+    airfoil1->update_local_state(state, environmentModel.environment);
+    airfoil1->calc_model(); // perform one step in the aerodynamics
     EXPECT_NEAR(environmentModel.environment.wind(1), -5, 1e-3);
     // cout << "Body-frame wind:\n"
     //      << environmentModel.environment.wind << endl;
@@ -58,11 +59,11 @@ TEST(TestAerodynamics, TestAerodynamics1)
     //      << airfoil1->airspeed_ << "\n"
     //      << airfoil1->alpha_ << "\n"
     //      << airfoil1->beta_ << endl;
-    EXPECT_TRUE(airfoil1->wrenchAero.force(1) < 0);
-    EXPECT_TRUE(airfoil1->wrenchAero.force.norm() < 1000);
+    EXPECT_TRUE(airfoil1->wrench_sum.wrenchAero.force(1) < 0);
+    EXPECT_TRUE(airfoil1->wrench_sum.wrenchAero.force.norm() < 1000);
     // cout << "Aerodynamic force:\n"
     //      << airfoil1->wrenchAero.force << endl;
-    EXPECT_TRUE(airfoil1->wrenchAero.torque.norm() < 1000);
+    EXPECT_TRUE(airfoil1->wrench_sum.wrenchAero.torque.norm() < 1000);
     // cout << "Aerodynamic torque:\n"
     //      << airfoil1->wrenchAero.torque << endl;
 }

@@ -32,15 +32,13 @@ TEST(TestGravity, TestGravitySimple)
     inertial.mass = 1;
 
     GravitySimple gravityModel;
-    gravityModel.calcGravity(states, inertial);
-    Vector3d force = gravityModel.getForce(states, inertial);
-    Vector3d torque = gravityModel.getTorque(states, inertial);
+    auto wrench = gravityModel.getWrench(states, inertial);
 
-    EXPECT_NEAR(force(0), -g * sqrt(2) / 2, 1e-3);
-    EXPECT_NEAR(force(1), g / 2, 1e-3);
-    EXPECT_NEAR(force(2), g / 2, 1e-3);
-    EXPECT_EQ(force.norm(), g);
-    EXPECT_EQ(torque.norm(), 0);
+    EXPECT_NEAR(wrench.force(0), -g * sqrt(2) / 2, 1e-3);
+    EXPECT_NEAR(wrench.force(1), g / 2, 1e-3);
+    EXPECT_NEAR(wrench.force(2), g / 2, 1e-3);
+    EXPECT_EQ(wrench.force.norm(), g);
+    EXPECT_EQ(wrench.torque.norm(), 0);
 }
 
 TEST(TestGravity, TestGravityClassic)
@@ -63,13 +61,11 @@ TEST(TestGravity, TestGravityClassic)
     inertial.mass = 1;
 
     GravityClassic gravityModel;
-    gravityModel.calcGravity(states, inertial);
-    Vector3d force = gravityModel.getForce(states, inertial);
-    Vector3d torque = gravityModel.getTorque(states, inertial);
+    auto wrench = gravityModel.getWrench(states, inertial);
 
-    EXPECT_NEAR(force(0), -g * sqrt(2) / 2, 1e-3);
-    EXPECT_NEAR(force(1), g / 2, 1e-3);
-    EXPECT_NEAR(force(2), g / 2, 1e-3);
-    EXPECT_NEAR(force.norm(), g, 1e-3);
-    EXPECT_EQ(torque.norm(), 0);
+    EXPECT_NEAR(wrench.force(0), -g * sqrt(2) / 2, 1e-3);
+    EXPECT_NEAR(wrench.force(1), g / 2, 1e-3);
+    EXPECT_NEAR(wrench.force(2), g / 2, 1e-3);
+    EXPECT_NEAR(wrench.force.norm(), g, 1e-3);
+    EXPECT_EQ(wrench.torque.norm(), 0);
 }

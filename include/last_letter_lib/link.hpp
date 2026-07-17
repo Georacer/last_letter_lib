@@ -35,7 +35,7 @@ namespace last_letter_lib
         void rotateWrench(Inertial);
         // Other methods
         void step(SimState_t state, Inertial inertial, Environment_t environment); // Calculate the forces and torques for each Wrench_t source
-        virtual void stepModelDynamics(SimState_t, Inertial, Environment_t) = 0;
+        virtual void stepModelDynamics(SimState_t, Environment_t) = 0;
         virtual Wrench_t getWrench(Environment_t) = 0;
 
         // Members
@@ -67,7 +67,7 @@ namespace last_letter_lib
         void passWorldParametersToModel(ParameterManager config); // Update internal model world parameters
         void setModelInput(Input input);
         void setModelInputPwm(InputPwm_t input);
-        virtual void stepModelDynamics(SimState_t, Inertial, Environment_t);
+        virtual void stepModelDynamics(SimState_t, Environment_t);
         Wrench_t getWrench(Environment_t);
 
     private:
@@ -84,7 +84,7 @@ namespace last_letter_lib
         void passWorldParametersToModel(ParameterManager config); // Update internal model world parameters
         void setModelInput(Input input);
         void setModelInputPwm(InputPwm_t input);
-        virtual void stepModelDynamics(SimState_t, Inertial, Environment_t);
+        virtual void stepModelDynamics(SimState_t, Environment_t);
         Wrench_t getWrench(Environment_t);
         // void updatePropTF();
         Eigen::Transform<double, 3, Eigen::Affine> gimbal_to_prop, body_to_prop; // Transformations in the propeller assembly for visual rendering
@@ -103,7 +103,7 @@ namespace last_letter_lib
         void passWorldParametersToModel(ParameterManager config); // Update internal model world parameters
         void setModelInput(Input input);
         void setModelInputPwm(InputPwm_t input);
-        void stepModelDynamics(SimState_t, Inertial, Environment_t);
+        void stepModelDynamics(SimState_t, Environment_t);
         void stepModelDynamics(SimState_t, WrenchSum_t);
         Wrench_t getWrench(Environment_t);
 

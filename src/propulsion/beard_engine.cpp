@@ -39,7 +39,7 @@ void EngBeard::post_propagation()
 }
 
 // Calculate propulsion wrench
-void EngBeard::calc_wrench(SimState_t /* states */, Inertial /* inertial */, Environment_t environment)
+void EngBeard::calc_wrench(SimState_t /* states */, Environment_t environment)
 {
 	rho = environment.density;
 	double x, y, z;
@@ -48,8 +48,8 @@ void EngBeard::calc_wrench(SimState_t /* states */, Inertial /* inertial */, Env
 	x = std::max(0.0, x);
 	y = 0;
 	z = 0;
-	wrenchProp.force = Vector3d(x, y, z);
-	if (!wrenchProp.force.allFinite())
+	wrench_sum.wrenchProp.force = Vector3d(x, y, z);
+	if (!wrench_sum.wrenchProp.force.allFinite())
 	{
 		throw runtime_error("propulsion.cpp/EngBeard: State NaN in wrenchProp.force");
 	}
@@ -57,8 +57,8 @@ void EngBeard::calc_wrench(SimState_t /* states */, Inertial /* inertial */, Env
 	x = -rotationDir * k_t_p * pow(omega, 2);
 	y = 0;
 	z = 0;
-	wrenchProp.torque = Vector3d(x, y, z);
-	if (!wrenchProp.torque.allFinite())
+	wrench_sum.wrenchProp.torque = Vector3d(x, y, z);
+	if (!wrench_sum.wrenchProp.torque.allFinite())
 	{
 		throw runtime_error("propulsion.cpp/EngBeard: State NaN in wrenchProp.torque");
 	}

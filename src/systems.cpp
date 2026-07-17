@@ -1,3 +1,4 @@
+#include "last_letter_lib/math_utils.hpp"
 #include <last_letter_lib/systems.hpp>
 
 namespace last_letter_lib {
@@ -5,17 +6,55 @@ namespace systems {
 
 void Component::update_parameters()
 {
-    pose.position.x() = get_param<double>("pose/position/x");
-    pose.position.y() = get_param<double>("pose/position/y");
-    pose.position.z() = get_param<double>("pose/position/z");
-    pose.orientation.w() = get_param<double>("pose/orientation/w");
-    pose.orientation.x() = get_param<double>("pose/orientation/x");
-    pose.orientation.y() = get_param<double>("pose/orientation/y");
-    pose.orientation.z() = get_param<double>("pose/orientation/z");
+    relative_pose.position.x() = get_param<double>("pose/position/x");
+    relative_pose.position.y() = get_param<double>("pose/position/y");
+    relative_pose.position.z() = get_param<double>("pose/position/z");
+    relative_pose.orientation.w() = get_param<double>("pose/orientation/w");
+    relative_pose.orientation.x() = get_param<double>("pose/orientation/x");
+    relative_pose.orientation.y() = get_param<double>("pose/orientation/y");
+    relative_pose.orientation.z() = get_param<double>("pose/orientation/z");
     inertial.mass = get_param<double>("inertial/mass");
     inertial.tensor(0, 0) = get_param<double>("inertial/tensor/j_xx");
     inertial.tensor(1, 1) = get_param<double>("inertial/tensor/j_yy");
     inertial.tensor(2, 2) = get_param<double>("inertial/tensor/j_zz");
+
+    if (gravity == nullptr) {
+        gravity = buildGravity(params_.filter("world/gravity/"));
+    }
+}
+
+void Component::update_local_state(const SimState_t body_state, const Environment_t environment)
+{
+    // Calculate the local state.
+    const UnitQuaternion q_eb = body_state.pose.orientation;
+    const UnitQuaternion q_bc = relative_pose.orientation;
+    local_state.pose.position = body_state.pose.position + q_eb*relative_pose.position;
+    const UnitQuaternion q_ec = q_eb * q_bc;
+    local_state.pose.orientation = q_ec;
+    // Velocity of the component w.r.t body frame.
+    const auto v_comp_body = body_state.velocity.linear + body_state.velocity.angular.cross(relative_pose.position);
+    local_state.velocity.linear = q_bc.conjugate()*v_comp_body;
+    local_state.velocity.angular = q_bc.conjugate()*body_state.velocity.angular;
+
+    // Calculate the local environment.
+    local_environment = environment;
+    // Transform the relative wind from body axes to propeller axes
+    local_environment.wind = q_ec * environment.wind;
+    if (!std::isfinite(local_environment.wind.x()))
+    {
+        throw runtime_error("sytems.cpp: NaN value in localWind.x");
+    }
+    if (std::fabs(local_environment.wind.x()) > 1e+160)
+    {
+        throw runtime_error("systems.cpp: localWind.x over 1e+160");
+    }
+}
+
+void Component::calc_model()
+{
+    // Run the gravity model.
+    wrench_sum.wrenchGrav = gravity->getWrench(local_state, inertial);
+    // Children will then run their own dynamics.
 }
 
 

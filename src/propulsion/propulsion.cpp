@@ -30,7 +30,7 @@ void Thruster::initialize_parameters()
 {
     Component::initialize_parameters();
 
-    set_param<double>("deltaT", 0.0025, false);
+    set_param<double>("world/deltaT", 0.0025, false);
     set_param<double>("rotationDir",        1, false);
     set_param<int>("chanMotor", 0, false);
     set_param<int>("motorType", 0, false);
@@ -47,7 +47,7 @@ void Thruster::update_parameters()
 {
     Component::update_parameters();
 
-    dt = get_param<double>("deltaT");
+    dt = get_param<double>("world/deltaT");
     rotationDir = get_param<double>("rotationDir");
     chanMotor = get_param<int>("chanMotor");
     thrustMax = get_param<double>("thrustMax");
@@ -95,19 +95,21 @@ stateType Thruster::outputs(const stateType /*x*/, const stateType u, const doub
 }
 
 // Engine physics step, container for the generic class
-void Thruster::step_thruster(SimState_t states, Inertial inertial, Environment_t environment)
+void Thruster::calc_model()
 {
-    relativeWind = states.velocity.linear - environment.wind;
+    Component::calc_model();
+
+    relativeWind = local_state.velocity.linear - local_environment.wind;
     normalWind = relativeWind.x();
     if (!std::isfinite(normalWind))
     {
         throw runtime_error("propulsion.cpp: airspeed is not finite");
     }
-    pre_propagation(states, inertial, environment);
+    pre_propagation(local_state, local_environment);
     step_dynamics(u, dt);
     post_propagation();
     rotateProp();
-    calc_wrench(states, inertial, environment);
+    calc_wrench(local_state, local_environment);
 }
 
 void Thruster::rotateProp() // Update propeller angle

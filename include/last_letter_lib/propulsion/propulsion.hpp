@@ -21,7 +21,6 @@
 using Eigen::Vector3d;
 using namespace last_letter_lib::uav_utils;
 using namespace last_letter_lib::systems;
-using last_letter_lib::math_utils::Inertial;
 using last_letter_lib::math_utils::Polynomial;
 using last_letter_lib::programming_utils::buildPolynomial;
 using last_letter_lib::programming_utils::ParameterManager;
@@ -46,7 +45,6 @@ public:
     double thrustMax, thrustMin;
     double torqueMax, torqueMin;
     Vector3d relativeWind;
-    Wrench_t wrenchProp;
     // stateType u holds the system input.
     // stateType x holds the system state.
 
@@ -62,11 +60,11 @@ public:
     void setInputPwm(InputPwm_t input);                                                             // store PWM control input
     virtual stateType dynamics(const stateType x, const stateType u, const double t) override;
     virtual stateType outputs(const stateType x, const stateType u, const double t) override;
-    void step_thruster(SimState_t states, Inertial inertial, Environment_t environment);               // engine physics step, container for the generic class
-    virtual void pre_propagation(SimState_t states, Inertial inertial, Environment_t environment) = 0; // Build the input u of the dynamic system.
+    void calc_model() override;               // engine physics step, container for the generic class
+    virtual void pre_propagation(SimState_t states, Environment_t environment) = 0; // Build the input u of the dynamic system.
     virtual void post_propagation() override = 0; // Distribute the propagated state into other local variables.
     void rotateProp();                                                                              // Update the propeller angle
-    virtual void calc_wrench(SimState_t states, Inertial inertial, Environment_t environment) = 0;     // Calculate Forces
+    virtual void calc_wrench(SimState_t states, Environment_t environment) = 0;     // Calculate Forces
     double torque_sign() {return rotationDir;}
 
 protected:
@@ -79,9 +77,9 @@ public:
 	NoEngine(string name);
 	~NoEngine() {};
 
-    void pre_propagation(SimState_t, Inertial, Environment_t) override {};
+    void pre_propagation(SimState_t, Environment_t) override {};
     void post_propagation() override {};
-	void calc_wrench(SimState_t, Inertial, Environment_t) override {};
+	void calc_wrench(SimState_t, Environment_t) override {};
 };
 
 class ThrusterSimple : public Thruster
@@ -92,9 +90,9 @@ public:
     ThrusterSimple(string name);
     ~ThrusterSimple() {};
 
-    void pre_propagation(SimState_t, Inertial, Environment_t) override {};
+    void pre_propagation(SimState_t, Environment_t) override {};
     void post_propagation() override {};
-    void calc_wrench(SimState_t states, Inertial inertial, Environment_t environment) override;
+    void calc_wrench(SimState_t states, Environment_t environment) override;
 };
 
 class EngBeard : public Thruster
@@ -122,9 +120,9 @@ public:
 
     void update_parameters() override;
 
-    void pre_propagation(SimState_t, Inertial, Environment_t) override {};
+    void pre_propagation(SimState_t, Environment_t) override {};
     void post_propagation() override;
-    void calc_wrench(SimState_t states, Inertial inertial, Environment_t environment) override;
+    void calc_wrench(SimState_t states, Environment_t environment) override;
 };
 
 class ElectricEng : public Thruster
@@ -180,10 +178,10 @@ public:
     }
     void update_parameters() override;
 
-    void pre_propagation(SimState_t, Inertial, Environment_t) override;
+    void pre_propagation(SimState_t, Environment_t) override;
     void post_propagation() override;
     stateType dynamics(const stateType x, const stateType u, const double t) override;
-    void calc_wrench(SimState_t states, Inertial inertial, Environment_t environment) override;
+    void calc_wrench(SimState_t states, Environment_t environment) override;
 };
 
 class ElectricEng2 : public Thruster
@@ -243,10 +241,10 @@ public:
     }
     void update_parameters() override;
 
-    void pre_propagation(SimState_t, Inertial, Environment_t) override;
+    void pre_propagation(SimState_t, Environment_t) override;
     void post_propagation() override;
     stateType dynamics(const stateType x, const stateType u, const double t) override;
-    void calc_wrench(SimState_t states, Inertial inertial, Environment_t environment) override;
+    void calc_wrench(SimState_t states, Environment_t environment) override;
 };
 
 class EngOmegaControl : public Thruster
@@ -283,9 +281,9 @@ public:
 
     void update_parameters() override;
 
-    void pre_propagation(SimState_t, Inertial, Environment_t) override {};
+    void pre_propagation(SimState_t, Environment_t) override {};
     void post_propagation() override;
-	void calc_wrench(SimState_t states, Inertial inertial, Environment_t environment) override;
+	void calc_wrench(SimState_t states, Environment_t environment) override;
 };
 
 class PistonEng : public Thruster
@@ -334,10 +332,10 @@ public:
     }
     void update_parameters() override;
 
-    void pre_propagation(SimState_t, Inertial, Environment_t) override;
+    void pre_propagation(SimState_t, Environment_t) override;
     void post_propagation() override;
     stateType dynamics(const stateType x, const stateType u, const double t) override;
-	void calc_wrench(SimState_t states, Inertial inertial, Environment_t environment) override;
+	void calc_wrench(SimState_t states, Environment_t environment) override;
 };
 
 // A propeller model.

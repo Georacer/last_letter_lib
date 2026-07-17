@@ -29,13 +29,13 @@ TEST(TestPropulsion, TestThrusterSimple)
     input.set_dt(throttle);
 
     SimState_t states;
-    Inertial inertial(1);
     Environment_t environment;
     thruster.setInput(input);
-    thruster.step_thruster(states, inertial, environment);
+    thruster.update_local_state(states, environment);
+    thruster.calc_model();
 
-    EXPECT_EQ(thruster.wrenchProp.force.x(), thruster.get_param<double>("thrustMax"));
-    EXPECT_EQ(thruster.wrenchProp.torque.x(), -thruster.get_param<double>("torqueMax"));
+    EXPECT_EQ(thruster.wrench_sum.wrenchProp.force.x(), thruster.get_param<double>("thrustMax"));
+    EXPECT_EQ(thruster.wrench_sum.wrenchProp.torque.x(), -thruster.get_param<double>("torqueMax"));
 }
 
 TEST(TestPropulsion, TestOmegaControlledEngine)
@@ -49,13 +49,13 @@ TEST(TestPropulsion, TestOmegaControlledEngine)
     input.set_dt(throttle);
 
     SimState_t states;
-    Inertial inertial(1);
     Environment_t environment;
     thruster.setInput(input);
-    thruster.step_thruster(states, inertial, environment);
+    thruster.update_local_state(states, environment);
+    thruster.calc_model();
 
     EXPECT_EQ(thruster.omega, thruster.get_param<double>("omega_max"));
-    EXPECT_GT(thruster.wrenchProp.force.x(), 0);
+    EXPECT_GT(thruster.wrench_sum.wrenchProp.force.x(), 0);
 }
 
 TEST(TestPropulsion, TestElectricEngine2)
@@ -69,21 +69,23 @@ TEST(TestPropulsion, TestElectricEngine2)
     input.set_dt(throttle);
 
     SimState_t states;
-    Inertial inertial(1);
     Environment_t environment;
     thruster.setInput(input);
+    thruster.update_local_state(states, environment);
     for (uint16_t idx=0; idx<1000; idx++) {
-        thruster.step_thruster(states, inertial, environment);
+        thruster.calc_model();
     }
 
     EXPECT_GT(thruster.omega, 0);
-    EXPECT_GT(thruster.wrenchProp.force.x(), 0);
+    EXPECT_GT(thruster.wrench_sum.wrenchProp.force.x(), 0);
 }
 
 TEST(TestPropulsion, TestPropulsion1)
 {
     ParameterManager config = load_config_aircraft("skywalker_2013");
-    Thruster *motor1 = buildThruster(config.filter("prop/motor1/"));
+    auto prop_config = config.filter("prop/motor1/");
+    prop_config.register_child_mngr(config.filter("world/"));
+    Thruster *motor1 = buildThruster(prop_config);
     SimState_t states = build_aircraft_state_from_config(config);
 
     double mass = config.filter("inertial").get<double>("m");
@@ -106,12 +108,13 @@ TEST(TestPropulsion, TestPropulsion1)
     environmentModel.calcEnvironment(states);
 
     motor1->setInput(input);
-    motor1->step_thruster(states, inertial, environmentModel.environment); // perform one step in the propdynamics
+    motor1->update_local_state(states, environmentModel.environment); // perform one step in the propdynamics
+    motor1->calc_model();
     EXPECT_GT(motor1->omega, 0);
-    EXPECT_GT(motor1->wrenchProp.force(0), 0);
-    EXPECT_EQ(motor1->wrenchProp.force(1), 0);
-    EXPECT_EQ(motor1->wrenchProp.force(2), 0);
-    EXPECT_LT(motor1->wrenchProp.torque(0), 0);
-    EXPECT_EQ(motor1->wrenchProp.torque(1), 0);
-    EXPECT_EQ(motor1->wrenchProp.torque(2), 0);
+    EXPECT_GT(motor1->wrench_sum.wrenchProp.force(0), 0);
+    EXPECT_EQ(motor1->wrench_sum.wrenchProp.force(1), 0);
+    EXPECT_EQ(motor1->wrench_sum.wrenchProp.force(2), 0);
+    EXPECT_LT(motor1->wrench_sum.wrenchProp.torque(0), 0);
+    EXPECT_EQ(motor1->wrench_sum.wrenchProp.torque(1), 0);
+    EXPECT_EQ(motor1->wrench_sum.wrenchProp.torque(2), 0);
 }

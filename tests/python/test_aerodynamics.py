@@ -471,7 +471,8 @@ class TestStdLinearAero:
         new_velocity[0] = 5  # Aircraft is going forward.
         new_velocity[2] = 5  # Aircraft is going forward.
         state.velocity_linear = new_velocity
-        airfoil.step_dynamics(state, Inertial(1), build_environment_data)
+        airfoil.update_local_state(state, build_environment_data)
+        airfoil.calc_model()
         w_1 = airfoil.wrench_aero
         assert np.abs(w_1.force[0]) < EPS  # No drag in the body frame.
         assert w_1.force[2] < 0  # Positive lift.
@@ -482,7 +483,8 @@ class TestStdLinearAero:
         new_velocity[0] = 5  # Aircraft is going forward.
         new_velocity[2] = -5  # Aircraft is going forward.
         state.velocity_linear = new_velocity
-        airfoil.step_dynamics(state, Inertial(1), build_environment_data)
+        airfoil.update_local_state(state, build_environment_data)
+        airfoil.calc_model()
         w_2 = airfoil.wrench_aero
         assert np.abs(w_2.force[0]) < EPS  # No drag in the body frame.
         assert w_2.force[2] > 0  # Negative lift.
@@ -493,7 +495,8 @@ class TestStdLinearAero:
         new_velocity[0] = -5  # Aircraft is going backwards.
         new_velocity[2] = -5  # Aircraft is going backwards.
         state.velocity_linear = new_velocity
-        airfoil.step_dynamics(state, Inertial(1), build_environment_data)
+        airfoil.update_local_state(state, build_environment_data)
+        airfoil.calc_model()
         w_3 = airfoil.wrench_aero
         assert np.abs(w_3.force[0]) < EPS  # No drag in the body frame.
         assert w_3.force[2] > 0  # Negative lift.
@@ -504,7 +507,8 @@ class TestStdLinearAero:
         new_velocity[0] = -5  # Aircraft is going backwards.
         new_velocity[2] = 5  # Aircraft is going backwards.
         state.velocity_linear = new_velocity
-        airfoil.step_dynamics(state, Inertial(1), build_environment_data)
+        airfoil.update_local_state(state, build_environment_data)
+        airfoil.calc_model()
         w_4 = airfoil.wrench_aero
         assert np.abs(w_4.force[0]) < EPS  # No drag in the body frame.
         assert w_4.force[2] < 0  # Positive lift.
@@ -715,7 +719,8 @@ class TestStdLinearAero:
         # Test nominal force generation
         airfoil = build_airfoil_simple
         airfoil.set_input(build_uav_inputs)
-        airfoil.step_dynamics(build_uav_state, Inertial(1), build_environment_data)
+        airfoil.update_local_state(state, build_environment_data)
+        airfoil.calc_model()
         forces = airfoil.wrench_aero.force
         tests = []
         tests.append(isinstance(forces, np.ndarray))
@@ -735,7 +740,8 @@ class TestStdLinearAero:
         # Test nominal moment generation
         airfoil = build_airfoil_simple
         airfoil.set_input(build_uav_inputs)
-        airfoil.step_dynamics(build_uav_state, Inertial(1), build_environment_data)
+        airfoil.update_local_state(state, build_environment_data)
+        airfoil.calc_model()
         moments = airfoil.wrench_aero.torque
         tests = []
         tests.append(isinstance(moments, np.ndarray))
@@ -753,7 +759,8 @@ class TestStdLinearAero:
         build_environment_data,
     ):
         airfoil = build_airfoil_simple
-        airfoil.step_dynamics(build_uav_state, Inertial(1), build_environment_data)
+        airfoil.update_local_state(state, build_environment_data)
+        airfoil.calc_model()
         wrench = airfoil.wrench_aero
         tests = []
         tests.append(isinstance(wrench, Wrench))
@@ -784,7 +791,8 @@ class TestStdLinearAero:
     #     # Get forces/moments in the airfoil frame
     #     inputs = np.array([0, 0, 0])
     #     airfoil.set_input(inputs)
-    #     airfoil.step_dynamics(build_uav_state, Inertial(1), build_environment_data)
+    # airfoil.update_local_state(state, build_environment_data)
+    # airfoil.calc_model()
     #     forces_a = airfoil.calc_forces(state, build_environment_data, inputs)
     #     moments_a = airfoil.calc_moments(state, build_environment_data, inputs)
     #     # Get wrench in body frame
@@ -819,13 +827,15 @@ class TestStdLinearAero:
         new_velocity = np.array([20, 0, 0])
         new_velocity[2] = 5  # Aircraft is descending with 0 pitch.
         state.velocity_linear = new_velocity
-        airfoil.step_dynamics(state, Inertial(1), build_environment_data)
+        airfoil.update_local_state(state, build_environment_data)
+        airfoil.calc_model()
         moments = airfoil.wrench_aero.torque
         assert moments[1] < 0  # Pitch moment is negative
 
         new_velocity[2] = -5  # Aircraft is ascending with 0 pitch.
         state.velocity_linear = new_velocity
-        airfoil.step_dynamics(state, Inertial(1), build_environment_data)
+        airfoil.update_local_state(state, build_environment_data)
+        airfoil.calc_model()
         moments = airfoil.wrench_aero.torque
         assert moments[1] > 0  # Pitch moment is positive
 
@@ -843,12 +853,14 @@ class TestStdLinearAero:
         new_velocity[0] = -20
         new_velocity[2] = 5  # Aircraft is descending with 0 pitch.
         state.velocity_linear = new_velocity
-        airfoil.step_dynamics(state, Inertial(1), build_environment_data)
+        airfoil.update_local_state(state, build_environment_data)
+        airfoil.calc_model()
         moments = airfoil.wrench_aero.torque
         assert moments[1] < 0  # Pitch moment is negative
 
         new_velocity[2] = -5  # Aircraft is ascending with 0 pitch.
         state.velocity_linear = new_velocity
-        airfoil.step_dynamics(state, Inertial(1), build_environment_data)
+        airfoil.update_local_state(state, build_environment_data)
+        airfoil.calc_model()
         moments = airfoil.wrench_aero.torque
         assert moments[1] > 0  # Pitch moment is positive

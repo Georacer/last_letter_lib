@@ -56,7 +56,7 @@ void ElectricEng::update_parameters()
 	propPowerPoly = buildPolynomial(propPowerPolyConfig);
 }
 
-void ElectricEng::pre_propagation(SimState_t states, Inertial inertial, Environment_t environment)
+void ElectricEng::pre_propagation(SimState_t states, Environment_t environment)
 {
 	rho = environment.density;
 
@@ -88,7 +88,7 @@ void ElectricEng::post_propagation()
 	// parentObj->states.rotorspeed[0]=std::fabs(omega); // Write engine speed to states message
 }
 
-void ElectricEng::calc_wrench(SimState_t /* states */, Inertial /* inertial */, Environment_t /* environment */)
+void ElectricEng::calc_wrench(SimState_t /* states */, Environment_t /* environment */)
 {
 	double Ei = std::fabs(omega) / 2 / M_PI / Kv;
 	double Im = (Cells * 4.0 * inputMotor - Ei) / (Rs * inputMotor + Rm);
@@ -118,14 +118,14 @@ void ElectricEng::calc_wrench(SimState_t /* states */, Inertial /* inertial */, 
 		forceX = 0;
 		torqueX = 0;
 	} // To avoid aircraft rolling and turning on the ground while throttle is off
-	wrenchProp.force = Vector3d(forceX, forceY, forceZ);
-	wrenchProp.torque = Vector3d(torqueX, torqueY, torqueZ);
-	if (!wrenchProp.force.allFinite())
+	wrench_sum.wrenchProp.force = Vector3d(forceX, forceY, forceZ);
+	wrench_sum.wrenchProp.torque = Vector3d(torqueX, torqueY, torqueZ);
+	if (!wrench_sum.wrenchProp.force.allFinite())
 	{
 		throw runtime_error("propulsion.cpp: State NaN in wrenchProp.force");
 	}
 
-	if (!wrenchProp.torque.allFinite())
+	if (!wrench_sum.wrenchProp.torque.allFinite())
 	{
 		throw runtime_error("propulsion.cpp: State NaN in wrenchProp.torque");
 	}
@@ -179,7 +179,7 @@ void ElectricEng2::update_parameters()
 	propPowerPoly = buildPolynomial(propPowerPolyConfig);
 }
 
-void ElectricEng2::pre_propagation(SimState_t states, Inertial inertial, Environment_t environment)
+void ElectricEng2::pre_propagation(SimState_t states, Environment_t environment)
 {
 	rho = environment.density;
 
@@ -212,7 +212,7 @@ void ElectricEng2::post_propagation()
 	// parentObj->states.rotorspeed[0]=std::fabs(omega); // Write engine speed to states message
 }
 
-void ElectricEng2::calc_wrench(SimState_t /* states */, Inertial /* inertial */, Environment_t /* environment */)
+void ElectricEng2::calc_wrench(SimState_t /* states */, Environment_t /* environment */)
 {
 	double advRatio = normalWind / (std::fabs(omega) / 2.0 / M_PI + 0.001) / propDiam; // Convert advance ratio to dimensionless units, not 1/rad
 	double propPower = propPowerPoly->evaluate(advRatio) * rho * pow(std::fabs(omega) / 2.0 / M_PI, 3) * pow(propDiam, 5);
@@ -245,14 +245,14 @@ void ElectricEng2::calc_wrench(SimState_t /* states */, Inertial /* inertial */,
 		torqueX = 0;
 	} // To avoid aircraft rolling and turning on the ground while throttle is off
 
-	wrenchProp.force = Vector3d(forceX, forceY, forceZ);
-	wrenchProp.torque = Vector3d(torqueX, torqueY, torqueZ);
-	if (!wrenchProp.force.allFinite())
+	wrench_sum.wrenchProp.force = Vector3d(forceX, forceY, forceZ);
+	wrench_sum.wrenchProp.torque = Vector3d(torqueX, torqueY, torqueZ);
+	if (!wrench_sum.wrenchProp.force.allFinite())
 	{
 		throw runtime_error("propulsion.cpp: State NaN in wrenchProp.force");
 	}
 
-	if (!wrenchProp.torque.allFinite())
+	if (!wrench_sum.wrenchProp.torque.allFinite())
 	{
 		throw runtime_error("propulsion.cpp: State NaN in wrenchProp.torque");
 	}

@@ -4,11 +4,12 @@
 #include <boost/array.hpp>
 #include <boost/numeric/odeint.hpp>
 
+#include <last_letter_lib/environment.hpp>
+#include <last_letter_lib/gravity.hpp>
 #include <last_letter_lib/math_utils.hpp>
 #include <last_letter_lib/prog_utils.hpp>
 #include <last_letter_lib/uav_utils.hpp>
 
-using Eigen::Quaterniond;
 using Eigen::Vector3d;
 using namespace boost::numeric;
 
@@ -22,9 +23,8 @@ namespace systems {
 class Component : public Parametrized
 {
 public:
-    Component(string name) : Parametrized(name)
-    {
-    }
+    Component(string name) : Parametrized(name) {};
+
     void initialize_parameters() override
     {
         set_param("pose/position/x", 0.0, false);
@@ -38,11 +38,23 @@ public:
         set_param("inertial/tensor/j_xx", 0.0, false);
         set_param("inertial/tensor/j_yy", 0.0, false);
         set_param("inertial/tensor/j_zz", 0.0, false);
+        set_param("world/gravity/type", 0.0, false);
     }
     void update_parameters() override;
+    // Update the local state given the aircraft state.
+    // body_state is describing the body frame in the NED coordinate system.
+    // environment is describing the wind in the NED coordinate system.
+    void update_local_state(const SimState_t body_state, const Environment_t environment);
+    virtual void calc_model(); // Perform any model calculations.
 
-    Pose pose;
+    WrenchSum_t wrench_sum; // The generated wrench in the local frame.
     Inertial inertial;
+    SimState_t local_state; // W.r.t. Earth. This also contains rotor speeds, which is bloat, but we'll use it for now.
+    Environment_t local_environment;
+
+private:
+    Pose relative_pose; // The pose of this component w.r.t. the airframe datum. Its quaternion is q_bc (component->body)
+    GravityModel *gravity{nullptr};
 };
 
 typedef std::vector<double> stateType;

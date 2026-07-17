@@ -14,10 +14,10 @@ ThrusterSimple::ThrusterSimple(string name_p)
 	omega = 0.0;
 }
 
-void ThrusterSimple::calc_wrench(SimState_t /*states*/, Inertial /*inertial*/, Environment_t /*environment*/)
+void ThrusterSimple::calc_wrench(SimState_t /*states*/, Environment_t /*environment*/)
 {
-    wrenchProp.force.x() = (thrustMax - thrustMin)*inputMotor + thrustMin;
-    wrenchProp.torque.x() = -torque_sign()*((torqueMax - torqueMin)*inputMotor + torqueMin);
+    wrench_sum.wrenchProp.force.x() = (thrustMax - thrustMin)*inputMotor + thrustMin;
+    wrench_sum.wrenchProp.torque.x() = -torque_sign()*((torqueMax - torqueMin)*inputMotor + torqueMin);
 }
 
 } // namespace propulsion

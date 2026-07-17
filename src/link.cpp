@@ -136,7 +136,7 @@ namespace last_letter_lib
         //           << std::endl;
         rotateState(state);
         rotateEnvironment(environment);
-        stepModelDynamics(localState_, inertial, localEnvironment_);
+        stepModelDynamics(localState_, localEnvironment_);
         wrenchLinkFrame = getWrench(localEnvironment_);
         if (!wrenchLinkFrame.force.allFinite())
         {
@@ -187,14 +187,15 @@ namespace last_letter_lib
         aerodynamics->setInputPwm(input);
     }
 
-    void LinkAerodynamic::stepModelDynamics(SimState_t state, Inertial inertial, Environment_t environment)
+    void LinkAerodynamic::stepModelDynamics(SimState_t state, Environment_t environment)
     {
-        aerodynamics->stepDynamics(state, inertial, environment);
+        aerodynamics->update_local_state(state, environment);
+        aerodynamics->calc_model();
     }
 
     Wrench_t LinkAerodynamic::getWrench(Environment_t /*environment*/)
     {
-        return aerodynamics->wrenchAero;
+        return aerodynamics->wrench_sum.wrenchAero;
     }
 
     // Propulsion link methods
@@ -222,7 +223,7 @@ namespace last_letter_lib
 
     void LinkPropulsion::passWorldParametersToModel(ParameterManager config)
     {
-        propulsion->set_param("deltaT", config.get<double>("deltaT"));
+        propulsion->params_.register_child_mngr(config);
         propulsion->update_parameters();
     }
 
@@ -236,15 +237,16 @@ namespace last_letter_lib
         propulsion->setInputPwm(input);
     }
 
-    void LinkPropulsion::stepModelDynamics(SimState_t state, Inertial inertial, Environment_t environment)
+    void LinkPropulsion::stepModelDynamics(SimState_t state, Environment_t environment)
     {
-        propulsion->step_thruster(state, inertial, environment);
+        propulsion->update_local_state(state, environment);
+        propulsion->calc_model();
         // updatePropTF();
     }
 
     Wrench_t LinkPropulsion::getWrench(Environment_t)
     {
-        return propulsion->wrenchProp;
+        return propulsion->wrench_sum.wrenchProp;
     }
 
     // void LinkPropulsion::updatePropTF()
@@ -290,7 +292,7 @@ namespace last_letter_lib
         groundReaction_->setInputPwm(input);
     }
 
-    void LinkGroundReaction::stepModelDynamics(SimState_t, Inertial, Environment_t)
+    void LinkGroundReaction::stepModelDynamics(SimState_t, Environment_t)
     {
         throw runtime_error("Do not use this interface. Use stepModelDynamics(state, wrenchSum) instead.");
     }

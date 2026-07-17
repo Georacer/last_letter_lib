@@ -39,7 +39,6 @@ public:
     double deltaa_max, deltae_max, deltar_max; // Control inputs and maximum surface deflections
     double inputAileron{0}, inputElevator{0}, inputRudder{0};
     int chanAileron, chanElevator, chanRudder;
-    Wrench_t wrenchAero;
 
     ////////////
     // Functions
@@ -50,9 +49,7 @@ public:
     void update_parameters() override;
     void setInput(Input input);
     void setInputPwm(InputPwm_t input);
-    void stepDynamics(const SimState_t states, const Inertial inertial, const Environment_t environment); // perform one step in the aerodynamics
-    virtual void getForce(Environment_t environmet) = 0;
-    virtual void getTorque(Environment_t environment) = 0;
+    void calc_model() override; // perform one step in the aerodynamics
 };
 
 ///////////////////////////////////////////
@@ -63,8 +60,6 @@ class NoAerodynamics : public Aerodynamics
 public:
     NoAerodynamics(string name) : Aerodynamics(name) {};
     ~NoAerodynamics() {};
-    void getForce(Environment_t environment);
-    void getTorque(Environment_t environment);
 };
 
 ////////////////////////////////////////////////////////
@@ -77,6 +72,12 @@ public:
     ~StdLinearAero() {};
     void initialize_parameters() override;
     void update_parameters() override;
+    void calc_model() override;
+    // Calculate lift coefficient from alpha
+    virtual double liftCoeff(double);
+    // Calculate drag coefficient from alpha and beta
+    double dragCoeff(double, double);
+
     double rho, g;
     double c_lift_q, c_lift_deltae, c_drag_q, c_drag_deltae;
     double c, b, s;
@@ -86,12 +87,6 @@ public:
     double c_n_0, c_n_b, c_n_p, c_n_r, c_n_deltaa, c_n_deltar;
     double M, alpha0, c_lift_0, c_lift_a0;
     double c_drag_p, oswald, AR;
-    void getForce(Environment_t environment) override;
-    void getTorque(Environment_t environment) override;
-    // Calculate lift coefficient from alpha
-    virtual double liftCoeff(double);
-    // Calculate drag coefficient from alpha and beta
-    double dragCoeff(double, double);
 private:
     virtual double _dragCoeff(double, double);
 };
@@ -106,6 +101,7 @@ public:
     ~SimpleDrag() {};
     void initialize_parameters() override;
     void update_parameters() override;
+
     double c_drag_a;
     // Calculate drag coefficient from alpha
 private:
@@ -122,6 +118,7 @@ public:
     ~PolynomialAero() {};
     void initialize_parameters() override;
     void update_parameters() override;
+
     math_utils::Polynomial *liftCoeffPoly;
     math_utils::Polynomial *dragCoeffPoly;
 
@@ -131,5 +128,6 @@ private:
 };
 
 Aerodynamics *buildAerodynamics(ParameterManager config);
+
 } // namespace aerodynamics
 } // namespace last_letter_lib

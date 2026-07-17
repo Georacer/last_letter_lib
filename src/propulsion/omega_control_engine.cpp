@@ -41,7 +41,7 @@ void EngOmegaControl::post_propagation()
 }
 
 // Calculate propulsion forces
-void EngOmegaControl::calc_wrench(SimState_t /* states */, Inertial /* inertial */, Environment_t environment)
+void EngOmegaControl::calc_wrench(SimState_t /* states */, Environment_t environment)
 {
 	rho = environment.density;
 	double eps = 1e-4;
@@ -50,11 +50,11 @@ void EngOmegaControl::calc_wrench(SimState_t /* states */, Inertial /* inertial 
 	torque = power_poly->evaluate(advRatio) /2/M_PI * rho * pow(std::fabs(omega)/2.0/M_PI,2) * pow(prop_diam,5);
 	thrust = thrust_poly->evaluate(advRatio) * rho * pow(std::fabs(omega)/2.0/M_PI,2) * pow(prop_diam,4);
 
-	wrenchProp.force = Vector3d(thrust, 0, 0);
-	if (!wrenchProp.force.allFinite()) {throw runtime_error("propulsion.cpp/EngOmegaControl: State NaN in wrenchProp.force");}
+	wrench_sum.wrenchProp.force = Vector3d(thrust, 0, 0);
+	if (!wrench_sum.wrenchProp.force.allFinite()) {throw runtime_error("propulsion.cpp/EngOmegaControl: State NaN in wrenchProp.force");}
 
-	wrenchProp.torque = Vector3d(-rotationDir * torque, 0, 0);
-	if (!wrenchProp.torque.allFinite()) {throw runtime_error("propulsion.cpp/EngOmegaControl: State NaN in wrenchProp.torque");}
+	wrench_sum.wrenchProp.torque = Vector3d(-rotationDir * torque, 0, 0);
+	if (!wrench_sum.wrenchProp.torque.allFinite()) {throw runtime_error("propulsion.cpp/EngOmegaControl: State NaN in wrenchProp.torque");}
 }
 
 } // namespace propulsion

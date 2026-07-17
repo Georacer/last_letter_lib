@@ -37,6 +37,7 @@ using last_letter_lib::uav_utils::Input;
 using last_letter_lib::uav_utils::Pose;
 using last_letter_lib::uav_utils::SimState_t;
 using last_letter_lib::uav_utils::Wrench_t;
+using last_letter_lib::uav_utils::WrenchSum_t;
 using namespace last_letter_lib::aerodynamics;
 using namespace last_letter_lib::propulsion;
 
@@ -200,6 +201,13 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def_readwrite("force", &Wrench_t::force)
         .def_readwrite("torque", &Wrench_t::torque)
         .def("to_array", &Wrench_t::to_array);
+    py::class_<WrenchSum_t>(m_uav_utils, "WrenchSum")
+        .def(py::init())
+        .def_readwrite("wrench_grav", &WrenchSum_t::wrenchGrav)
+        .def_readwrite("wrench_aero", &WrenchSum_t::wrenchAero)
+        .def_readwrite("wrench_prop", &WrenchSum_t::wrenchProp)
+        .def_readwrite("wrench_ground", &WrenchSum_t::wrenchGround)
+        .def_readwrite("wrench_external", &WrenchSum_t::wrenchExternal);
     py::class_<Airdata>(m_uav_utils, "Airdata")
         .def(py::init<double, double, double>(), py::arg("airspeed") = 0, py::arg("alpha") = 0, py::arg("beta") = 0)
         .def("init_from_velocity", &Airdata::init_from_velocity, py::arg("vel_body"), py::arg("vel_wind") = Vector3d())
@@ -265,21 +273,22 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
     py::class_<Component, Parametrized>(m_systems, "Component", py::multiple_inheritance()) // Declaring as multiple_inheritance, because Parametrized is a virtual base of Component.
         .def(py::init<string>(), py::arg("name"))
         .def("update_parameters", &Component::update_parameters)
-        .def_readwrite("pose", &Component::pose)
-        .def_readwrite("inertial", &Component::inertial);
+        .def("update_local_state", &Component::update_local_state)
+        .def("calc_model", &Component::calc_model)
+        .def_readonly("wrench_sum", &Component::wrench_sum)
+        .def_readonly("local_state", &Component::local_state)
+        .def_readonly("inertial", &Component::inertial);
 
     auto m_gravity = m.def_submodule("cpp_gravity", "last_letter_lib gravity submodule");
     // TODO: Attempt to bind pure virtual GravityModel.
     py::class_<GravitySimple>(m_gravity, "GravitySimple")
         .def(py::init())
         .def("calc_gravity", &GravitySimple::calcGravity)
-        .def("get_force", &GravitySimple::getForce)
-        .def("get_torque", &GravitySimple::getTorque);
+        .def("get_wrench", &GravitySimple::getWrench);
     py::class_<GravityClassic>(m_gravity, "GravityClassic")
         .def(py::init())
         .def("calc_gravity", &GravityClassic::calcGravity)
-        .def("get_force", &GravityClassic::getForce)
-        .def("get_torque", &GravityClassic::getTorque);
+        .def("get_wrench", &GravitySimple::getWrench);
 
     auto m_environment = m.def_submodule("cpp_environment", "last_letter_lib environment submodule");
     py::class_<Environment_t>(m_environment, "EnvironmentData")
@@ -299,8 +308,7 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
     m_aerodynamics.def("calc_bank_from_radius", &calc_bank_from_radius, "Calculate the required bank angle to sustain a turn");
     py::class_<Aerodynamics, Component>(m_aerodynamics, "Aerodynamics")
         .def("set_input", &Aerodynamics::setInput)
-        .def("step_dynamics", &Aerodynamics::stepDynamics)
-        .def_readonly("wrench_aero", &Aerodynamics::wrenchAero);
+        .def("calc_model", &Aerodynamics::calc_model);
     py::class_<NoAerodynamics, Aerodynamics>(m_aerodynamics, "NoAerodynamics")
         .def(py::init<string>(), py::arg("name"));
     py::class_<StdLinearAero, Aerodynamics>(m_aerodynamics, "StdLinearAero")
@@ -331,49 +339,48 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def("update_parameters", &Thruster::update_parameters)
         .def("set_input", &Thruster::setInput)
         .def("set_input_pwm", &Thruster::setInputPwm)
-        .def("step_thruster", &Thruster::step_thruster)
-        .def_readonly("omega", &Thruster::omega)
-        .def_readonly("wrenchProp", &Thruster::wrenchProp);
+        .def("calc_model", &Thruster::calc_model)
+        .def_readonly("omega", &Thruster::omega);
     py::class_<NoEngine, Thruster>(m_propulsion, "NoEngine")
         .def(py::init<string>(), py::arg("name"))
         .def("update_parameters", &NoEngine::update_parameters)
         .def("set_input", &NoEngine::setInput)
         .def("set_input_pwm", &NoEngine::setInputPwm)
-        .def("step_thruster", &NoEngine::step_thruster);
+        .def("calc_model", &NoEngine::calc_model);
     py::class_<ThrusterSimple, Thruster>(m_propulsion, "ThrusterSimple")
         .def(py::init<string>(), py::arg("name"))
         .def("update_parameters", &ThrusterSimple::update_parameters)
         .def("set_input", &ThrusterSimple::setInput)
         .def("set_input_pwm", &ThrusterSimple::setInputPwm)
-        .def("step_thruster", &ThrusterSimple::step_thruster);
+        .def("calc_model", &ThrusterSimple::calc_model);
     py::class_<EngBeard, Thruster>(m_propulsion, "EngBeard")
         .def(py::init<string>(), py::arg("name"))
         .def("update_parameters", &EngBeard::update_parameters)
         .def("set_input", &EngBeard::setInput)
         .def("set_input_pwm", &EngBeard::setInputPwm)
-        .def("step_thruster", &EngBeard::step_thruster);
+        .def("calc_model", &EngBeard::calc_model);
     py::class_<ElectricEng, Thruster>(m_propulsion, "ElectricEng")
         .def(py::init<string>(), py::arg("name"))
         .def("update_parameters", &ElectricEng::update_parameters)
         .def("set_input", &ElectricEng::setInput)
         .def("set_input_pwm", &ElectricEng::setInputPwm)
-        .def("step_thruster", &ElectricEng::step_thruster);
+        .def("calc_model", &ElectricEng::calc_model);
     py::class_<ElectricEng2, Thruster>(m_propulsion, "ElectricEng2")
         .def(py::init<string>(), py::arg("name"))
         .def("update_parameters", &ElectricEng2::update_parameters)
         .def("set_input", &ElectricEng2::setInput)
         .def("set_input_pwm", &ElectricEng2::setInputPwm)
-        .def("step_thruster", &ElectricEng2::step_thruster);
+        .def("calc_model", &ElectricEng2::calc_model);
     py::class_<EngOmegaControl, Thruster>(m_propulsion, "EngOmegaControl")
         .def(py::init<string>(), py::arg("name"))
         .def("update_parameters", &EngOmegaControl::update_parameters)
         .def("set_input", &EngOmegaControl::setInput)
         .def("set_input_pwm", &EngOmegaControl::setInputPwm)
-        .def("step_thruster", &EngOmegaControl::step_thruster);
+        .def("calc_model", &EngOmegaControl::calc_model);
     py::class_<PistonEng, Thruster>(m_propulsion, "PistonEng")
         .def(py::init<string>(), py::arg("name"))
         .def("update_parameters", &PistonEng::update_parameters)
         .def("set_input", &PistonEng::setInput)
         .def("set_input_pwm", &PistonEng::setInputPwm)
-        .def("step_thruster", &PistonEng::step_thruster);
+        .def("calc_model", &PistonEng::calc_model);
 }

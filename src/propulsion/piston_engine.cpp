@@ -53,7 +53,7 @@ void PistonEng::update_parameters()
 	propPowerPoly = buildPolynomial(propPowerPolyConfig);
 }
 
-void PistonEng::pre_propagation(SimState_t, Inertial, Environment_t environment)
+void PistonEng::pre_propagation(SimState_t, Environment_t environment)
 {
 	rho = environment.density; // Read current air density
 
@@ -83,7 +83,7 @@ void PistonEng::post_propagation()
     omega = rotationDir * x[0];
 }
 
-void PistonEng::calc_wrench(SimState_t /* states */, Inertial /* inertial */, Environment_t environment)
+void PistonEng::calc_wrench(SimState_t /* states */, Environment_t environment)
 {
 	rho = environment.density; // Read current air density
 
@@ -113,10 +113,10 @@ void PistonEng::calc_wrench(SimState_t /* states */, Inertial /* inertial */, En
 	torqueY = 0.0;
 	torqueZ = 0.0;
 
-	wrenchProp.torque = Vector3d(forceX, forceY, forceZ);
-	wrenchProp.torque = Vector3d(torqueX, torqueY, torqueZ);
-	if (!wrenchProp.force.allFinite()) {throw runtime_error("propulsion.cpp: State NaN in wrenchProp.force");}
-	if (!wrenchProp.torque.allFinite()) {throw runtime_error("propulsion.cpp: State NaN in wrenchProp.torque");}
+	wrench_sum.wrenchProp.torque = Vector3d(forceX, forceY, forceZ);
+	wrench_sum.wrenchProp.torque = Vector3d(torqueX, torqueY, torqueZ);
+	if (!wrench_sum.wrenchProp.force.allFinite()) {throw runtime_error("propulsion.cpp: State NaN in wrenchProp.force");}
+	if (!wrench_sum.wrenchProp.torque.allFinite()) {throw runtime_error("propulsion.cpp: State NaN in wrenchProp.torque");}
 }
 
 } // namespace propulsion

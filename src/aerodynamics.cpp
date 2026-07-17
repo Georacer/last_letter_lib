@@ -57,6 +57,8 @@ void Aerodynamics::initialize_parameters()
 
 void Aerodynamics::update_parameters()
 {
+    Component::update_parameters();
+
     chanAileron = get_param<int>("chanAileron");
     chanElevator = get_param<int>("chanElevator");
     chanRudder = get_param<int>("chanRudder");
@@ -86,48 +88,21 @@ void Aerodynamics::setInputPwm(InputPwm_t p_input)
 }
 
 // One step in the physics engine
-void Aerodynamics::stepDynamics(const SimState_t states, const Inertial /*inertial*/, const Environment_t environment)
+void Aerodynamics::calc_model()
 {
-    p = states.velocity.angular(0);
-    q = states.velocity.angular(1);
-    r = states.velocity.angular(2);
+    // Perform gravity calculations.
+    Component::calc_model();
 
-    // std::cout << "received states and wind: \n"
-    // 		  << states.velocity.linear << "\n"
-    // 		  << environment.wind << "\n"
-    // 		  << std::endl;
+    p = local_state.velocity.angular(0);
+    q = local_state.velocity.angular(1);
+    r = local_state.velocity.angular(2);
 
-    airdata.init_from_velocity(states.velocity.linear, environment.wind);
+    airdata.init_from_velocity(local_state.velocity.linear, local_environment.wind);
     // Calculate the new, relative air data
     airdata.airspeed = airdata.airspeed;
     airdata.alpha = airdata.alpha;
     airdata.beta = airdata.beta;
 
-    // std::cout << "Calculated airdata: \n"
-    // 		  << airdata.airspeed << "\n"
-    // 		  << airdata.alpha << "\n"
-    // 		  << airdata.beta << "\n"
-    // 		  << std::endl;
-
-    getForce(environment);
-    getTorque(environment);
-
-    // std::cout << "Calculated local aeroforce: \n"
-    // 		  << wrenchAero.force << std::endl;
-}
-
-/////////////////////////////
-// Define NoAerodynamics class
-/////////////////////////////
-
-// Force calculation function
-void NoAerodynamics::getForce(Environment_t /* environment */)
-{
-}
-
-// Torque calculation function
-void NoAerodynamics::getTorque(Environment_t /* environment */)
-{
 }
 
 /////////////////////////////
@@ -218,11 +193,12 @@ void StdLinearAero::update_parameters()
     alpha0 = get_param<double>("alpha_stall");
 }
 
-// Force calculation function
-void StdLinearAero::getForce(Environment_t environment)
+void StdLinearAero::calc_model()
 {
+    Aerodynamics::calc_model();
+
     // Read air density
-    rho = environment.density;
+    rho = local_environment.density;
 
     // request lift and drag alpha-coefficients from the corresponding functions
     double c_lift_a = liftCoeff(airdata.alpha);
@@ -256,17 +232,9 @@ void StdLinearAero::getForce(Environment_t environment)
 
     // std::cout << "drag force: " << ax << std::endl;
 
-    wrenchAero.force = Vector3d(ax, ay, az);
-}
-
-// Torque calculation function
-void StdLinearAero::getTorque(Environment_t environment)
-{
-    // Read air density
-    rho = environment.density;
+    wrench_sum.wrenchAero.force = Vector3d(ax, ay, az);
 
     // calculate aerodynamic torque
-    double qbar = calc_dynamic_pressure(rho, airdata.airspeed) * s; // Calculate dynamic pressure
     double la, na, ma;
     if (airdata.airspeed == 0)
     {
@@ -281,9 +249,7 @@ void StdLinearAero::getTorque(Environment_t environment)
         na = qbar * b * (c_n_0 + c_n_b * airdata.beta + c_n_p * b * p / (2 * airdata.airspeed) + c_n_r * b * r / (2 * airdata.airspeed) + c_n_deltaa * inputAileron + c_n_deltar * inputRudder);
     }
 
-    wrenchAero.torque = Vector3d(la, ma, na);
-
-    // Removing torque calculation, because the CG effect is now being taken into account in the 'rotateTorque' function
+    wrench_sum.wrenchAero.torque = Vector3d(la, ma, na);
 }
 
 //////////////////////////
