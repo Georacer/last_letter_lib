@@ -25,16 +25,16 @@ namespace programming_utils {
 //     YAML::Node ground;
 // };
 
-typedef enum
-{
-    PARAM_TYPE_WORLD = 0,
-    PARAM_TYPE_ENV,
-    PARAM_TYPE_INIT,
-    PARAM_TYPE_INERTIAL,
-    PARAM_TYPE_AERO,
-    PARAM_TYPE_PROP,
-    PARAM_TYPE_GROUND
-} ParamType_t;
+// typedef enum
+// {
+//     PARAM_TYPE_WORLD = 0,
+//     PARAM_TYPE_ENV,
+//     PARAM_TYPE_INIT,
+//     PARAM_TYPE_INERTIAL,
+//     PARAM_TYPE_AERO,
+//     PARAM_TYPE_PROP,
+//     PARAM_TYPE_GROUND
+// } ParamType_t;
 
 // Parameter functions
 //////////////////////
@@ -253,14 +253,14 @@ public:
     Parametrized(string name_p);
     virtual ~Parametrized() = default;
     // Initialize parameters, read from custom values and set attribute values.
-    void initialize(ParameterManager params_p = ParameterManager("temp_node"));
+    virtual void initialize(ParameterManager params_p = ParameterManager("temp_node"));
     // Initializing object from YAML stream.
-    void initialize(const std::string yaml_str);
+    virtual void initialize(const std::string yaml_str);
     // Create your class-specific parameters here, along with their defaults.
     virtual void initialize_parameters(){};
     // Assign values from the parameter dictionary to the local variables here.
     virtual void update_parameters() = 0;
-    void load_parameters(ParameterManager params_p) {params_.load_parameters(params_p);} // Load from a ParameterManager.
+    virtual void load_parameters(ParameterManager params_p) {params_.load_parameters(params_p);} // Load from a ParameterManager.
     // Register another Parametrized object as a child, in order to access and manage their parameters.
     void add_child(Parametrized &c) { params_.register_child_mngr(c.params_); }
     template <typename T>

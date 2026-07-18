@@ -59,11 +59,11 @@ namespace last_letter_lib
 		/////////////
 		// Constructor
 		// EnvironmentModel(ParameterManager envConfig, ParameterManager worldConfig);
-		EnvironmentModel() : Parametrized("environment") {};
+		EnvironmentModel() : Parametrized("env") {};
 
 		void initialize_parameters() override
 		{
-			set_param<double>("deltaT", 0.01, false);
+			set_param<double>("world/deltaT", 0.01, false);
 			set_param<bool>("Dryden/use", false, false);
 			// initialize atmosphere stuff
 			set_param<double>("groundTemp", 25, false);

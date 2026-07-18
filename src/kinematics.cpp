@@ -1,218 +1,221 @@
 #include "last_letter_lib/kinematics.hpp"
 
-namespace last_letter_lib
+namespace last_letter_lib {
+
+//////////////////////////
+// Define Kinematics class
+//////////////////////////
+
+//////////////////
+// Class Destructor
+Kinematics::~Kinematics()
 {
+    if (integrator != nullptr) {
+        delete integrator;
+    }
+}
 
-	//////////////////////////
-	// Define Kinematics class
-	//////////////////////////
+void Kinematics::initialize_parameters()
+{
+    set_param("world/deltaT", 2.0, false);
+    set_param("inertial/m", 2.0, false);
+    set_param("inertial/j_x", 0.8244, false);
+    set_param("inertial/j_y", 1.135, false);
+    set_param("inertial/j_z", 1.759, false);
+    set_param("inertial/j_xz", 0.1204, false);
+}
 
-	///////////////////
-	// Class Constructor
-	Kinematics::Kinematics(ParameterManager inertialConfig, ParameterManager worldConfig)
-	{
-		readParametersInertial(inertialConfig);
-		readParametersWorld(worldConfig);
+void Kinematics::update_parameters()
+{
+    dt = get_param<double>("world/deltaT");
 
-		// Build the integrator object
-		integrator = buildIntegrator(worldConfig);
-	}
+    double mass = get_param<double>("inertial/m");
+    double j_x, j_y, j_z, j_xz;
+    j_x = get_param<double>("inertial/j_x");
+    j_y = get_param<double>("inertial/j_y");
+    j_z = get_param<double>("inertial/j_z");
+    j_xz = get_param<double>("inertial/j_xz");
+    std::vector<double> J = {
+        j_x, 0.0, -j_xz,
+        0.0, j_y, 0.0,
+        -j_xz, 0.0, j_z};
+    inertial = Inertial(mass, J);
 
-	//////////////////
-	// Class Destructor
-	Kinematics::~Kinematics()
-	{
-		delete integrator;
-	}
+    int res = math_utils::is_pos_def(inertial.tensor);
+    if (!(res == 0))
+    {
+        switch (res)
+        {
+        case -1:
+            throw runtime_error("Matrix of inertia is singular");
+            break;
+        case -2:
+            throw runtime_error("Matrix of inertia is not positive definite");
+            break;
+        default:
+            break;
+        }
+    }
 
-	////////////////////////////////////////
-	// Read and register world parameters
-	void Kinematics::readParametersWorld(ParameterManager worldConfig)
-	{
-		dt = worldConfig.get<double>("deltaT");
-	}
+}
 
-	////////////////////////////////////////
-	// Read and register inertial parameters
-	void Kinematics::readParametersInertial(ParameterManager inertialConfig)
-	{
-		// Calculate inertia matrix...
+void Kinematics::initialize(ParameterManager config)
+{
+    Parametrized::initialize(config);
 
-		double mass = inertialConfig.get<double>("m");
-		double j_x, j_y, j_z, j_xz;
-		j_x = inertialConfig.get<double>("j_x");
-		j_y = inertialConfig.get<double>("j_y");
-		j_z = inertialConfig.get<double>("j_z");
-		j_xz = inertialConfig.get<double>("j_xz");
-		std::vector<double> J = {
-			j_x, 0.0, -j_xz,
-			0.0, j_y, 0.0,
-			-j_xz, 0.0, j_z};
-		inertial = Inertial(mass, J);
+    // Build the integrator object
+    if (integrator == nullptr) {
+        integrator = buildIntegrator(config.filter("world/"));
+    }
+}
 
-		int res = math_utils::is_pos_def(inertial.tensor);
-		if (!(res == 0))
-		{
-			switch (res)
-			{
-			case -1:
-				throw runtime_error("Matrix of inertia is singular");
-				break;
-			case -2:
-				throw runtime_error("Matrix of inertia is not positive definite");
-				break;
-			default:
-				break;
-			}
-		}
-	}
+///////////////////////////////
+// State derivatives calculation
+void Kinematics::calcDerivatives(SimState_t states, Wrench_t inpWrench)
+{
+    // variable declaration
+    // create position derivatives from earth velocity
+    stateDot.posDot = states.pose.orientation * states.velocity.linear;
+    if (!stateDot.posDot.allFinite())
+    {
+        throw runtime_error("NaN member in position derivative vector");
+    }
 
-	///////////////////////////////
-	// State derivatives calculation
-	void Kinematics::calcDerivatives(SimState_t states, Wrench_t inpWrench)
-	{
-		// variable declaration
-		// create position derivatives from earth velocity
-		stateDot.posDot = states.pose.orientation * states.velocity.linear;
-		if (!stateDot.posDot.allFinite())
-		{
-			throw runtime_error("NaN member in position derivative vector");
-		}
+    // create body velocity derivatives from acceleration, angular rotation and body velocity
+    Vector3d linearAcc = (1.0 / inertial.mass) * inpWrench.force;
+    if (!linearAcc.allFinite())
+    {
+        throw runtime_error("NaN member in linear acceleration vector");
+    }
+    Vector3d corriolisAcc = -states.velocity.angular.cross(states.velocity.linear);
+    if (!corriolisAcc.allFinite())
+    {
+        throw runtime_error("NaN member in corriolis acceleration vector");
+    }
+    stateDot.speedDot = linearAcc + corriolisAcc;
 
-		// create body velocity derivatives from acceleration, angular rotation and body velocity
-		Vector3d linearAcc = (1.0 / inertial.mass) * inpWrench.force;
-		if (!linearAcc.allFinite())
-		{
-			throw runtime_error("NaN member in linear acceleration vector");
-		}
-		Vector3d corriolisAcc = -states.velocity.angular.cross(states.velocity.linear);
-		if (!corriolisAcc.allFinite())
-		{
-			throw runtime_error("NaN member in corriolis acceleration vector");
-		}
-		stateDot.speedDot = linearAcc + corriolisAcc;
+    // create angular derivatives quaternion from angular rates
+    // ATTENTION! This quaternion derivative equation refers to the body-to-earth quaternion
+    double x, y, z, w;
+    x = states.velocity.angular.x() * 0.5 * dt;
+    y = states.velocity.angular.y() * 0.5 * dt;
+    z = states.velocity.angular.z() * 0.5 * dt;
+    w = 1.0;
+    stateDot.quatDot = Quaterniond(w, x, y, z);
+    if (!math_utils::myisfinite(stateDot.quatDot))
+    {
+        throw runtime_error("NaN member in quaternion derivative vector");
+    }
 
-		// create angular derivatives quaternion from angular rates
-		// ATTENTION! This quaternion derivative equation refers to the body-to-earth quaternion
-		double x, y, z, w;
-		x = states.velocity.angular.x() * 0.5 * dt;
-		y = states.velocity.angular.y() * 0.5 * dt;
-		z = states.velocity.angular.z() * 0.5 * dt;
-		w = 1.0;
-		stateDot.quatDot = Quaterniond(w, x, y, z);
-		if (!math_utils::myisfinite(stateDot.quatDot))
-		{
-			throw runtime_error("NaN member in quaternion derivative vector");
-		}
+    // create angular rate derivatives from torque
+    stateDot.rateDot = inertial.tensor.inverse() * (inpWrench.torque - states.velocity.angular.cross(inertial.tensor * states.velocity.angular));
+    if (!stateDot.rateDot.allFinite())
+    {
+        throw runtime_error("NaN member in angular velocity derivative vector");
+    }
 
-		// create angular rate derivatives from torque
-		stateDot.rateDot = inertial.tensor.inverse() * (inpWrench.torque - states.velocity.angular.cross(inertial.tensor * states.velocity.angular));
-		if (!stateDot.rateDot.allFinite())
-		{
-			throw runtime_error("NaN member in angular velocity derivative vector");
-		}
+    stateDot.coordDot.x() = 180.0 / M_PI * asin(stateDot.posDot.x() / WGS84_RM(states.geoid.latitude));
+    stateDot.coordDot.y() = 180.0 / M_PI * asin(stateDot.posDot.y() / WGS84_RN(states.geoid.longitude));
+    stateDot.coordDot.z() = -stateDot.posDot.z();
+}
 
-		stateDot.coordDot.x() = 180.0 / M_PI * asin(stateDot.posDot.x() / WGS84_RM(states.geoid.latitude));
-		stateDot.coordDot.y() = 180.0 / M_PI * asin(stateDot.posDot.y() / WGS84_RN(states.geoid.longitude));
-		stateDot.coordDot.z() = -stateDot.posDot.z();
-	}
+//////////////////////////
+// Propagate the UAV state
+SimState_t Kinematics::propagateState(SimState_t states, Wrench_t inpWrench)
+{
+    calcDerivatives(states, inpWrench);
+    return integrator->propagation(states, stateDot);
+}
 
-	//////////////////////////
-	// Propagate the UAV state
-	SimState_t Kinematics::propagateState(SimState_t states, Wrench_t inpWrench)
-	{
-		calcDerivatives(states, inpWrench);
-		return integrator->propagation(states, stateDot);
-	}
+//////////////////////////
+// Define Integrator class
+//////////////////////////
 
-	//////////////////////////
-	// Define Integrator class
-	//////////////////////////
+Integrator::Integrator(ParameterManager worldConfig)
+{
+    dt = worldConfig.get<double>("deltaT");
+}
 
-	Integrator::Integrator(ParameterManager worldConfig)
-	{
-		dt = worldConfig.get<double>("deltaT");
-	}
+Integrator::~Integrator()
+{
+}
 
-	Integrator::~Integrator()
-	{
-	}
+//////////////////////////
+// Define ForwardEuler class
+//////////////////////////
 
-	//////////////////////////
-	// Define ForwardEuler class
-	//////////////////////////
+// Class Constructor
+ForwardEuler::ForwardEuler(ParameterManager worldConfig) : Integrator(worldConfig)
+{
+}
 
-	// Class Constructor
-	ForwardEuler::ForwardEuler(ParameterManager worldConfig) : Integrator(worldConfig)
-	{
-	}
+// Propagation of the states
+SimState_t ForwardEuler::propagation(SimState_t states, Derivatives_t derivatives)
+{
+    SimState_t newStates;
 
-	// Propagation of the states
-	SimState_t ForwardEuler::propagation(SimState_t states, Derivatives_t derivatives)
-	{
-		SimState_t newStates;
+    // Propagate the NED coordinates from earth velocity
+    newStates.pose.position = states.pose.position + derivatives.posDot * dt;
+    if (!newStates.pose.position.allFinite())
+    {
+        throw runtime_error("NaN member in position vector");
+    }
 
-		// Propagate the NED coordinates from earth velocity
-		newStates.pose.position = states.pose.position + derivatives.posDot * dt;
-		if (!newStates.pose.position.allFinite())
-		{
-			throw runtime_error("NaN member in position vector");
-		}
+    // Propagate orientation quaternion from angular derivatives quaternion
+    Quaterniond tempQuat = states.pose.orientation * derivatives.quatDot;
+    // Quaterniond tempQuat = states.pose.orientation.conjugate()*derivatives.quatDot;
+    newStates.pose.orientation = tempQuat.normalized();
+    if (!math_utils::myisfinite(newStates.pose.orientation))
+    {
+        throw runtime_error("NaN member in orientation quaternion");
+    }
 
-		// Propagate orientation quaternion from angular derivatives quaternion
-		Quaterniond tempQuat = states.pose.orientation * derivatives.quatDot;
-		// Quaterniond tempQuat = states.pose.orientation.conjugate()*derivatives.quatDot;
-		newStates.pose.orientation = tempQuat.normalized();
-		if (!math_utils::myisfinite(newStates.pose.orientation))
-		{
-			throw runtime_error("NaN member in orientation quaternion");
-		}
+    // Propagate body velocity from body velocity derivatives
+    newStates.velocity.linear = states.velocity.linear + derivatives.speedDot * dt;
+    if (!newStates.velocity.linear.allFinite())
+    {
+        throw runtime_error("NaN member in linear velocity vector");
+    }
 
-		// Propagate body velocity from body velocity derivatives
-		newStates.velocity.linear = states.velocity.linear + derivatives.speedDot * dt;
-		if (!newStates.velocity.linear.allFinite())
-		{
-			throw runtime_error("NaN member in linear velocity vector");
-		}
+    // Propagate angular velocity from angular derivatives
+    newStates.velocity.angular = states.velocity.angular + derivatives.rateDot * dt;
+    if (!newStates.velocity.angular.allFinite())
+    {
+        throw runtime_error("NaN member in angular velocity vector");
+    }
 
-		// Propagate angular velocity from angular derivatives
-		newStates.velocity.angular = states.velocity.angular + derivatives.rateDot * dt;
-		if (!newStates.velocity.angular.allFinite())
-		{
-			throw runtime_error("NaN member in angular velocity vector");
-		}
+    // Set linear acceleration from the speed derivatives
+    newStates.acceleration.linear = derivatives.speedDot;
 
-		// Set linear acceleration from the speed derivatives
-		newStates.acceleration.linear = derivatives.speedDot;
+    // Set angular acceleration from the angular rate derivatives
+    newStates.acceleration.angular = derivatives.rateDot;
 
-		// Set angular acceleration from the angular rate derivatives
-		newStates.acceleration.angular = derivatives.rateDot;
+    // Update Geoid stuff using the NED coordinates
+    newStates.geoid.latitude = states.geoid.latitude + derivatives.coordDot.x() * dt;
+    newStates.geoid.longitude = states.geoid.longitude + derivatives.coordDot.y() * dt;
+    newStates.geoid.altitude = states.geoid.altitude + derivatives.coordDot.z() * dt;
+    newStates.geoid.velocity[0] = derivatives.posDot.x();
+    newStates.geoid.velocity[1] = derivatives.posDot.y();
+    newStates.geoid.velocity[2] = -derivatives.posDot.z(); // Upwards velocity
 
-		// Update Geoid stuff using the NED coordinates
-		newStates.geoid.latitude = states.geoid.latitude + derivatives.coordDot.x() * dt;
-		newStates.geoid.longitude = states.geoid.longitude + derivatives.coordDot.y() * dt;
-		newStates.geoid.altitude = states.geoid.altitude + derivatives.coordDot.z() * dt;
-		newStates.geoid.velocity[0] = derivatives.posDot.x();
-		newStates.geoid.velocity[1] = derivatives.posDot.y();
-		newStates.geoid.velocity[2] = -derivatives.posDot.z(); // Upwards velocity
+    return newStates;
+}
 
-		return newStates;
-	}
+// Build integrator model
+Integrator *buildIntegrator(ParameterManager worldConfig)
+{
+    int integratorType;
+    integratorType = worldConfig.get<int>("integratorType");
+    std::cout << "building integrator class... ";
+    switch (integratorType)
+    {
+    case 0:
+        std::cout << "selecting Forward Euler" << std::endl;
+        return new ForwardEuler(worldConfig);
+    default:
+        throw runtime_error("Invalid integrator type!");
+        break;
+    }
+}
 
-	// Build integrator model
-	Integrator *buildIntegrator(ParameterManager worldConfig)
-	{
-		int integratorType;
-		integratorType = worldConfig.get<int>("integratorType");
-		std::cout << "building integrator class... ";
-		switch (integratorType)
-		{
-		case 0:
-			std::cout << "selecting Forward Euler" << std::endl;
-			return new ForwardEuler(worldConfig);
-		default:
-			throw runtime_error("Invalid integrator type!");
-			break;
-		}
-	}
 } // namespace last_letter_lib

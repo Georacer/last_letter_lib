@@ -16,66 +16,51 @@ using Eigen::Vector3d;
 namespace last_letter_lib
 {
 
-	// Core class declarations
+// Core class declarations
 
-	// Top UavModel object class
-	class UavModel
-	{
-	public:
-		///////////
-		// Variables
-		ParameterManager configs;
-		SimState_t state;	 // main simulation states
-		Input input;		 // Normalized input to the model
-		InputPwm_t PwmInput; // PWM input to the model
-		double dt;			 // simulation timestep in s
-		int chanReset;
+// Top UavModel object class
+class UavModel : public Parametrized
+{
+public:
+    ///////////
+    // Variables
+    SimState_t state;	 // main simulation states
+    Input input;		 // Normalized input to the model
+    InputPwm_t PwmInput; // PWM input to the model
+    double dt;			 // simulation timestep in s
+    int chanReset;
 
-		/////////
-		// Members
-		Kinematics kinematics;
-		Dynamics dynamics;
-		EnvironmentModel environmentModel;
-		std::vector<std::shared_ptr<Sensor>> sensors;
+    /////////
+    // Members
+    Kinematics kinematics;
+    Dynamics dynamics;
+    EnvironmentModel environmentModel;
+    std::vector<std::shared_ptr<Sensor>> sensors;
 
-	private:
-		// Initialization parameters
-		Vector3d initPosition_, initVelLinear_, initVelAngular_, initCoordinates_;
-		Quaterniond initOrientation_;
-		int initChanReset_;
-		Input initCtrlInput_;
+private:
+    // Initialization parameters
+    Vector3d initPosition_, initVelLinear_, initVelAngular_, initCoordinates_;
+    Quaterniond initOrientation_;
+    int initChanReset_;
+    Input initCtrlInput_;
 
-		///////////
-		// Methods
-	public:
-		// Constructor
-		UavModel(programming_utils::ParameterManager configs);
+    ///////////
+    // Methods
+public:
+    // Constructor
+    UavModel(string name);
+    // Destructor
+    ~UavModel() = default;
+    void initialize(ParameterManager config) override;
+    void initialize_parameters() override;
+    void update_parameters() override;
 
-		// Initialize UavModel object
-		void init();
+    void init(); // Initialize UavModel object
+    void step(); // Perform simulation step
 
-		// Destructor
-		~UavModel();
+    SimState_t getState() { return state; } // Return the state of the Body Frame
+    void setInput(Input inputMsg);
+    void setInputPwm(InputPwm_t inputMsg);
+};
 
-		SimState_t getState() { return state; } // Return the state of the Body Frame
-		void setInput(Input inputMsg);
-		void setInputPwm(InputPwm_t inputMsg);
-		bool set_parameter(programming_utils::ParamType_t paramType, std::string name, double value);
-		void update_model();
-
-		// Force all models to re-read configuration parameters
-		void updateConfigWorld();
-		void updateConfigEnvironment();
-		void updateConfigInit();
-		void updateConfigInertial();
-		void updateConfigAero();
-		void updateConfigProp();
-		void updateConfigGround();
-		void updateConfigAll();
-
-		void readParametersWorld(ParameterManager worldConfig);
-		void readParametersInit(ParameterManager initConfig);
-
-		void step(); // Perform simulation step
-	};
 } // namespace last_letter_lib

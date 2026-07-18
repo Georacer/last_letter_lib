@@ -15,12 +15,13 @@ using namespace last_letter_lib;
 
 TEST(TestUavModel, TestInstantation)
 {
-     // Read parameter files
-     auto config = load_config_aircraft("skywalker_2013");
-     SimState_t state = build_aircraft_state_from_config(config);
+    // Read parameter files
+    auto config = load_config_aircraft("skywalker_2013");
+    SimState_t state = build_aircraft_state_from_config(config);
 
-     // Create model
-     last_letter_lib::UavModel uavModel(config);
+    // Create model
+    last_letter_lib::UavModel uavModel("skywalker_2013");
+    uavModel.initialize(config);
 
-     ASSERT_TRUE(true);
+    ASSERT_TRUE(true);
 }

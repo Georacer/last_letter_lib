@@ -24,18 +24,6 @@ TEST(TestDynamics, TestDynamics1)
     // Create input data
     std::vector<double> tempVec;
 
-    double mass = config.filter("inertial").get<double>("m");
-    double j_x, j_y, j_z, j_xz;
-    j_x = config.filter("inertial").get<double>("j_x");
-    j_y = config.filter("inertial").get<double>("j_y");
-    j_z = config.filter("inertial").get<double>("j_z");
-    j_xz = config.filter("inertial").get<double>("j_xz");
-    std::vector<double> J = {
-        j_x, 0, -j_xz,
-        0, j_y, 0,
-        -j_xz, 0, j_z};
-    Inertial inertial(mass, J);
-
     Input input;
     input.value[0] = 0.1;
     input.value[1] = 0.1;
@@ -48,7 +36,10 @@ TEST(TestDynamics, TestDynamics1)
     Environment_t environment = environmentModel.environment;
 
     // Create dynamics object
-    Dynamics dynamics(config.filter("world"), config.filter("aero"), config.filter("prop"), config.filter("ground"));
+    auto dynamics = Dynamics();
+    auto dynamics_config = config.filter("dynamics/");
+    dynamics_config.register_child_mngr(config.filter("world/")); // Point kinematics to the required world parameters.
+    dynamics.initialize(dynamics_config);
     dynamics.setInput(input);
     dynamics.update_local_state(state, environment);
     dynamics.calc_model(state);

@@ -28,8 +28,11 @@ TEST(TestKinematics, TestKinematics1)
 
     // Create kinematics object
     SimState_t newState;
-    Kinematics kinematics(config.filter("inertial/"), config.filter("world/"));
-	newState = kinematics.propagateState(state, inpWrench); // Use this method to calculate state integral
+    auto kinematics = Kinematics();
+    auto kinematics_config = config.filter("kinematics/");
+    kinematics_config.register_child_mngr(config.filter("world/")); // Point kinematics to the required world parameters.
+    kinematics.initialize(kinematics_config);
+    newState = kinematics.propagateState(state, inpWrench); // Use this method to calculate state integral
 
     EXPECT_GT(newState.pose.position.x(), state.pose.position.x()); // Initial velocity is positive.
     EXPECT_EQ(newState.pose.position.y(), state.pose.position.y());

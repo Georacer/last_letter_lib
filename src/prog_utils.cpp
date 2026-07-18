@@ -297,14 +297,21 @@ namespace last_letter_lib
             configs.register_child_mngr(world);
             ParameterManager env("env", YAML::LoadFile(fullEnvironmentFilename));
             configs.register_child_mngr(env);
+
+            ParameterManager dynamics_config("dynamics");
             ParameterManager prop("prop", YAML::LoadFile(fullPropFilename));
-            configs.register_child_mngr(prop);
+            dynamics_config.register_child_mngr(prop);
             ParameterManager aero("aero", YAML::LoadFile(fullAeroFilename));
-            configs.register_child_mngr(aero);
+            dynamics_config.register_child_mngr(aero);
             ParameterManager ground("ground", YAML::LoadFile(fullGroundFilename));
-            configs.register_child_mngr(ground);
+            dynamics_config.register_child_mngr(ground);
+            configs.register_child_mngr(dynamics_config);
+
+            ParameterManager kinematics_config("kinematics");
             ParameterManager inertial("inertial", YAML::LoadFile(fullInertialFilename));
-            configs.register_child_mngr(inertial);
+            kinematics_config.register_child_mngr(inertial);
+            configs.register_child_mngr(kinematics_config);
+
             ParameterManager init("init", YAML::LoadFile(fullInitFilename));
             configs.register_child_mngr(init);
 

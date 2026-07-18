@@ -20,11 +20,14 @@ namespace last_letter_lib
 {
 
 // Container class
-class Dynamics
+class Dynamics : public Parametrized
 {
 public:
-    Dynamics(ParameterManager p_worldConfig, ParameterManager p_aeroConfig, ParameterManager p_propConfig, ParameterManager p_groundConfig);
-    ~Dynamics();
+    Dynamics() : Parametrized("dynamics") {};
+    void initialize(ParameterManager config) override;
+    void update_parameters() override;
+    void load_parameters(ParameterManager config) override;
+
     void readParametersAerodynamics(ParameterManager config);
     void readParametersProp(ParameterManager config);
     void readParametersGround(ParameterManager config);
@@ -40,7 +43,7 @@ public:
     vector<aerodynamics::Aerodynamics*> aerodynamics;
     int nMotors; // number of motors mounted on the aircraft
     vector<propulsion::Thruster*> thrusters;
-    ground_reaction::GroundReaction* groundReaction;
+    std::unique_ptr<ground_reaction::GroundReaction> ground_reaction;
 };
 
 } // namespace last_letter_lib

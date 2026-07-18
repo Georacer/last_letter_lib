@@ -83,22 +83,10 @@ TEST(TestPropulsion, TestElectricEngine2)
 TEST(TestPropulsion, TestPropulsion1)
 {
     ParameterManager config = load_config_aircraft("skywalker_2013");
-    auto prop_config = config.filter("prop/motor1/");
+    auto prop_config = config.filter("dynamics/prop/motor1/");
     prop_config.register_child_mngr(config.filter("world/"));
     auto motor1 = buildThruster(prop_config);
     SimState_t states = build_aircraft_state_from_config(config);
-
-    double mass = config.filter("inertial").get<double>("m");
-    double j_x, j_y, j_z, j_xz;
-    j_x = config.filter("inertial").get<double>("j_x");
-    j_y = config.filter("inertial").get<double>("j_y");
-    j_z = config.filter("inertial").get<double>("j_z");
-    j_xz = config.filter("inertial").get<double>("j_xz");
-    std::vector<double> J = {
-        j_x, 0, -j_xz,
-        0, j_y, 0,
-        -j_xz, 0, j_z};
-    Inertial inertial(mass, J);
 
     Input input;
     input.value[2] = 0.5;

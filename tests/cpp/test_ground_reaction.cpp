@@ -19,10 +19,10 @@ protected:
     void SetUp() override
     {
         auto config = load_config_aircraft("skywalker_2013");
-        ground_reaction = buildGroundReaction(config.filter("ground/"));
+        ground_reaction = buildGroundReaction(config.filter("dynamics/ground/"));
     }
 
-    GroundReaction* ground_reaction;
+    std::unique_ptr<GroundReaction> ground_reaction;
 };
 
 TEST_F(GroundReactionTest, TestAboveGround)
@@ -57,7 +57,6 @@ TEST_F(GroundReactionTest, TestImmobileContact)
     WrenchSum_t wrenchSum;
 
     Vector3d groundForce = ground_reaction->getForce(states, wrenchSum);
-    Vector3d groundTorque = ground_reaction->getTorque(states, wrenchSum);
 
     ASSERT_EQ(groundForce.x(), 0);
     ASSERT_EQ(groundForce.y(), 0);

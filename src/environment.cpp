@@ -23,7 +23,7 @@ namespace last_letter_lib
 	{
 
 		// Set world parameters
-		dt = get_param<double>("deltaT");
+		dt = get_param<double>("world/deltaT");
 
 		// Set environment parameters
 

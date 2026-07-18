@@ -1,6 +1,7 @@
 /// Ground reactions interface class
 
 #include <iostream>
+#include <memory>
 #include <Eigen/Eigen>
 
 #include "last_letter_lib/prog_utils.hpp"
@@ -94,7 +95,7 @@ public:
 	Vector3d getTorque(const SimState_t states, const WrenchSum_t wrenchSum) override;
 };
 
-GroundReaction *buildGroundReaction(ParameterManager config);
+std::unique_ptr<GroundReaction> buildGroundReaction(ParameterManager config);
 
 } // namespace ground_reaction
 } // namespace last_letter_lib

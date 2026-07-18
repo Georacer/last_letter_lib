@@ -22,18 +22,6 @@ TEST(TestAerodynamics, TestAerodynamics1)
     auto config = load_config_aircraft("skywalker_2013");
     SimState_t state = build_aircraft_state_from_config(config);
 
-    double mass = config.filter("inertial").get<double>("m");
-    double j_x, j_y, j_z, j_xz;
-    j_x = config.filter("inertial").get<double>("j_x");
-    j_y = config.filter("inertial").get<double>("j_y");
-    j_z = config.filter("inertial").get<double>("j_z");
-    j_xz = config.filter("inertial").get<double>("j_xz");
-    std::vector<double> J = {
-        j_x, 0, -j_xz,
-        0, j_y, 0,
-        -j_xz, 0, j_z};
-    Inertial inertial(mass, J);
-
     EnvironmentModel environmentModel = EnvironmentModel();
     environmentModel.initialize(config.filter("env"));
     environmentModel.calcEnvironment(state);
@@ -44,7 +32,7 @@ TEST(TestAerodynamics, TestAerodynamics1)
     input.value[2] = 0.5;
     input.value[3] = 0.0;
 
-    auto airfoil1 = buildAerodynamics(config.filter("aero/airfoil1/"));
+    auto airfoil1 = buildAerodynamics(config.filter("dynamics/aero/airfoil1/"));
     airfoil1->setInput(input);
 
     airfoil1->update_local_state(state, environmentModel.environment);

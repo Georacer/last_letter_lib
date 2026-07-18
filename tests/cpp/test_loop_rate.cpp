@@ -15,7 +15,8 @@ TEST(TestLoopRate, TestLoopRate1)
     auto config = load_config_aircraft("skywalker_2013");
     SimState_t state = build_aircraft_state_from_config(config);
     state.pose.position.z() = -1000; // Lift the aircraft above the ground.
-    UavModel uav(config);
+    UavModel uav("skywalker_2013");
+    uav.initialize(config);
 
     uint32_t loopNum=10000;
     double t_steps, t_derivs;

@@ -48,26 +48,26 @@ void GroundReaction::setInputPwm(InputPwm_t p_input)
 }
 
 // Build ground reactions model
-GroundReaction *buildGroundReaction(ParameterManager config)
+std::unique_ptr<GroundReaction> buildGroundReaction(ParameterManager config)
 {
     int groundReactionType;
     groundReactionType = config.get<double>("groundReactionType");
     string name = config.get<string>("name");
-    GroundReaction *ground_reaction;
+    std::unique_ptr<GroundReaction> ground_reaction;
     std::cout << "building ground reactions model: ";
     switch (groundReactionType)
     {
     case 0:
         std::cout << "selecting no ground reactions" << std::endl;
-        ground_reaction = new NoGroundReaction(name);
+        ground_reaction = std::make_unique<NoGroundReaction>(name);
         break;
     case 1:
         std::cout << "selecting Panos ground reactions" << std::endl;
-        ground_reaction = new PanosContactPoints(name);
+        ground_reaction = std::make_unique<PanosContactPoints>(name);
         break;
     case 2:
         std::cout << "selecting PointFriction ground reactions" << std::endl;
-        ground_reaction = new PointFriction(name);
+        ground_reaction = std::make_unique<PointFriction>(name);
         break;
     default:
         throw runtime_error("Error while constructing ground reactions");
