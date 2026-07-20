@@ -38,6 +38,7 @@ public:
     void calc_model(SimState_t states); // Calculate the forces and torques for each component.
 
     WrenchSum_t wrench_sum;
+    Inertial inertial; // Lumped inertial characteristics in the body frame.
     vector<unique_ptr<Component>> components;
     int nWings; // number of airfoils mounted on the aircraft
     vector<aerodynamics::Aerodynamics*> aerodynamics;

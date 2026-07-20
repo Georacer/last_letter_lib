@@ -38,6 +38,7 @@ public:
         set_param("inertial/tensor/j_xx", 0.0, false);
         set_param("inertial/tensor/j_yy", 0.0, false);
         set_param("inertial/tensor/j_zz", 0.0, false);
+        set_param("inertial/tensor/j_xz", 0.0, false);
         set_param("world/gravity/type", 0.0, false);
     }
     void update_parameters() override;
@@ -46,6 +47,8 @@ public:
     // environment is describing the wind in the NED coordinate system.
     void update_local_state(const SimState_t body_state, const Environment_t environment);
     virtual void calc_model(); // Perform any model calculations.
+    WrenchSum_t rotate_wrenches() const ; // Get the component wrenches in the body frame.
+    Inertial rotate_inertia() const; // Get the component inertia in the body frame.
 
     WrenchSum_t wrench_sum; // The generated wrench in the local frame.
     Inertial inertial;

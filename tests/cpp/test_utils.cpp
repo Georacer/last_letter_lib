@@ -20,7 +20,6 @@ ParameterManager load_config_aircraft(std::string uav_name, bool randomize)
     string prop_filename = "propulsion.yaml";
     string aero_filename = "aerodynamics.yaml";
     string ground_filename = "ground.yaml";
-    string inertial_filename = "inertial.yaml";
     string init_filename = "init.yaml";
     string world_filename = "world.yaml";
     string environment_filename = "environment.yaml";
@@ -31,7 +30,6 @@ ParameterManager load_config_aircraft(std::string uav_name, bool randomize)
     string fullPropFilename = paramDir + uav_name + "/" + prop_filename;
     string fullAeroFilename = paramDir + uav_name + "/" + aero_filename;
     string fullGroundFilename = paramDir + uav_name + "/" + ground_filename;
-    string fullInertialFilename = paramDir + uav_name + "/" + inertial_filename;
     string fullInitFilename = paramDir + uav_name + "/" + init_filename;
 
     ParameterManager configs("aircraft");
@@ -50,8 +48,6 @@ ParameterManager load_config_aircraft(std::string uav_name, bool randomize)
     configs.register_child_mngr(dynamics_config);
 
     ParameterManager kinematics_config("kinematics");
-    ParameterManager inertial("inertial", YAML::LoadFile(fullInertialFilename));
-    kinematics_config.register_child_mngr(inertial);
     configs.register_child_mngr(kinematics_config);
 
     ParameterManager init("init", YAML::LoadFile(fullInitFilename));

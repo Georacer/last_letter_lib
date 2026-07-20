@@ -17,46 +17,12 @@ Kinematics::~Kinematics()
 
 void Kinematics::initialize_parameters()
 {
-    set_param("world/deltaT", 2.0, false);
-    set_param("inertial/m", 2.0, false);
-    set_param("inertial/j_x", 0.8244, false);
-    set_param("inertial/j_y", 1.135, false);
-    set_param("inertial/j_z", 1.759, false);
-    set_param("inertial/j_xz", 0.1204, false);
+    set_param("world/deltaT", 0.0025, false);
 }
 
 void Kinematics::update_parameters()
 {
     dt = get_param<double>("world/deltaT");
-
-    double mass = get_param<double>("inertial/m");
-    double j_x, j_y, j_z, j_xz;
-    j_x = get_param<double>("inertial/j_x");
-    j_y = get_param<double>("inertial/j_y");
-    j_z = get_param<double>("inertial/j_z");
-    j_xz = get_param<double>("inertial/j_xz");
-    std::vector<double> J = {
-        j_x, 0.0, -j_xz,
-        0.0, j_y, 0.0,
-        -j_xz, 0.0, j_z};
-    inertial = Inertial(mass, J);
-
-    int res = math_utils::is_pos_def(inertial.tensor);
-    if (!(res == 0))
-    {
-        switch (res)
-        {
-        case -1:
-            throw runtime_error("Matrix of inertia is singular");
-            break;
-        case -2:
-            throw runtime_error("Matrix of inertia is not positive definite");
-            break;
-        default:
-            break;
-        }
-    }
-
 }
 
 void Kinematics::initialize(ParameterManager config)
@@ -71,7 +37,7 @@ void Kinematics::initialize(ParameterManager config)
 
 ///////////////////////////////
 // State derivatives calculation
-void Kinematics::calcDerivatives(SimState_t states, Wrench_t inpWrench)
+void Kinematics::calcDerivatives(SimState_t states, Inertial inertial, Wrench_t inpWrench)
 {
     // variable declaration
     // create position derivatives from earth velocity
@@ -121,9 +87,9 @@ void Kinematics::calcDerivatives(SimState_t states, Wrench_t inpWrench)
 
 //////////////////////////
 // Propagate the UAV state
-SimState_t Kinematics::propagateState(SimState_t states, Wrench_t inpWrench)
+SimState_t Kinematics::propagateState(SimState_t states, Inertial inertia, Wrench_t inpWrench)
 {
-    calcDerivatives(states, inpWrench);
+    calcDerivatives(states, inertia, inpWrench);
     return integrator->propagation(states, stateDot);
 }
 

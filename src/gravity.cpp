@@ -21,7 +21,7 @@ Wrench_t GravityModel::getWrench(const SimState_t states, const Inertial inertia
     Vector3d force = orientation_eb * gravVect;
     if (math_utils::isnan(force)) { throw runtime_error("gravity.cpp: NaN member in force vector"); }
 
-    Wrench_t wrench(force, Vector3d());
+    Wrench_t wrench(force, Vector3d::Zero());
     return wrench;
 }
 

@@ -5,7 +5,6 @@
 #include <pybind11/eigen.h>
 #include <pybind11/numpy.h>
 #include <pybind11/operators.h>
-#include <iostream>
 
 #include "last_letter_lib/math_utils.hpp"
 #include "last_letter_lib/uav_utils.hpp"
@@ -15,6 +14,7 @@
 #include "last_letter_lib/systems.hpp"
 #include "last_letter_lib/aerodynamics.hpp"
 #include "last_letter_lib/propulsion/propulsion.hpp"
+#include "last_letter_lib/uav_model.hpp"
 
 namespace py = pybind11;
 
@@ -38,6 +38,7 @@ using last_letter_lib::uav_utils::Pose;
 using last_letter_lib::uav_utils::SimState_t;
 using last_letter_lib::uav_utils::Wrench_t;
 using last_letter_lib::uav_utils::WrenchSum_t;
+using last_letter_lib::UavModel;
 using namespace last_letter_lib::aerodynamics;
 using namespace last_letter_lib::propulsion;
 
@@ -210,7 +211,7 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def_readwrite("wrench_external", &WrenchSum_t::wrenchExternal);
     py::class_<Airdata>(m_uav_utils, "Airdata")
         .def(py::init<double, double, double>(), py::arg("airspeed") = 0, py::arg("alpha") = 0, py::arg("beta") = 0)
-        .def("init_from_velocity", &Airdata::init_from_velocity, py::arg("vel_body"), py::arg("vel_wind") = Vector3d())
+        .def("init_from_velocity", &Airdata::init_from_velocity, py::arg("vel_body"), py::arg("vel_wind") = Vector3d::Zero())
         .def("init_from_state_wind", &Airdata::init_from_state_wind, py::arg("state"), py::arg("wind"))
         .def_property_readonly("S_bw", &Airdata::S_bw)
         .def_property_readonly("S_wb", &Airdata::S_wb)
@@ -221,10 +222,10 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
     py::class_<SimState_t>(m_uav_utils, "UavState")
         .def(py::init())
         .def(py::init<Vector3d, UnitQuaternion, Vector3d, Vector3d, std::vector<double>>(),
-             py::arg("position") = Vector3d(),
+             py::arg("position") = Vector3d::Zero(),
              py::arg("orientation") = UnitQuaternion(),
-             py::arg("velocity_linear") = Vector3d(),
-             py::arg("velocity_angular") = Vector3d(),
+             py::arg("velocity_linear") = Vector3d::Zero(),
+             py::arg("velocity_angular") = Vector3d::Zero(),
              py::arg("thrusters_velocity") = std::vector<double>(0))
         .def(py::init<Vector3_ll, UnitQuaternion, Vector3_ll, Vector3_ll, std::vector<double>>(),
              py::arg("position") = Vector3_ll(),
@@ -267,7 +268,8 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def("get_param_vector", &Parametrized::get_param<vector<double>>, py::arg("param_name"))
         .def("get_param_string", &Parametrized::get_param<std::string>, py::arg("param_name"))
         .def("set_param", &Parametrized::set_param<double>, py::arg("param_name"), py::arg("param_value"), py::arg("safe") = true)
-        .def("set_param", &Parametrized::set_param<std::string>, py::arg("param_name"), py::arg("param_value"), py::arg("safe") = true);
+        .def("set_param", &Parametrized::set_param<std::string>, py::arg("param_name"), py::arg("param_value"), py::arg("safe") = true)
+        .def("set_param", &Parametrized::set_param<vector<double>>, py::arg("param_name"), py::arg("param_value"), py::arg("safe") = true);
 
     auto m_systems = m.def_submodule("cpp_systems", "last_letter_lib systems submodule");
     py::class_<Component, Parametrized>(m_systems, "Component", py::multiple_inheritance()) // Declaring as multiple_inheritance, because Parametrized is a virtual base of Component.
@@ -383,4 +385,15 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def("set_input", &PistonEng::setInput)
         .def("set_input_pwm", &PistonEng::setInputPwm)
         .def("calc_model", &PistonEng::calc_model);
+
+    auto m_simulation = m.def_submodule("cpp_simulation", "last_letter_lib simulation submodule");
+    py::class_<UavModel, Parametrized>(m_simulation, "Aircraft")
+        .def(py::init<string>(), py::arg("name"))
+        .def("initialize", static_cast<void (Parametrized::*)(const std::string)>(&Parametrized::initialize), py::arg("parameters"))
+        .def("update_parameters", &UavModel::update_parameters)
+        .def("set_input", &UavModel::setInput)
+        .def("set_input_pwm", &UavModel::setInputPwm)
+        .def("step", &UavModel::step)
+        .def("init", &UavModel::init)
+        .def_readonly("state", &UavModel::state);
 }

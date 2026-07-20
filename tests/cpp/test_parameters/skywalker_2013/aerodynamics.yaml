@@ -6,6 +6,13 @@ airfoil1:
   name: body_frd
   CGOffset: [-0.02, 0.00, -0.05] # vector from CG to CoL
   mountOrientation: [0.0, 0.0, 0.0] # Euler rotations from body axes to propeller normal plane. Gimbal rotation axis should be in z-axis.
+  inertial:
+    mass: 1.9
+    tensor:
+      j_xx: 0.8244
+      j_yy: 1.135
+      j_zz: 1.759
+      j_xz: 0.1204
   chanGimbal: -1
   gimbalAxis: 0
   gimbalAngle_max: 0.0

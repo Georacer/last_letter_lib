@@ -52,6 +52,7 @@ public:
     // Destructor
     ~UavModel() = default;
     void initialize(ParameterManager config) override;
+    void initialize(const std::string yaml_str) override;
     void initialize_parameters() override;
     void update_parameters() override;
 

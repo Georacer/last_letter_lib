@@ -65,6 +65,7 @@ namespace last_letter_lib
             parameters_["name"] = name_p;
         }
 
+        // This constructor allows loading non-existent parameters.
         ParameterManager::ParameterManager(string name_p, const YAML::Node parameters_p) : name{name_p}
         {
             parameters_ = parameters_p;
@@ -289,7 +290,6 @@ namespace last_letter_lib
             string fullPropFilename = modelPath + aircraftDir + modelName + "/" + prop_filename;
             string fullAeroFilename = modelPath + aircraftDir + modelName + "/" + aero_filename;
             string fullGroundFilename = modelPath + aircraftDir + modelName + "/" + ground_filename;
-            string fullInertialFilename = modelPath + aircraftDir + modelName + "/" + inertial_filename;
             string fullInitFilename = modelPath + aircraftDir + modelName + "/" + init_filename;
             string fullRandomizerFilename = modelPath + aircraftDir + modelName + "/" + randomizer_filename;
 
@@ -308,8 +308,6 @@ namespace last_letter_lib
             configs.register_child_mngr(dynamics_config);
 
             ParameterManager kinematics_config("kinematics");
-            ParameterManager inertial("inertial", YAML::LoadFile(fullInertialFilename));
-            kinematics_config.register_child_mngr(inertial);
             configs.register_child_mngr(kinematics_config);
 
             ParameterManager init("init", YAML::LoadFile(fullInitFilename));

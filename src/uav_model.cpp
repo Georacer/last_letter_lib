@@ -31,25 +31,24 @@ void UavModel::initialize(ParameterManager config)
 
     init();
 
-    // Add sensors to the UAV
-    sensors.push_back(std::make_shared<Imu>());
-    sensors.push_back(std::make_shared<Barometer>());
-    sensors.push_back(std::make_shared<AirdataSensor>());
-    sensors.push_back(std::make_shared<Gnss>());
-    sensors.push_back(std::make_shared<MavlinkHilStateQuaternion>());
-    for (auto sensor_ptr : sensors)
-    {
-        sensor_ptr->init(config);
-    }
+    // // Add sensors to the UAV
+    // sensors.push_back(std::make_shared<Imu>());
+    // sensors.push_back(std::make_shared<Barometer>());
+    // sensors.push_back(std::make_shared<AirdataSensor>());
+    // sensors.push_back(std::make_shared<Gnss>());
+    // sensors.push_back(std::make_shared<MavlinkHilStateQuaternion>());
+    // for (auto sensor_ptr : sensors)
+    // {
+    //     sensor_ptr->init(config);
+    // }
 
     auto kinematics_config = config.filter("kinematics/");
     kinematics_config.register_child_mngr(config.filter("world/")); // Point kinematics to the required world parameters.
     kinematics.initialize(kinematics_config);
     add_child(kinematics);
 
-
     auto dynamics_config = config.filter("dynamics/");
-    dynamics_config.register_child_mngr(config.filter("world/")); // Point kinematics to the required world parameters.
+    dynamics_config.register_child_mngr(config.filter("world/")); // Point dynamics to the required world parameters.
     dynamics.initialize(dynamics_config);
     add_child(dynamics);
 
@@ -60,6 +59,13 @@ void UavModel::initialize(ParameterManager config)
 
     // Initialize input
     setInput(initCtrlInput_);
+}
+
+void UavModel::initialize(const std::string yaml_str)
+{
+    auto config = ParameterManager("aircraft", YAML::Load(yaml_str));
+
+    initialize(config);
 }
 
 void UavModel::initialize_parameters()
@@ -150,12 +156,17 @@ void UavModel::step()
 {
     // Perform step actions serially
 
+    // Update the environment and propagate the current state and environment
+    // into every component before evaluating their forces and torques.
+    environmentModel.calcEnvironment(state);
+    dynamics.update_local_state(state, environmentModel.environment);
+
     // Calculate dynamics
     dynamics.calc_model(state);
     auto inpWrench = dynamics.wrench_sum.sum();
 
     SimState_t newState;
-    newState = kinematics.propagateState(state, inpWrench);
+    newState = kinematics.propagateState(state, dynamics.inertial, inpWrench);
 
     // Check new state for non-finite values
     Vector3d tempVect;

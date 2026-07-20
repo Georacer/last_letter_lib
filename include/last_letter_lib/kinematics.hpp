@@ -60,9 +60,8 @@ public:
 
     double dt;
     Derivatives_t stateDot;
-    Inertial inertial;
-    void calcDerivatives(SimState_t states, Wrench_t inpWrench);	  // Do not use this method (private)
-    SimState_t propagateState(SimState_t states, Wrench_t inpWrench); // Use this method to calculate state integral
+    void calcDerivatives(SimState_t states, Inertial inertia, Wrench_t inpWrench);	  // Do not use this method (private)
+    SimState_t propagateState(SimState_t states, Inertial inertia, Wrench_t inpWrench); // Use this method to calculate state integral
     Integrator *integrator{nullptr};
 };
 

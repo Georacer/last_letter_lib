@@ -107,27 +107,50 @@ void Dynamics::update_local_state(SimState_t states, Environment_t environment)
 // Calculate the forces and torques for each Wrench_t source
 void Dynamics::calc_model(SimState_t states)
 {
-    WrenchSum_t new_sum;
+    WrenchSum_t new_wrench_sum;
+    Inertial new_inertial;
+    new_inertial.tensor = Eigen::Matrix3d::Zero();
     for (auto &component : components) {
         component->calc_model();
-        new_sum += component->wrench_sum;
+        new_wrench_sum += component->rotate_wrenches();
+
+        auto rotated_inertial = component->rotate_inertia();
+        new_inertial.mass += rotated_inertial.mass;
+        new_inertial.tensor += rotated_inertial.tensor;
+    }
+
+    inertial = new_inertial;
+    int res = math_utils::is_pos_def(inertial.tensor);
+    if (!(res == 0))
+    {
+        switch (res)
+        {
+        case -1:
+            throw runtime_error("Matrix of inertia is singular");
+            break;
+        case -2:
+            throw runtime_error("Matrix of inertia is not positive definite");
+            break;
+        default:
+            break;
+        }
     }
 
     // Call ground reactions routines - MUST BE CALLED LAST!!!
     // This is needed for some ground reactions models, which are designed to counter the remaining force sum
-    new_sum.wrenchGround.force = ground_reaction->getForce(states, new_sum);
-    if (!new_sum.wrenchGround.force.allFinite())
+    new_wrench_sum.wrenchGround.force = ground_reaction->getForce(states, new_wrench_sum);
+    if (!new_wrench_sum.wrenchGround.force.allFinite())
     {
         throw runtime_error("dynamicsLib.cpp: NaN member in groundReaction force vector");
     }
 
-    new_sum.wrenchGround.torque = ground_reaction->getTorque(states, new_sum);
-    if (!new_sum.wrenchGround.torque.allFinite())
+    new_wrench_sum.wrenchGround.torque = ground_reaction->getTorque(states, new_wrench_sum);
+    if (!new_wrench_sum.wrenchGround.torque.allFinite())
     {
         throw runtime_error("dynamicsLib.cpp: NaN member in groundReaction torque vector");
     }
 
-    wrench_sum = new_sum;
+    wrench_sum = new_wrench_sum;
 }
 
 } // namespace last_letter_lib

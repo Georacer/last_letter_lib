@@ -2,6 +2,8 @@
 // Aerodynamics class related declarations //
 /////////////////////////////////////////////
 
+#pragma once
+
 #include <memory>
 
 #include <Eigen/Eigen>

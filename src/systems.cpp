@@ -1,4 +1,5 @@
 #include "last_letter_lib/math_utils.hpp"
+#include "last_letter_lib/uav_utils.hpp"
 #include <last_letter_lib/systems.hpp>
 
 namespace last_letter_lib {
@@ -17,6 +18,7 @@ void Component::update_parameters()
     inertial.tensor(0, 0) = get_param<double>("inertial/tensor/j_xx");
     inertial.tensor(1, 1) = get_param<double>("inertial/tensor/j_yy");
     inertial.tensor(2, 2) = get_param<double>("inertial/tensor/j_zz");
+    inertial.tensor(0, 2) = inertial.tensor(2, 0) = -get_param<double>("inertial/tensor/j_xz");
 
     if (gravity == nullptr) {
         gravity = buildGravity(params_.filter("world/gravity/"));
@@ -57,6 +59,59 @@ void Component::calc_model()
     // Children will then run their own dynamics.
 }
 
+WrenchSum_t Component::rotate_wrenches() const
+{
+    const UnitQuaternion q_bc = relative_pose.orientation;
+    auto wrenchSum_body = WrenchSum_t();
+
+    Vector3d force_grav_body = q_bc * wrench_sum.wrenchGrav.force;
+    Vector3d torque_grav_body = q_bc * wrench_sum.wrenchGrav.torque + relative_pose.position.cross(force_grav_body);
+    const auto wrenchGrav_body = Wrench_t(force_grav_body, torque_grav_body);
+    wrenchSum_body.wrenchGrav = wrenchGrav_body;
+
+    Vector3d force_aero_body = q_bc * wrench_sum.wrenchAero.force;
+    Vector3d torque_aero_body = q_bc * wrench_sum.wrenchAero.torque + relative_pose.position.cross(force_aero_body);
+    const auto wrenchAero_body = Wrench_t(force_aero_body, torque_aero_body);
+    wrenchSum_body.wrenchAero = wrenchAero_body;
+
+    Vector3d force_prop_body = q_bc * wrench_sum.wrenchProp.force;
+    Vector3d torque_prop_body = q_bc * wrench_sum.wrenchProp.torque + relative_pose.position.cross(force_prop_body);
+    const auto wrenchProp_body = Wrench_t(force_prop_body, torque_prop_body);
+    wrenchSum_body.wrenchProp = wrenchProp_body;
+
+    return wrenchSum_body;
+}
+
+Inertial Component::rotate_inertia() const
+{
+    const auto x = relative_pose.position.x();
+    const auto y = relative_pose.position.y();
+    const auto z = relative_pose.position.z();
+    const auto mass = inertial.mass;
+    UnitQuaternion q_bc = relative_pose.orientation;
+    auto inertia_rotated = q_bc.R_bi() * inertial.tensor * q_bc.R_bi().transpose();
+
+    // Calculate parallel axis theorem.
+    Eigen::Matrix3d tensor_body = inertia_rotated;
+    tensor_body(0, 0) += mass*(y*y + z*z);
+    tensor_body(1, 1) += mass*(x*x + z*z);
+    tensor_body(2, 2) += mass*(x*x + y*y);
+    tensor_body(0 , 1) += - mass*x*y;
+    tensor_body(1 , 0) += - mass*x*y;
+    tensor_body(0 , 2) += - mass*x*z;
+    tensor_body(2 , 0) += - mass*x*z;
+    tensor_body(1 , 2) += - mass*y*z;
+    tensor_body(2 , 1) += - mass*y*z;
+
+    auto inertia_body = Inertial(inertial.mass);
+    inertia_body.tensor = tensor_body;
+
+    return inertia_body;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Dynamic System
+///////////////////////////////////////////////////////////////////////////////
 
 DynamicSystem::DynamicSystem(stateType x_0_p, stateType u_0_p, double t_p) :
         x_0(x_0_p), u_0(u_0_p), t_0(t_p)
