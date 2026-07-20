@@ -34,7 +34,7 @@ void Component::update_local_state(const SimState_t body_state, const Environmen
     const UnitQuaternion q_ec = q_eb * q_bc;
     local_state.pose.orientation = q_ec;
     // Velocity of the component w.r.t body frame.
-    const auto v_comp_body = body_state.velocity.linear + body_state.velocity.angular.cross(relative_pose.position);
+    const Eigen::Vector3d v_comp_body = body_state.velocity.linear + body_state.velocity.angular.cross(relative_pose.position);
     local_state.velocity.linear = q_bc.conjugate()*v_comp_body;
     local_state.velocity.angular = q_bc.conjugate()*body_state.velocity.angular;
 
@@ -89,7 +89,7 @@ Inertial Component::rotate_inertia() const
     const auto z = relative_pose.position.z();
     const auto mass = inertial.mass;
     UnitQuaternion q_bc = relative_pose.orientation;
-    auto inertia_rotated = q_bc.R_bi() * inertial.tensor * q_bc.R_bi().transpose();
+    Eigen::Matrix3d inertia_rotated = q_bc.R_bi() * inertial.tensor * q_bc.R_bi().transpose();
 
     // Calculate parallel axis theorem.
     Eigen::Matrix3d tensor_body = inertia_rotated;

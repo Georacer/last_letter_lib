@@ -57,6 +57,13 @@ def build_desc_airfoil_simple():
     c_n_beta: 0.1
     c_n_deltar: 0.1
     alpha_stall: 0.26
+    inertial:
+        mass: 1.8
+        tensor:
+            j_xx: 0.8244
+            j_yy: 1.135
+            j_zz: 1.759
+            j_xz: 0.1204
     """
 
 
@@ -160,6 +167,12 @@ class TestStdLinearAero:
     def test_constructor(self):
         airfoil = aerodynamics.StdLinearAero("test_airfoild")
         assert isinstance(airfoil, aerodynamics.StdLinearAero)
+
+    def test_inertial(self, build_airfoil_simple):
+        airfoil = build_airfoil_simple
+        assert airfoil.inertial.tensor[0, 0] == pytest.approx(0.8244)
+        assert airfoil.inertial.tensor[1, 1] == pytest.approx(1.135)
+        assert airfoil.inertial.tensor[2, 2] == pytest.approx(1.759)
 
     # def test_lift_coeff(
     #     self,

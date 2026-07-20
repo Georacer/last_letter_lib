@@ -52,6 +52,11 @@ def build_desc_aircraft():
                 c_m_qn: -30
                 inertial:
                     mass: 1.8
+                    tensor:
+                        j_xx: 0.8244
+                        j_yy: 1.135
+                        j_zz: 1.759
+                        j_xz: 0.1204
         prop:
             nMotors: 1
             motor1:
@@ -69,7 +74,10 @@ def build_desc_aircraft():
             groundReactionType: 0
             name: no_contact
     env:
+        windRef: 0
     kinematics:
+    init:
+        position: [0, 0, 0]
     """
     return sim.AircraftParameters(
         name="test_aircraft",
