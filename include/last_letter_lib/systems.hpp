@@ -48,15 +48,17 @@ public:
     void update_local_state(const SimState_t body_state, const Environment_t environment);
     virtual void calc_model(); // Perform any model calculations.
     WrenchSum_t rotate_wrenches() const ; // Get the component wrenches in the body frame.
-    Inertial rotate_inertia() const; // Get the component inertia in the body frame.
+    // Get the component inertia about the Center of Mass. Accepts r_com, the offset between the Body Frame origin
+    // and the CoM, (in other words, the center of gravityin body-frame coordinates) in order to compensate for it.
+    Inertial rotate_inertia(const Eigen::Vector3d &r_com = Eigen::Vector3d::Zero()) const;
 
     WrenchSum_t wrench_sum; // The generated wrench in the local frame.
     Inertial inertial;
     SimState_t local_state; // W.r.t. Earth. This also contains rotor speeds, which is bloat, but we'll use it for now.
     Environment_t local_environment;
+    Pose relative_pose; // The pose of this component w.r.t. the airframe datum. Its quaternion is q_bc (component->body)
 
 private:
-    Pose relative_pose; // The pose of this component w.r.t. the airframe datum. Its quaternion is q_bc (component->body)
     GravityModel *gravity{nullptr};
 };
 

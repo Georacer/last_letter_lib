@@ -230,8 +230,6 @@ void StdLinearAero::calc_model()
         // split c_z_deltae to include "abs" term
     }
 
-    // std::cout << "drag force: " << ax << std::endl;
-
     wrench_sum.wrenchAero.force = Vector3d(ax, ay, az);
 
     // calculate aerodynamic torque

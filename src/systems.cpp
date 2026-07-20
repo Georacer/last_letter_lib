@@ -82,11 +82,12 @@ WrenchSum_t Component::rotate_wrenches() const
     return wrenchSum_body;
 }
 
-Inertial Component::rotate_inertia() const
+Inertial Component::rotate_inertia(const Eigen::Vector3d &r_com) const
 {
-    const auto x = relative_pose.position.x();
-    const auto y = relative_pose.position.y();
-    const auto z = relative_pose.position.z();
+    // Parallel-axis offset from the reference point r_com to this component.
+    const auto x = relative_pose.position.x() - r_com.x();
+    const auto y = relative_pose.position.y() - r_com.y();
+    const auto z = relative_pose.position.z() - r_com.z();
     const auto mass = inertial.mass;
     UnitQuaternion q_bc = relative_pose.orientation;
     Eigen::Matrix3d inertia_rotated = q_bc.R_bi() * inertial.tensor * q_bc.R_bi().transpose();

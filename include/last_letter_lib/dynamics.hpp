@@ -38,7 +38,8 @@ public:
     void calc_model(SimState_t states); // Calculate the forces and torques for each component.
 
     WrenchSum_t wrench_sum;
-    Inertial inertial; // Lumped inertial characteristics in the body frame.
+    Inertial inertial; // Lumped inertial characteristics, referenced to the CG.
+    Vector3d cog{Vector3d::Zero()}; // Center of gravity w.r.t. the body-frame origin.
     vector<unique_ptr<Component>> components;
     int nWings; // number of airfoils mounted on the aircraft
     vector<aerodynamics::Aerodynamics*> aerodynamics;

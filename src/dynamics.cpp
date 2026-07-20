@@ -107,6 +107,18 @@ void Dynamics::update_local_state(SimState_t states, Environment_t environment)
 // Calculate the forces and torques for each Wrench_t source
 void Dynamics::calc_model(SimState_t states)
 {
+    // First pass: calculate the Center of Mass from the component masses. The
+    // equations of motion in Kinematics are written about the CoM, so the inertia
+    // tensor and wrench moments must be referenced to it (not the body origin).
+    double total_mass = 0.0;
+    Vector3d first_moment = Vector3d::Zero(); // sum of mass * position
+    for (auto &component : components) {
+        total_mass += component->inertial.mass;
+        first_moment += component->inertial.mass * component->relative_pose.position;
+    }
+    cog = (total_mass > 0.0) ? Vector3d(first_moment / total_mass) : Vector3d::Zero();
+
+    // Second pass: evaluate wrenches and accumulate the inertia about the CoM.
     WrenchSum_t new_wrench_sum;
     Inertial new_inertial;
     new_inertial.tensor = Eigen::Matrix3d::Zero();
@@ -114,7 +126,7 @@ void Dynamics::calc_model(SimState_t states)
         component->calc_model();
         new_wrench_sum += component->rotate_wrenches();
 
-        auto rotated_inertial = component->rotate_inertia();
+        auto rotated_inertial = component->rotate_inertia(cog);
         new_inertial.mass += rotated_inertial.mass;
         new_inertial.tensor += rotated_inertial.tensor;
     }

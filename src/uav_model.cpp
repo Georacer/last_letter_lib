@@ -165,6 +165,12 @@ void UavModel::step()
     dynamics.calc_model(state);
     auto inpWrench = dynamics.wrench_sum.sum();
 
+    // Transfer the total moment from the body-frame origin to the Center of
+    // Mass, so it is consistent with the CoM-referenced equations of motion
+    // and the CoM-referenced inertia tensor. This compensates for moments
+    // created by gravity.
+    inpWrench.torque -= dynamics.cog.cross(inpWrench.force);
+
     SimState_t newState;
     newState = kinematics.propagateState(state, dynamics.inertial, inpWrench);
 
