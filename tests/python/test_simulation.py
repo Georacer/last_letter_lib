@@ -67,7 +67,7 @@ def build_desc_aircraft():
                 torqueMax: 0.01
                 pose:
                     position:
-                        x: -0.5
+                        x: 0.03
                 inertial:
                     mass: 0.2
         ground:
@@ -376,6 +376,8 @@ class TestAircraft:
     def test_thruster_1(self, build_desc_aircraft):
         ac = sim.Aircraft("test_aircraft")
         ac.initialize(build_desc_aircraft)
+        ac.set_param("env/rho", 0)  # Nullify aerodynamic effects.
+        ac.update_parameters()
         u = Inputs(0, 0, 0, [1])
         ac.set_input(u)
         ac.step()
@@ -383,9 +385,11 @@ class TestAircraft:
         assert ac.state.velocity_linear[0] > 0
         assert ac.state.velocity_linear[1] == pytest.approx(0)
         assert ac.state.velocity_linear[2] > 0
-        assert ac.state.velocity_angular[0] > 0
+        assert (
+            ac.state.velocity_angular[0] < 0
+        )  # Propeller torque is negative by default.
         assert ac.state.velocity_angular[1] == pytest.approx(0)
-        assert ac.state.velocity_angular[2] > 0
+        assert ac.state.velocity_angular[2] < 0
 
     def test_thruster_2(self, build_desc_aircraft):
         ac = sim.Aircraft("test_aircraft")
