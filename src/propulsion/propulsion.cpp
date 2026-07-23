@@ -3,6 +3,9 @@
 #include "last_letter_lib/math_utils.hpp"
 #include "last_letter_lib/uav_utils.hpp"
 
+#include "data_tamer/data_tamer.hpp"
+#include "last_letter_lib/log_types.hpp"
+
 using namespace std;
 using namespace last_letter_lib;
 using namespace last_letter_lib::systems;
@@ -95,9 +98,9 @@ stateType Thruster::outputs(const stateType /*x*/, const stateType u, const doub
 }
 
 // Engine physics step, container for the generic class
-void Thruster::calc_model()
+void Thruster::calc_model_impl()
 {
-    Component::calc_model();
+    Component::calc_model_impl();
 
     relativeWind = local_state.velocity.linear - local_environment.wind;
     normalWind = relativeWind.x();
@@ -110,6 +113,15 @@ void Thruster::calc_model()
     post_propagation();
     rotateProp();
     calc_wrench(local_state, local_environment);
+}
+
+void Thruster::register_log_channels()
+{
+    Component::register_log_channels(); // wrench_sum
+    auto channel = DataTamer::ChannelsRegistry::Global().getChannel(get_name());
+    channel->registerValue("omega", &omega);          // motor speed [rad/s]
+    channel->registerValue("theta", &theta);          // propeller angle [rad]
+    channel->registerValue("input_motor", &inputMotor); // control input [0-1]
 }
 
 void Thruster::rotateProp() // Update propeller angle

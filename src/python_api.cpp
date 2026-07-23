@@ -15,6 +15,7 @@
 #include "last_letter_lib/aerodynamics.hpp"
 #include "last_letter_lib/propulsion/propulsion.hpp"
 #include "last_letter_lib/uav_model.hpp"
+#include "last_letter_lib/logging.hpp"
 
 namespace py = pybind11;
 
@@ -86,6 +87,14 @@ Input input_from_array(const std::vector<double> v) { return Input(v.at(0), v.at
 PYBIND11_MODULE(cpp_last_letter_lib, m)
 {
     m.doc() = "The last_letter_lib python bindings.";
+
+    // Data-logging on/off toggle. All logging is driven from C++; Python only
+    // turns it on/off. After enable_logging(path), any stepped Component /
+    // UavModel self-logs into the MCAP file until disable_logging().
+    m.def("enable_logging", &last_letter_lib::logging::enable, py::arg("path"),
+          "Start recording simulation data to an MCAP file at `path`.");
+    m.def("disable_logging", &last_letter_lib::logging::disable,
+          "Stop recording and close the MCAP file.");
 
     auto m_math_utils = m.def_submodule("cpp_math_utils", "last_letter_lib math_utils submodule");
     py::class_<Vector3_ll>(m_math_utils, "Vector3")
@@ -395,5 +404,8 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def("set_input_pwm", &UavModel::setInputPwm)
         .def("step", &UavModel::step)
         .def("init", &UavModel::init)
+        .def("enable_logging", &UavModel::enable_logging, py::arg("path"))
+        .def("disable_logging", &UavModel::disable_logging)
+        .def_property_readonly("time", &UavModel::get_time)
         .def_readonly("state", &UavModel::state);
 }

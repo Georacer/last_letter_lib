@@ -28,6 +28,7 @@ public:
     Input input;		 // Normalized input to the model
     InputPwm_t PwmInput; // PWM input to the model
     double dt;			 // simulation timestep in s
+    double sim_time_{0}; // elapsed simulation time in s (the logging clock)
     int chanReset;
 
     /////////
@@ -44,6 +45,10 @@ private:
     int initChanReset_;
     Input initCtrlInput_;
 
+    // Logging
+    void log_state();       // snapshot UavModel::state into its log channel
+    unsigned log_epoch_{0}; // recording id we last registered channels for
+
     ///////////
     // Methods
 public:
@@ -58,6 +63,13 @@ public:
 
     void init(); // Initialize UavModel object
     void step(); // Perform simulation step
+
+    // Data logging. All logging is C++-driven; these just toggle the global
+    // recording (see last_letter_lib::logging). Call enable_logging() before
+    // the first step() so channels are created with the MCAP sink attached.
+    void enable_logging(const std::string &path); // start recording to an MCAP file
+    void disable_logging();                        // stop recording and close the file
+    double get_time() const { return sim_time_; }  // elapsed simulation time in s
 
     SimState_t getState() { return state; } // Return the state of the Body Frame
     void setInput(Input inputMsg);

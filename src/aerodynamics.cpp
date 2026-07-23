@@ -3,6 +3,9 @@
 #include "last_letter_lib/prog_utils.hpp"
 #include "last_letter_lib/math_utils.hpp"
 
+#include "data_tamer/data_tamer.hpp"
+#include "last_letter_lib/log_types.hpp"
+
 using namespace std;
 using namespace last_letter_lib;
 using last_letter_lib::programming_utils::ParameterManager;
@@ -88,10 +91,10 @@ void Aerodynamics::setInputPwm(InputPwm_t p_input)
 }
 
 // One step in the physics engine
-void Aerodynamics::calc_model()
+void Aerodynamics::calc_model_impl()
 {
     // Perform gravity calculations.
-    Component::calc_model();
+    Component::calc_model_impl();
 
     p = local_state.velocity.angular(0);
     q = local_state.velocity.angular(1);
@@ -193,9 +196,17 @@ void StdLinearAero::update_parameters()
     alpha0 = get_param<double>("alpha_stall");
 }
 
-void StdLinearAero::calc_model()
+void Aerodynamics::register_log_channels()
 {
-    Aerodynamics::calc_model();
+    Component::register_log_channels(); // wrench_sum
+    DataTamer::ChannelsRegistry::Global()
+        .getChannel(get_name())
+        ->registerValue("airdata", &airdata);
+}
+
+void StdLinearAero::calc_model_impl()
+{
+    Aerodynamics::calc_model_impl();
 
     // Read air density
     rho = local_environment.density;

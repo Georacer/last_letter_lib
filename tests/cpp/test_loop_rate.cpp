@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 #include <time.h>
 #include <chrono>
+#include <filesystem>
 
 #include "last_letter_lib/uav_model.hpp"
 
@@ -19,9 +20,14 @@ TEST(TestLoopRate, TestLoopRate1)
     uav.initialize(config);
 
     uint32_t loopNum=10000;
-    double t_steps, t_derivs;
+    double t_steps, t_steps_nolog, t_derivs;
 
     cout << "Testing simulation loop rate" << endl;
+
+    // Record all loopNum simulation steps to an MCAP log we can inspect
+    // afterwards (PlotJuggler, or last_letter_lib.utils.log in Python).
+    auto log_path = std::filesystem::absolute("test_loop_rate.mcap").string();
+    uav.enable_logging(log_path);
 
     // Calculate step time requirements
     auto t_start = chrono::steady_clock::now();
@@ -32,8 +38,27 @@ TEST(TestLoopRate, TestLoopRate1)
     auto t_end = chrono::steady_clock::now();
     t_steps = (double)chrono::duration_cast<chrono::milliseconds>(t_end-t_start).count()/1000;
 
+    // Stop recording (flushes + closes the MCAP) now that all loopNum steps are
+    // done. The second timing loop below is not a simulation step: it re-runs
+    // dynamics.calc_model() on a frozen state purely to benchmark it, so it is
+    // intentionally left out of the log.
+    uav.disable_logging();
+    cout << "Wrote " << loopNum << "-step simulation log to " << log_path << endl;
+
     SimState_t newState;
     newState = uav.state;
+
+    // Re-run the same number of steps from a reset state WITHOUT logging, so we
+    // can compare against the logged run above and see the per-step logging
+    // overhead. (init() resets the model to its initial state.)
+    uav.init();
+    t_start = chrono::steady_clock::now();
+    for (uint32_t i=0; i<loopNum; i++)
+    {
+        uav.step();
+    }
+    t_end = chrono::steady_clock::now();
+    t_steps_nolog = (double)chrono::duration_cast<chrono::milliseconds>(t_end-t_start).count()/1000;
 
     // Calculate dynamics calculation time requirements
     t_start = chrono::steady_clock::now();
@@ -62,7 +87,10 @@ TEST(TestLoopRate, TestLoopRate1)
     cout << "Linear Acceleration\n" << newState.acceleration.linear << endl;
     cout << "Angular Acceleration\n" << newState.acceleration.angular << endl;
 
-    cout << t_steps << " second(s) elapsed for " << loopNum << " simulation steps" << endl;
+    cout << t_steps << " second(s) elapsed for " << loopNum << " simulation steps (with logging)" << endl;
+    cout << t_steps_nolog << " second(s) elapsed for " << loopNum << " simulation steps (no logging)" << endl;
+    cout << "Logging overhead: " << (t_steps - t_steps_nolog) << " s total, "
+         << (t_steps - t_steps_nolog) / loopNum * 1e6 << " us/step" << endl;
     cout << t_derivs << " second(s) elapsed for " << loopNum << " model derivative calculations" << endl;
 
 }

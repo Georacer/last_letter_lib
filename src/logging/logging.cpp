@@ -1,0 +1,87 @@
+// Implementation of the logging facade over DataTamer. All DataTamer / MCAP
+// (C++17) code is confined to this translation unit.
+
+#include "last_letter_lib/logging.hpp"
+
+#include <chrono>
+#include <cmath>
+#include <memory>
+#include <thread>
+
+#include "data_tamer/data_tamer.hpp"
+#include "data_tamer/sinks/mcap_sink.hpp"
+
+namespace last_letter_lib
+{
+namespace logging
+{
+namespace
+{
+bool g_enabled = false;
+bool g_time_set = false;
+long long g_time_ns = 0;
+long long g_auto_index = 0;
+unsigned g_epoch = 0;
+// Keep the sink alive for the duration of the recording. Destroying it (in
+// disable()) flushes and closes the MCAP file.
+std::shared_ptr<DataTamer::MCAPSink> g_sink;
+} // namespace
+
+void enable(const std::string &path)
+{
+    // Start from a clean slate: drop any channels/sinks from a previous run so
+    // each recording is independent (important when many sims run in one
+    // process, e.g. the test binary).
+    DataTamer::ChannelsRegistry::Global().clear();
+
+    // do_compression=false: more robust to crash/segfault mid-run, which
+    // matters for long streaming sims.
+    g_sink = std::make_shared<DataTamer::MCAPSink>(path, /*do_compression=*/false);
+    DataTamer::ChannelsRegistry::Global().addDefaultSink(g_sink);
+
+    g_enabled = true;
+    g_time_set = false;
+    g_auto_index = 0;
+    ++g_epoch;
+}
+
+void disable()
+{
+    // DataTamer's sink writes on a background thread that drains its queue in
+    // ~250us passes, and its shutdown (stopThread) does NOT drain the queue
+    // first. So we must let the worker flush pending snapshots before tearing
+    // the sink down, otherwise the most recent samples are lost. One worker
+    // pass drains the whole queue; this delay covers many passes with margin
+    // for scheduler jitter, and is a one-time cost paid only at disable().
+    if (g_sink)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+    DataTamer::ChannelsRegistry::Global().clear();
+    g_sink.reset(); // flush + close the MCAP file
+    g_enabled = false;
+}
+
+bool is_enabled()
+{
+    return g_enabled;
+}
+
+void set_time(double t_seconds)
+{
+    g_time_ns = static_cast<long long>(std::llround(t_seconds * 1e9));
+    g_time_set = true;
+}
+
+long long now_ns()
+{
+    return g_time_set ? g_time_ns : (g_auto_index++);
+}
+
+unsigned epoch()
+{
+    return g_epoch;
+}
+
+} // namespace logging
+} // namespace last_letter_lib

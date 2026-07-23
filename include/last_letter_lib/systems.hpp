@@ -46,7 +46,11 @@ public:
     // body_state is describing the body frame in the NED coordinate system.
     // environment is describing the wind in the NED coordinate system.
     void update_local_state(const SimState_t body_state, const Environment_t environment);
-    virtual void calc_model(); // Perform any model calculations.
+    // Run this component's model for one step, then self-log its data if
+    // logging is enabled. This is non-virtual on purpose: subclasses override
+    // calc_model_impl(), so the self-log hook fires exactly once, at the end of
+    // the outermost call, regardless of which subclass is running.
+    void calc_model();
     WrenchSum_t rotate_wrenches() const ; // Get the component wrenches in the body frame.
     // Get the component inertia about the Center of Mass. Accepts r_com, the offset between the Body Frame origin
     // and the CoM, (in other words, the center of gravityin body-frame coordinates) in order to compensate for it.
@@ -58,7 +62,19 @@ public:
     Environment_t local_environment;
     Pose relative_pose; // The pose of this component w.r.t. the airframe datum. Its quaternion is q_bc (component->body)
 
+protected:
+    // The actual per-step model computation. Overridden by subclasses (which
+    // should call their parent's implementation first). Do NOT call this
+    // directly from outside; call calc_model().
+    virtual void calc_model_impl();
+    // Register this component's log channel and fields. Virtual so subclasses
+    // add their own fields by overriding and calling the base first. Called
+    // once per recording, lazily, from maybe_log().
+    virtual void register_log_channels();
+
 private:
+    void maybe_log(); // Self-log hook invoked by calc_model().
+    unsigned log_epoch_{0}; // Recording id we last registered channels for.
     GravityModel *gravity{nullptr};
 };
 

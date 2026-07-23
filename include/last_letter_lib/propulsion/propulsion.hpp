@@ -62,7 +62,7 @@ public:
     void setInputPwm(InputPwm_t input);                                                             // store PWM control input
     virtual stateType dynamics(const stateType x, const stateType u, const double t) override;
     virtual stateType outputs(const stateType x, const stateType u, const double t) override;
-    void calc_model() override;               // engine physics step, container for the generic class
+    void calc_model_impl() override;          // engine physics step, container for the generic class
     virtual void pre_propagation(SimState_t states, Environment_t environment) = 0; // Build the input u of the dynamic system.
     virtual void post_propagation() override = 0; // Distribute the propagated state into other local variables.
     void rotateProp();                                                                              // Update the propeller angle
@@ -70,6 +70,7 @@ public:
     double torque_sign() {return rotationDir;}
 
 protected:
+    void register_log_channels() override; // adds omega/theta/input to base wrench_sum
     bool initialized{false};
 };
 

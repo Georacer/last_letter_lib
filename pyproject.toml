@@ -9,8 +9,10 @@ authors = [
 requires-python = ">=3.10,<3.12"
 dependencies = [
     "matplotlib>=3.10.3",
+    "mcap>=1.2.0",
     "numba>=0.61.2",
     "numpy>=2.2.6",
+    "pandas>=2.2.0",
     "pybind11>=2.13.6",
     "pydantic>=2.11.7",
     "pyyaml>=6.0.2",

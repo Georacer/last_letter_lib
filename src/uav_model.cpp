@@ -1,8 +1,13 @@
 // Core class definitions
 #include <stdexcept>
+#include <chrono>
 
 #include "last_letter_lib/uav_model.hpp"
 #include "last_letter_lib/prog_utils.hpp"
+
+#include "data_tamer/data_tamer.hpp"
+#include "last_letter_lib/logging.hpp"
+#include "last_letter_lib/log_types.hpp"
 
 using namespace std;
 using namespace last_letter_lib::programming_utils;
@@ -156,6 +161,15 @@ void UavModel::step()
 {
     // Perform step actions serially
 
+    // Stamp this step's samples with the current sim-time and log the state at
+    // the top of the step, so UavModel::state and the component wrenches (which
+    // are computed from this same state, mid-step) all share the timestamp.
+    if (logging::is_enabled())
+    {
+        logging::set_time(sim_time_);
+        log_state();
+    }
+
     // Update the environment and propagate the current state and environment
     // into every component before evaluating their forces and torques.
     environmentModel.calcEnvironment(state);
@@ -213,6 +227,35 @@ void UavModel::step()
     }
 
     state = newState;
+
+    // Advance the simulation clock.
+    sim_time_ += dt;
+}
+
+/////////////////////////////////////////////////
+// Data logging
+void UavModel::enable_logging(const std::string &path)
+{
+    logging::enable(path);
+}
+
+void UavModel::disable_logging()
+{
+    logging::disable();
+}
+
+void UavModel::log_state()
+{
+    // (Re)register our channel for this recording the first time we log into
+    // it; enable() clears the registry and bumps the epoch.
+    auto channel = DataTamer::ChannelsRegistry::Global().getChannel(get_name());
+    if (log_epoch_ != logging::epoch())
+    {
+        channel->registerValue("pose", &state.pose);
+        channel->registerValue("velocity", &state.velocity);
+        log_epoch_ = logging::epoch();
+    }
+    channel->takeSnapshot(std::chrono::nanoseconds(logging::now_ns()));
 }
 
 /////////////////////////////////////////////////

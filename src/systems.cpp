@@ -2,6 +2,13 @@
 #include "last_letter_lib/uav_utils.hpp"
 #include <last_letter_lib/systems.hpp>
 
+#include <chrono>
+
+#include "data_tamer/data_tamer.hpp"
+
+#include "last_letter_lib/logging.hpp"
+#include "last_letter_lib/log_types.hpp"
+
 namespace last_letter_lib {
 namespace systems {
 
@@ -54,9 +61,41 @@ void Component::update_local_state(const SimState_t body_state, const Environmen
 
 void Component::calc_model()
 {
+    // Run the model (dispatches to the most-derived override), then self-log.
+    calc_model_impl();
+    maybe_log();
+}
+
+void Component::calc_model_impl()
+{
     // Run the gravity model.
     wrench_sum.wrenchGrav = gravity->getWrench(local_state, inertial);
     // Children will then run their own dynamics.
+}
+
+void Component::register_log_channels()
+{
+    auto channel = DataTamer::ChannelsRegistry::Global().getChannel(get_name());
+    channel->registerValue("wrench_sum", &wrench_sum);
+}
+
+void Component::maybe_log()
+{
+    if (!logging::is_enabled())
+    {
+        return;
+    }
+    // (Re)register our channel for this recording the first time we log into
+    // it. enable() clears the registry and bumps the epoch, so a fresh
+    // recording re-registers against the current member addresses.
+    if (log_epoch_ != logging::epoch())
+    {
+        register_log_channels();
+        log_epoch_ = logging::epoch();
+    }
+    DataTamer::ChannelsRegistry::Global()
+        .getChannel(get_name())
+        ->takeSnapshot(std::chrono::nanoseconds(logging::now_ns()));
 }
 
 WrenchSum_t Component::rotate_wrenches() const

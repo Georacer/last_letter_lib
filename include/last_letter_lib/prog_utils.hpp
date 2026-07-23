@@ -268,6 +268,9 @@ public:
     template <typename T>
     T get_param(string param_name) { return params_.get<T>(param_name); }
 
+    // Name of this object (used, among others, as its log-channel name).
+    const string &get_name() const { return name; }
+
     ParameterManager params_;
 private:
     string name;

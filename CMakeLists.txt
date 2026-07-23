@@ -11,10 +11,11 @@ if(NOT CMAKE_C_STANDARD)
   set(CMAKE_C_STANDARD 99)
 endif()
 
-# Default to C++14
+# Whole project builds at C++17 (required by the DataTamer logging backend).
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Configure compile options
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -64,6 +65,38 @@ install(TARGETS yaml-cpp
         RUNTIME DESTINATION ${PROJECT_NAME}
 )
 
+# Import DataTamer, the data-logging backend (MCAP output, PlotJuggler-native).
+# The buildable CMake project lives in the data_tamer_cpp/ subdirectory, hence
+# SOURCE_SUBDIR (honored by FetchContent_MakeAvailable on CMake >= 3.18).
+# DATA_TAMER_BUILD_ROS must be OFF so it uses its vendored mcap (3rdparty/mcap)
+# instead of requiring a ROS 2 / mcap_vendor environment.
+FetchContent_Declare(
+  data_tamer
+  GIT_REPOSITORY https://github.com/PickNikRobotics/data_tamer.git
+  GIT_TAG        1.0.3
+  SOURCE_SUBDIR  data_tamer_cpp
+)
+set(DATA_TAMER_BUILD_ROS OFF CACHE BOOL "" FORCE)
+set(DATA_TAMER_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(DATA_TAMER_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+# Build DataTamer and its vendored mcap as STATIC, position-independent, so they
+# embed directly into last_letter_lib.so. Otherwise BUILD_SHARED_LIBS (forced ON
+# earlier for yaml-cpp) makes them separate .so files that are not shipped next
+# to the Python extension, so `import last_letter_lib` fails with
+# "libdata_tamer.so: cannot open shared object file". Scope the override to this
+# fetch and restore BUILD_SHARED_LIBS afterwards so yaml-cpp/googletest are
+# unaffected.
+set(_LLL_BUILD_SHARED_LIBS_SAVED "${BUILD_SHARED_LIBS}")
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+FetchContent_MakeAvailable(data_tamer)
+set(BUILD_SHARED_LIBS "${_LLL_BUILD_SHARED_LIBS_SAVED}" CACHE BOOL "" FORCE)
+# DataTamer compiles its own target with -Werror; drop it so a compiler version
+# other than the one upstream tested can't fail our build on a stray warning.
+if(TARGET data_tamer AND (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
+  target_compile_options(data_tamer PRIVATE -Wno-error)
+endif()
+
 
 include_directories(
   include
@@ -100,12 +133,14 @@ add_library(last_letter_lib SHARED
   src/kinematics.cpp
   src/sensors.cpp
   src/uav_model.cpp
+  src/logging/logging.cpp
 )
 target_link_libraries(last_letter_lib
   Eigen3::Eigen
   ${LAPACK_LIBRARIES}
   yaml-cpp
   Boost::boost
+  data_tamer
 )
 
 # add_library(lib_trimmer src/trimmer.cpp)

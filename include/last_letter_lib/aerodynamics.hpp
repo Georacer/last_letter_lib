@@ -53,7 +53,10 @@ public:
     void update_parameters() override;
     void setInput(Input input);
     void setInputPwm(InputPwm_t input);
-    void calc_model() override; // perform one step in the aerodynamics
+    void calc_model_impl() override; // perform one step in the aerodynamics
+
+protected:
+    void register_log_channels() override; // adds airdata to the base wrench_sum
 };
 
 ///////////////////////////////////////////
@@ -76,7 +79,7 @@ public:
     ~StdLinearAero() {};
     void initialize_parameters() override;
     void update_parameters() override;
-    void calc_model() override;
+    void calc_model_impl() override;
     // Calculate lift coefficient from alpha
     virtual double liftCoeff(double);
     // Calculate drag coefficient from alpha and beta
