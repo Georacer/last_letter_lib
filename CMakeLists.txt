@@ -27,8 +27,6 @@ endif()
 find_package(Eigen3 REQUIRED NO_MODULE)
 
 # include(FindEigen3.cmake)
-find_package(LAPACK REQUIRED)
-
 find_package(Boost REQUIRED)
 
 # find_package(NLopt REQUIRED) # Will enable later with trimmer
@@ -101,7 +99,6 @@ endif()
 include_directories(
   include
   ${EIGEN3_INCLUDE_DIRS}
-  ${LAPACK_INCLUDE_DIRS}
   ${NLOPT_INCLUDE_DIRS}
 
   # "/usr/local/include" # Used to include nlopt
@@ -137,7 +134,6 @@ add_library(last_letter_lib SHARED
 )
 target_link_libraries(last_letter_lib
   Eigen3::Eigen
-  ${LAPACK_LIBRARIES}
   yaml-cpp
   Boost::boost
   data_tamer
@@ -177,7 +173,6 @@ file(COPY last_letter_models/HID.yaml DESTINATION $ENV{HOME}/last_letter_models)
 # # Declare dependencies of this library to its consumers
 # ament_export_dependencies(
 # Eigen3
-# LAPACK
 # )
 
 # Compile test files

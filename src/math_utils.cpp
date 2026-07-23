@@ -389,24 +389,6 @@ namespace last_letter_lib
             return c;
         }
 
-        int inverse(double *A, double *Ainv, int N)
-        {
-            int *IPIV = new int[N + 1];
-            int LWORK = N * N;
-            double *WORK = new double[LWORK];
-            int INFO;
-
-            memcpy(Ainv, A, LWORK * sizeof(double));
-
-            dgetrf_(&N, &N, Ainv, &N, IPIV, &INFO);
-            dgetri_(&N, Ainv, &N, IPIV, WORK, &LWORK, &INFO);
-
-            delete IPIV;
-            delete WORK;
-
-            return INFO;
-        }
-
         ////////////////////
         // Class Definitions
         ////////////////////

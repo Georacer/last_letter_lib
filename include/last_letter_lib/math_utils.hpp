@@ -17,15 +17,6 @@ using Eigen::Quaterniond;
 using Eigen::Vector3d;
 using Eigen::Vector4d;
 
-extern "C"
-{
-	// LU decomoposition of a general matrix
-	void dgetrf_(int *M, int *N, double *A, int *lda, int *IPIV, int *INFO);
-
-	// generate inverse of a matrix given its LU decomposition
-	void dgetri_(int *N, double *A, int *lda, int *IPIV, double *WORK, int *lwork, int *INFO);
-}
-
 namespace last_letter_lib
 {
 	namespace math_utils
@@ -89,8 +80,6 @@ namespace last_letter_lib
 		Vector3d operator*(const double *mtx, Vector3d &vec);
 		// Vector3d operator*(const double a, Vector3d& vec);
 		Vector3d operator/(const double *mtx, Vector3d &vec);
-
-		int inverse(double *A, double *Ainv, int N);
 
 		//////////
 		// Classes
