@@ -1,11 +1,9 @@
 // Core class definitions
 #include <stdexcept>
-#include <chrono>
 
 #include "last_letter_lib/uav_model.hpp"
 #include "last_letter_lib/prog_utils.hpp"
 
-#include "data_tamer/data_tamer.hpp"
 #include "last_letter_lib/logging.hpp"
 #include "last_letter_lib/log_types.hpp"
 
@@ -248,14 +246,14 @@ void UavModel::log_state()
 {
     // (Re)register our channel for this recording the first time we log into
     // it; enable() clears the registry and bumps the epoch.
-    auto channel = DataTamer::ChannelsRegistry::Global().getChannel(get_name());
+    auto channel = logging::get_channel(get_name());
     if (log_epoch_ != logging::epoch())
     {
-        channel->registerValue("pose", &state.pose);
-        channel->registerValue("velocity", &state.velocity);
+        channel.register_value("pose", &state.pose);
+        channel.register_value("velocity", &state.velocity);
         log_epoch_ = logging::epoch();
     }
-    channel->takeSnapshot(std::chrono::nanoseconds(logging::now_ns()));
+    channel.take_snapshot();
 }
 
 /////////////////////////////////////////////////

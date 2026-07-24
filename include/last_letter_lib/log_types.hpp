@@ -1,21 +1,46 @@
 #pragma once
 
-// DataTamer TypeDefinition specializations for the last_letter_lib data types
-// we log. Each must live in the SAME namespace as the type it describes, so
-// DataTamer finds it via ADL, and must return a std::string_view type name and
-// enumerate the type's fields via add("name", &member). Everything must bottom
-// out in numeric scalars (double here).
+// Backend-aware logging header. It provides two things for the .cpp files that
+// self-log (systems, aerodynamics, propulsion, uav_model):
 //
-// This header pulls in DataTamer's serialization contract only transitively
-// through the add() callback shapes; it does NOT include DataTamer. Include it
-// in the .cpp that calls registerValue(), alongside the DataTamer headers.
+//  1. DataTamer TypeDefinition specializations for the last_letter_lib data
+//     types we log. Each must live in the SAME namespace as the type it
+//     describes, so DataTamer finds it via ADL, and must return a
+//     std::string_view type name and enumerate the type's fields via
+//     add("name", &member). Everything must bottom out in numeric scalars.
+//  2. The definition of logging::LogChannel::register_value (declared in the
+//     backend-free logging.hpp). Defining it here — where DataTamer is included
+//     — keeps DataTamer out of logging.hpp while letting callers register values
+//     through the opaque handle instead of naming DataTamer directly.
+//
+// Include this header (not the DataTamer headers) in the .cpp files that log.
 
+#include <memory>
 #include <string_view>
 
 #include <Eigen/Eigen>
 
+#include "data_tamer/data_tamer.hpp"
+
+#include <last_letter_lib/logging.hpp>
 #include <last_letter_lib/math_utils.hpp>
 #include <last_letter_lib/uav_utils.hpp>
+
+// ---- logging::LogChannel::register_value ------------------------------------
+// Out-of-line definition of the handle's registration template. Recovers the
+// type-erased DataTamer channel and forwards to its registerValue(), whose T is
+// resolved against the TypeDefinition overloads below via ADL.
+namespace last_letter_lib
+{
+namespace logging
+{
+template <typename T>
+void LogChannel::register_value(const std::string &name, const T *value)
+{
+    std::static_pointer_cast<DataTamer::LogChannel>(impl_)->registerValue(name, value);
+}
+} // namespace logging
+} // namespace last_letter_lib
 
 // ---- Eigen ------------------------------------------------------------------
 // Defined in namespace Eigen so ADL finds it for Eigen::Vector3d. Uses the

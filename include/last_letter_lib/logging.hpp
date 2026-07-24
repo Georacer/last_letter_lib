@@ -12,6 +12,7 @@
 // then self-logs into that sink from inside its calc_model()/step(). When
 // logging is disabled, the self-log is a cheap no-op.
 
+#include <memory>
 #include <string>
 
 namespace last_letter_lib
@@ -47,6 +48,39 @@ long long now_ns();
 // Monotonically increasing recording id, bumped by each enable(). Loggers use
 // it to know when to (re)register their channels for a fresh recording.
 unsigned epoch();
+
+// Opaque handle to one named log channel. It hides the logging backend from
+// callers: obtain it with get_channel(), register the entity's members on it,
+// then take_snapshot(). Copying a handle refers to the same underlying channel.
+class LogChannel
+{
+  public:
+    LogChannel() = default;
+
+    // Register a loggable member by address; the pointee must outlive the
+    // recording. Defined in log_types.hpp (the backend-aware header), so this
+    // header stays free of the backend and safe to include from C++11 code.
+    template <typename T>
+    void register_value(const std::string &name, const T *value);
+
+    // Capture all registered values into one snapshot, timestamped with now_ns().
+    void take_snapshot();
+
+    // False for a default-constructed / empty handle.
+    explicit operator bool() const { return static_cast<bool>(impl_); }
+
+  private:
+    friend LogChannel get_channel(const std::string &);
+    explicit LogChannel(std::shared_ptr<void> impl) : impl_(std::move(impl)) {}
+
+    // Type-erased std::shared_ptr<DataTamer::LogChannel>; the backend type is
+    // never named in this header. Recovered via static_pointer_cast in the
+    // backend TUs (logging.cpp, log_types.hpp).
+    std::shared_ptr<void> impl_;
+};
+
+// Get (creating on first use) the named channel from the global registry.
+LogChannel get_channel(const std::string &name);
 
 } // namespace logging
 } // namespace last_letter_lib

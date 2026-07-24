@@ -2,10 +2,6 @@
 #include "last_letter_lib/uav_utils.hpp"
 #include <last_letter_lib/systems.hpp>
 
-#include <chrono>
-
-#include "data_tamer/data_tamer.hpp"
-
 #include "last_letter_lib/logging.hpp"
 #include "last_letter_lib/log_types.hpp"
 
@@ -75,8 +71,7 @@ void Component::calc_model_impl()
 
 void Component::register_log_channels()
 {
-    auto channel = DataTamer::ChannelsRegistry::Global().getChannel(get_name());
-    channel->registerValue("wrench_sum", &wrench_sum);
+    logging::get_channel(get_name()).register_value("wrench_sum", &wrench_sum);
 }
 
 void Component::maybe_log()
@@ -93,9 +88,7 @@ void Component::maybe_log()
         register_log_channels();
         log_epoch_ = logging::epoch();
     }
-    DataTamer::ChannelsRegistry::Global()
-        .getChannel(get_name())
-        ->takeSnapshot(std::chrono::nanoseconds(logging::now_ns()));
+    logging::get_channel(get_name()).take_snapshot();
 }
 
 WrenchSum_t Component::rotate_wrenches() const

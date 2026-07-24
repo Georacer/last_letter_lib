@@ -98,5 +98,22 @@ unsigned epoch()
     return g_epoch;
 }
 
+LogChannel get_channel(const std::string &name)
+{
+    // getChannel() returns shared_ptr<DataTamer::LogChannel>, stored type-erased
+    // in the handle's shared_ptr<void>.
+    return LogChannel(DataTamer::ChannelsRegistry::Global().getChannel(name));
+}
+
+void LogChannel::take_snapshot()
+{
+    if (!impl_)
+    {
+        return;
+    }
+    std::static_pointer_cast<DataTamer::LogChannel>(impl_)
+        ->takeSnapshot(std::chrono::nanoseconds(now_ns()));
+}
+
 } // namespace logging
 } // namespace last_letter_lib

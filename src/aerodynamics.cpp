@@ -3,7 +3,7 @@
 #include "last_letter_lib/prog_utils.hpp"
 #include "last_letter_lib/math_utils.hpp"
 
-#include "data_tamer/data_tamer.hpp"
+#include "last_letter_lib/logging.hpp"
 #include "last_letter_lib/log_types.hpp"
 
 using namespace std;
@@ -199,9 +199,7 @@ void StdLinearAero::update_parameters()
 void Aerodynamics::register_log_channels()
 {
     Component::register_log_channels(); // wrench_sum
-    DataTamer::ChannelsRegistry::Global()
-        .getChannel(get_name())
-        ->registerValue("airdata", &airdata);
+    logging::get_channel(get_name()).register_value("airdata", &airdata);
 }
 
 void StdLinearAero::calc_model_impl()
