@@ -67,7 +67,7 @@ public:
     // Data logging. All logging is C++-driven; these just toggle the global
     // recording (see last_letter_lib::logging). Call enable_logging() before
     // the first step() so channels are created with the MCAP sink attached.
-    void enable_logging(const std::string &path); // start recording to an MCAP file
+    void enable_logging(const std::string &path = ""); // start recording (empty path => timestamped filename)
     void disable_logging();                        // stop recording and close the file
     double get_time() const { return sim_time_; }  // elapsed simulation time in s
 

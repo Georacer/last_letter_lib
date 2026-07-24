@@ -19,11 +19,14 @@ namespace last_letter_lib
 namespace logging
 {
 
-// Start a new recording, writing to `path` (should end in ".mcap").
+// Start a new recording, writing to `path` (should end in ".mcap"). If `path`
+// is empty (the default), a filename is generated from the current local
+// date/time as "YYYY-MM-DD_HH-MM-SS.mcap" in the current working directory, so
+// repeated runs do not overwrite each other.
 // Clears any previous recording and bumps the epoch (see epoch()).
 // Call this BEFORE the first calc_model()/step() so channels are created with
 // the sink already attached.
-void enable(const std::string &path);
+void enable(const std::string &path = "");
 
 // Stop the current recording, flushing and closing the file.
 void disable();

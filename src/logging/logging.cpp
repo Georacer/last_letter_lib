@@ -5,18 +5,17 @@
 
 #include <chrono>
 #include <cmath>
+#include <ctime>
 #include <memory>
 #include <thread>
 
 #include "data_tamer/data_tamer.hpp"
 #include "data_tamer/sinks/mcap_sink.hpp"
 
-namespace last_letter_lib
-{
-namespace logging
-{
-namespace
-{
+namespace last_letter_lib {
+namespace logging {
+
+namespace {
 bool g_enabled = false;
 bool g_time_set = false;
 long long g_time_ns = 0;
@@ -25,10 +24,26 @@ unsigned g_epoch = 0;
 // Keep the sink alive for the duration of the recording. Destroying it (in
 // disable()) flushes and closes the MCAP file.
 std::shared_ptr<DataTamer::MCAPSink> g_sink;
+
+// Filename derived from the current local date/time, e.g.
+// "2026-07-24_01-30-00.mcap". Used when enable() is called with no path.
+std::string default_log_filename()
+{
+    std::time_t now = std::time(nullptr);
+    std::tm local_tm{};
+    localtime_r(&now, &local_tm);
+    char buf[32];
+    std::strftime(buf, sizeof(buf), "%Y-%m-%d_%H-%M-%S.mcap", &local_tm);
+    return std::string(buf);
+}
 } // namespace
 
 void enable(const std::string &path)
 {
+    // With no path, name the file after the current local date/time so repeated
+    // runs don't clobber each other (written to the current working directory).
+    const std::string out_path = path.empty() ? default_log_filename() : path;
+
     // Start from a clean slate: drop any channels/sinks from a previous run so
     // each recording is independent (important when many sims run in one
     // process, e.g. the test binary).
@@ -36,7 +51,7 @@ void enable(const std::string &path)
 
     // do_compression=false: more robust to crash/segfault mid-run, which
     // matters for long streaming sims.
-    g_sink = std::make_shared<DataTamer::MCAPSink>(path, /*do_compression=*/false);
+    g_sink = std::make_shared<DataTamer::MCAPSink>(out_path, /*do_compression=*/false);
     DataTamer::ChannelsRegistry::Global().addDefaultSink(g_sink);
 
     g_enabled = true;

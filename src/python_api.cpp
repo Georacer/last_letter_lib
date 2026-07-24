@@ -91,8 +91,9 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
     // Data-logging on/off toggle. All logging is driven from C++; Python only
     // turns it on/off. After enable_logging(path), any stepped Component /
     // UavModel self-logs into the MCAP file until disable_logging().
-    m.def("enable_logging", &last_letter_lib::logging::enable, py::arg("path"),
-          "Start recording simulation data to an MCAP file at `path`.");
+    m.def("enable_logging", &last_letter_lib::logging::enable, py::arg("path") = "",
+          "Start recording simulation data to an MCAP file at `path`. With no "
+          "path, a file named after the current date/time is created in the cwd.");
     m.def("disable_logging", &last_letter_lib::logging::disable,
           "Stop recording and close the MCAP file.");
 
@@ -404,7 +405,7 @@ PYBIND11_MODULE(cpp_last_letter_lib, m)
         .def("set_input_pwm", &UavModel::setInputPwm)
         .def("step", &UavModel::step)
         .def("init", &UavModel::init)
-        .def("enable_logging", &UavModel::enable_logging, py::arg("path"))
+        .def("enable_logging", &UavModel::enable_logging, py::arg("path") = "")
         .def("disable_logging", &UavModel::disable_logging)
         .def_property_readonly("time", &UavModel::get_time)
         .def_readonly("state", &UavModel::state);

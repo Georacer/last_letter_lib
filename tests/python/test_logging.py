@@ -4,10 +4,6 @@
 These verify that the Python on/off toggle (last_letter_lib.enable_logging /
 disable_logging) drives C++ self-logging for a bare Component, with no UavModel
 and no logger object passed around.
-
-Note: this is a smoke test that only checks an MCAP file is produced. Once the
-MCAP reader (utils/log.py) lands, it will be extended to assert channels, field
-names and row counts.
 """
 
 __authors__ = ["George Zogopoulos"]
