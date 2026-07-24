@@ -26,19 +26,30 @@ endif()
 # find_package(ament_cmake REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
 
-# include(FindEigen3.cmake)
 find_package(Boost REQUIRED)
 
 # find_package(NLopt REQUIRED) # Will enable later with trimmer
-find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
-message(STATUS "Current Python site-packages dir: ${Python3_SITELIB}")
-set(PYBIND11_FINDPYTHON ON)
-find_package(pybind11 PATHS ${Python3_SITELIB}/pybind11/share/cmake/pybind11 CONFIG REQUIRED)
+
+# Python extension (pybind11). OFF by default, so a bare `cmake` build produces
+# only the C++ library and needs neither Python dev headers nor pybind11. The
+# scikit-build-core / uv package build turns it ON (see [tool.scikit-build] in
+# pyproject.toml); that build is the one whose extension actually gets imported.
+option(LAST_LETTER_BUILD_PYTHON "Build the pybind11 Python extension (cpp_last_letter_lib)" OFF)
+if(LAST_LETTER_BUILD_PYTHON)
+  find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+  message(STATUS "Current Python site-packages dir: ${Python3_SITELIB}")
+  set(PYBIND11_FINDPYTHON ON)
+  find_package(pybind11 PATHS ${Python3_SITELIB}/pybind11/share/cmake/pybind11 CONFIG REQUIRED)
+endif()
 
 # add_subdirectory(external/pybind11)
 
-# Path where libyaml-cpp.so will be built
-set(YAML_CPP_SO_PATH ${CMAKE_BINARY_DIR}/ext-yaml-cpp-prefix/src/ext-yaml-cpp-build/libyaml-cpp.so)
+# All fetched dependencies (yaml-cpp, DataTamer + its vendored mcap, googletest)
+# are built STATIC and position-independent, so they embed directly into
+# last_letter_lib.so and leave no side-car .so files to ship next to the Python
+# extension. BUILD_SHARED_LIBS is left at its default (OFF); PIC must be enabled
+# before the first FetchContent so every dependency is compiled with -fPIC.
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Import yaml-cpp
 include(FetchContent)
@@ -52,16 +63,8 @@ FetchContent_Declare(
 # Set options before the library is added
 set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
-set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(yaml_cpp)
-# Ensure the yaml-cpp library (and other files) will get installed before they get cleaned.
-install(TARGETS yaml-cpp
-        EXPORT yamlcppTargets
-        LIBRARY DESTINATION ${PROJECT_NAME}
-        ARCHIVE DESTINATION ${PROJECT_NAME}
-        RUNTIME DESTINATION ${PROJECT_NAME}
-)
 
 # Import DataTamer, the data-logging backend (MCAP output, PlotJuggler-native).
 # The buildable CMake project lives in the data_tamer_cpp/ subdirectory, hence
@@ -77,18 +80,7 @@ FetchContent_Declare(
 set(DATA_TAMER_BUILD_ROS OFF CACHE BOOL "" FORCE)
 set(DATA_TAMER_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(DATA_TAMER_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-# Build DataTamer and its vendored mcap as STATIC, position-independent, so they
-# embed directly into last_letter_lib.so. Otherwise BUILD_SHARED_LIBS (forced ON
-# earlier for yaml-cpp) makes them separate .so files that are not shipped next
-# to the Python extension, so `import last_letter_lib` fails with
-# "libdata_tamer.so: cannot open shared object file". Scope the override to this
-# fetch and restore BUILD_SHARED_LIBS afterwards so yaml-cpp/googletest are
-# unaffected.
-set(_LLL_BUILD_SHARED_LIBS_SAVED "${BUILD_SHARED_LIBS}")
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 FetchContent_MakeAvailable(data_tamer)
-set(BUILD_SHARED_LIBS "${_LLL_BUILD_SHARED_LIBS_SAVED}" CACHE BOOL "" FORCE)
 # DataTamer compiles its own target with -Werror; drop it so a compiler version
 # other than the one upstream tested can't fail our build on a stray warning.
 if(TARGET data_tamer AND (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
@@ -100,9 +92,7 @@ include_directories(
   include
   ${EIGEN3_INCLUDE_DIRS}
   ${NLOPT_INCLUDE_DIRS}
-
   # "/usr/local/include" # Used to include nlopt
-  # ${YAML_CPP_INCLUDE_DIR}
 )
 
 # Declare the project library
@@ -143,21 +133,27 @@ target_link_libraries(last_letter_lib
 # target_link_libraries(lib_trimmer
 # ${NLOPT_LIBRARIES}
 # lib_uav_model)
-list(APPEND pybind11_sources
-  src/python_api.cpp
-)
-pybind11_add_module(cpp_last_letter_lib ${pybind11_sources})
-set_target_properties(cpp_last_letter_lib PROPERTIES
-    INSTALL_RPATH "$ORIGIN"
-    BUILD_RPATH "$ORIGIN"
-)
-target_link_libraries(cpp_last_letter_lib PRIVATE last_letter_lib)
-install(TARGETS cpp_last_letter_lib LIBRARY DESTINATION ${PROJECT_NAME})
+if(LAST_LETTER_BUILD_PYTHON)
+  list(APPEND pybind11_sources
+    src/python_api.cpp
+  )
+  pybind11_add_module(cpp_last_letter_lib ${pybind11_sources})
+  set_target_properties(cpp_last_letter_lib PROPERTIES
+      INSTALL_RPATH "$ORIGIN"
+      BUILD_RPATH "$ORIGIN"
+  )
+  target_link_libraries(cpp_last_letter_lib PRIVATE last_letter_lib)
+  install(TARGETS cpp_last_letter_lib LIBRARY DESTINATION ${PROJECT_NAME})
+endif()
 
-# Copy data files to home folder
-# file(COPY last_letter_models DESTINATION $ENV{HOME}) # Deprecated, using new models folder
-file(COPY models DESTINATION $ENV{HOME}/last_letter_models)
-file(COPY last_letter_models/HID.yaml DESTINATION $ENV{HOME}/last_letter_models)
+# Stage runtime aircraft-model data into the folder the library reads from at
+# runtime. That location is hardcoded as $HOME/last_letter_models in both
+# src/prog_utils.cpp (C++) and src/last_letter_lib/model_creator.py (Python), so
+# the DESTINATION is an absolute path mirroring it, not CMAKE_INSTALL_PREFIX.
+# These are install rules: they run at `cmake --install` time, NOT at configure,
+# so plain `cmake`/`cmake --build` no longer writes to $HOME.
+install(DIRECTORY models DESTINATION $ENV{HOME}/last_letter_models)
+install(FILES last_letter_models/HID.yaml DESTINATION $ENV{HOME}/last_letter_models)
 
 # Export the header files for use by consumers of the library
 # ament_export_include_directories(include)  # Unnecessary according to https://index.ros.org/doc/ros2/Tutorials/Ament-CMake-Documentation/#building-a-library
@@ -175,55 +171,60 @@ file(COPY last_letter_models/HID.yaml DESTINATION $ENV{HOME}/last_letter_models)
 # Eigen3
 # )
 
-# Compile test files
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/refs/tags/v1.13.0.zip
-)
+# C++ unit tests (googletest). OFF by default, so an ordinary library / Python
+# extension build neither fetches googletest nor compiles the test binary.
+# Enable with -DLAST_LETTER_BUILD_TESTS=ON (see build command below).
+option(LAST_LETTER_BUILD_TESTS "Build the C++ googletest suite (all_tests)" OFF)
+if(LAST_LETTER_BUILD_TESTS)
+  include(FetchContent)
+  FetchContent_Declare(
+    googletest
+    URL https://github.com/google/googletest/archive/refs/tags/v1.13.0.zip
+  )
 
-FetchContent_MakeAvailable(googletest)
+  FetchContent_MakeAvailable(googletest)
 
-enable_testing()
+  enable_testing()
 
-list(APPEND test_sources
-  tests/cpp/test_utils.cpp
-  tests/cpp/test_prog_utils.cpp
-  tests/cpp/test_uav_utils.cpp
-  tests/cpp/test_math_utils.cpp
-  tests/cpp/test_systems.cpp
-  tests/cpp/test_environment.cpp
-  tests/cpp/test_aerodynamics.cpp
-  tests/cpp/test_propulsion.cpp
-  tests/cpp/test_ground_reaction.cpp
-  tests/cpp/test_gravity.cpp
-  tests/cpp/test_dynamics.cpp
-  tests/cpp/test_kinematics.cpp
-  tests/cpp/test_uav_model.cpp
-  tests/cpp/test_loop_rate.cpp
+  list(APPEND test_sources
+    tests/cpp/test_utils.cpp
+    tests/cpp/test_prog_utils.cpp
+    tests/cpp/test_uav_utils.cpp
+    tests/cpp/test_math_utils.cpp
+    tests/cpp/test_systems.cpp
+    tests/cpp/test_environment.cpp
+    tests/cpp/test_aerodynamics.cpp
+    tests/cpp/test_propulsion.cpp
+    tests/cpp/test_ground_reaction.cpp
+    tests/cpp/test_gravity.cpp
+    tests/cpp/test_dynamics.cpp
+    tests/cpp/test_kinematics.cpp
+    tests/cpp/test_uav_model.cpp
+    tests/cpp/test_loop_rate.cpp
 
-  # tests/cpp/test_pybind.cpp
-)
-add_executable(all_tests ${test_sources})
-target_include_directories(all_tests PUBLIC
-  tests/cpp
-)
-target_link_libraries(all_tests
-  GTest::gtest_main
-  yaml-cpp
-  last_letter_lib
-)
+    # tests/cpp/test_pybind.cpp
+  )
+  add_executable(all_tests ${test_sources})
+  target_include_directories(all_tests PUBLIC
+    tests/cpp
+  )
+  target_link_libraries(all_tests
+    GTest::gtest_main
+    yaml-cpp
+    last_letter_lib
+  )
 
-# Perhaps copy over the test data to the build folder?
-include(GoogleTest)
-gtest_discover_tests(all_tests)
+  # Perhaps copy over the test data to the build folder?
+  include(GoogleTest)
+  gtest_discover_tests(all_tests)
+endif()
 
-# # the following line skips the linter which checks for copyrights
-# # uncomment the line when a copyright and license is not present in all source files
-# #set(ament_cmake_copyright_FOUND TRUE)
-# # the following line skips cpplint (only works in a git repo)
-# # uncomment the line when this package is not in a git repo
-# #set(ament_cmake_cpplint_FOUND TRUE)
+# the following line skips the linter which checks for copyrights
+# uncomment the line when a copyright and license is not present in all source files
+#set(ament_cmake_copyright_FOUND TRUE)
+# the following line skips cpplint (only works in a git repo)
+# uncomment the line when this package is not in a git repo
+#set(ament_cmake_cpplint_FOUND TRUE)
 
 # install(DIRECTORY tests/cpp/test_parameters DESTINATION share/${PROJECT_NAME})
 
@@ -243,13 +244,3 @@ install(
   INCLUDES DESTINATION include
   EXPORT last_letter_lib_targets
 )
-
-
-# install(
-# TARGETS last_letter_lib
-# EXPORT export_last_letter_lib
-# LIBRARY DESTINATION lib
-# ARCHIVE DESTINATION lib
-# RUNTIME DESTINATION bin
-# INCLUDES DESTINATION include
-# )

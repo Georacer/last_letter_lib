@@ -18,26 +18,27 @@ A nix-shell pure configuration has been provided which can be optionally used.
 
 ### To build the Python code
 
-<!-- Build the C++/Python bindings with Pybind11 -->
-
 To build the Python wheels do
 
 - uv build
 
 To build the code so that you can import the Python code in editable mode do
 
-- uv venv [--python 3.10]
 - uv pip install --editable . [--force-reinstall]
 
 ## Testing instructions
 
 ### Build and run C++ tests
 
-- cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug && cmake --build build && ./build/all_tests
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DLAST_LETTER_BUILD_TESTS=ON && cmake --build build && cmake --build build && ./build/all_tests
+```
 
-or straight after compiling the Python package:
+### Build everything
 
-- ./build/cp310-cp310-linux_x86_64/all_tests
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DLAST_LETTER_BUILD_TESTS=ON -DLAST_LETTER_BUILD_TESTS=ON && cmake --build build && cmake --build build && ./build/all_tests
+```
 
 ### Run the Python tests
 
