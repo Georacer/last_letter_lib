@@ -198,7 +198,7 @@ void StdLinearAero::update_parameters()
 
 void Aerodynamics::register_log_channels()
 {
-    Component::register_log_channels(); // wrench_sum
+    Component::register_log_channels(); // First let Component register basic data.
     logging::get_channel(get_name()).register_value("airdata", &airdata);
 }
 

@@ -24,11 +24,11 @@ class UavModel : public Parametrized
 public:
     ///////////
     // Variables
-    SimState_t state;	 // main simulation states
+    SimState_t state;	 // Main simulation states
     Input input;		 // Normalized input to the model
     InputPwm_t PwmInput; // PWM input to the model
-    double dt;			 // simulation timestep in s
-    double sim_time_{0}; // elapsed simulation time in s (the logging clock)
+    double dt;			 // Simulation timestep in s
+    double sim_time_{0}; // Elapsed simulation time in s (the logging clock)
     int chanReset;
 
     /////////
@@ -46,8 +46,8 @@ private:
     Input initCtrlInput_;
 
     // Logging
-    void log_state();       // snapshot UavModel::state into its log channel
-    unsigned log_epoch_{0}; // recording id we last registered channels for
+    void log_state();       // Snapshot UavModel::state into its log channel.
+    unsigned log_epoch_{0}; // Recording id we last registered channels for
 
     ///////////
     // Methods
@@ -64,14 +64,13 @@ public:
     void init(); // Initialize UavModel object
     void step(); // Perform simulation step
 
-    // Data logging. All logging is C++-driven; these just toggle the global
-    // recording (see last_letter_lib::logging). Call enable_logging() before
-    // the first step() so channels are created with the MCAP sink attached.
-    void enable_logging(const std::string &path = ""); // start recording (empty path => timestamped filename)
-    void disable_logging();                        // stop recording and close the file
-    double get_time() const { return sim_time_; }  // elapsed simulation time in s
+    // Data logging. Call enable_logging() before the first step() so channels
+    // are created with the MCAP sink attached.
+    void enable_logging(const std::string &path = ""); // Start recording (empty path => timestamped filename).
+    void disable_logging();                        // Stop recording and close the file.
+    double get_time() const { return sim_time_; }  // Elapsed simulation time in s.
 
-    SimState_t getState() { return state; } // Return the state of the Body Frame
+    SimState_t getState() { return state; } // Return the state of the Body Frame.
     void setInput(Input inputMsg);
     void setInputPwm(InputPwm_t inputMsg);
 };

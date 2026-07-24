@@ -117,7 +117,8 @@ void Thruster::calc_model_impl()
 
 void Thruster::register_log_channels()
 {
-    Component::register_log_channels(); // wrench_sum
+    Component::register_log_channels(); // First let Component register basic data.
+
     auto channel = logging::get_channel(get_name());
     channel.register_value("omega", &omega);            // motor speed [rad/s]
     channel.register_value("theta", &theta);            // propeller angle [rad]

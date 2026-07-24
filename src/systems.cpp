@@ -57,9 +57,8 @@ void Component::update_local_state(const SimState_t body_state, const Environmen
 
 void Component::calc_model()
 {
-    // Run the model (dispatches to the most-derived override), then self-log.
     calc_model_impl();
-    maybe_log();
+    log();
 }
 
 void Component::calc_model_impl()
@@ -74,7 +73,7 @@ void Component::register_log_channels()
     logging::get_channel(get_name()).register_value("wrench_sum", &wrench_sum);
 }
 
-void Component::maybe_log()
+void Component::log()
 {
     if (!logging::is_enabled())
     {

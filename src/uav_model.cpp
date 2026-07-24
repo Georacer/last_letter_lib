@@ -162,11 +162,7 @@ void UavModel::step()
     // Stamp this step's samples with the current sim-time and log the state at
     // the top of the step, so UavModel::state and the component wrenches (which
     // are computed from this same state, mid-step) all share the timestamp.
-    if (logging::is_enabled())
-    {
-        logging::set_time(sim_time_);
-        log_state();
-    }
+    log_state();
 
     // Update the environment and propagate the current state and environment
     // into every component before evaluating their forces and torques.
@@ -244,6 +240,11 @@ void UavModel::disable_logging()
 
 void UavModel::log_state()
 {
+    if (!logging::is_enabled())
+    {
+        return;
+    }
+    logging::set_time(sim_time_);
     // (Re)register our channel for this recording the first time we log into
     // it; enable() clears the registry and bumps the epoch.
     auto channel = logging::get_channel(get_name());
